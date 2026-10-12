@@ -1,0 +1,40 @@
+runner:
+  gosec:
+    cmd: gosec -fmt=golint ./...
+    format: gosec
+    level: error
+
+  golangci-lint:
+    cmd: golangci-lint run ./...
+    format: golangci-lint
+    level: error
+
+  gopls:
+    cmd: gopls check $(find . -name "*.go" -type f)
+    errorformat:
+      - "%f:%l:%c: %m"
+      - "%f:%l: %m"
+    level: warning
+
+  govulncheck:
+    cmd: govulncheck ./...
+    errorformat:
+      - "%m"
+    level: info
+
+  staticcheck:
+    cmd: staticcheck ./...
+    format: staticcheck
+    level: warning
+
+  errcheck:
+    cmd: errcheck ./...
+    errorformat:
+      - "%f:%l:%c:\t%m"
+      - "%f:%l:%c: %m"
+    level: warning
+
+  vet:
+    cmd: go vet ./...
+    format: go-vet
+    level: error
