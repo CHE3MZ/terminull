@@ -1,0 +1,10 @@
+logs/
+dist/
+build/
+
+.vscode/
+.idea/
+.env
+
+*.exe
+*.DS_Store
