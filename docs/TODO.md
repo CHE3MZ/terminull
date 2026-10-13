@@ -47,8 +47,8 @@
 - [x] 3.14 `progress/` tests: spinner start/stop, bar incr, no garble smoke
 - [x] 3.15 `output/` table (tablewriter ascii), json/yaml stable keys, asciigraph, humanize, shlex
 - [x] 3.16 `output/` tests: table vs json vs yaml golden, wide letters, piped
-- [ ] 3.17 `static/` appname banner, help, version, completion scripts, out-only fast exit on ctrl+c
-- [ ] 3.18 `static/` tests: help/version golden, completion non-empty
+- [x] 3.17 `static/` appname banner, help, version, completion scripts, out-only fast exit on ctrl+c
+- [x] 3.18 `static/` tests: help/version golden, completion non-empty
 
 # phase 4 — demo + integration:
 
