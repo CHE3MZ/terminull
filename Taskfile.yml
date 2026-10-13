@@ -2,4 +2,27 @@ version: '3'
 
 tasks:
   default:
-    desc: Default task.
+    desc: Run bugcheck + seccheck locally.
+    cmds:
+      - sh scripts/ops/go-bugcheck.sh
+      - sh scripts/ops/go-seccheck.sh
+
+  lint:
+    desc: Run golangci-lint.
+    cmds:
+      - golangci-lint run ./...
+
+  test:
+    desc: Run go tests via script.
+    cmds:
+      - sh scripts/test.sh
+
+  build:
+    desc: Build all packages + demo into dist/.
+    cmds:
+      - sh scripts/build.sh
+
+  demo:
+    desc: Smoke-run demo-app non-interactively.
+    cmds:
+      - sh scripts/demo.sh
