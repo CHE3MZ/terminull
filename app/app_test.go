@@ -1,0 +1,240 @@
+package app
+
+import (
+	"bytes"
+	"context"
+	"strings"
+	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
+	"github.com/CHE3MZ/terminull/core"
+)
+
+// testDeployRun records what the handler saw.
+type testDeployRun struct {
+	flagEnv   string
+	configEnv string
+	output    string
+	ran       bool
+}
+
+func newTestApp(out, errOut *bytes.Buffer, run *testDeployRun) *App {
+	app := New("demo", WithVersion("9.9.9-test"))
+	app.SetOut(out)
+	app.SetErr(errOut)
+	app.Add(Command{
+		Use:   "deploy",
+		Short: "deploy things",
+		Args:  cobra.MaximumNArgs(1),
+		Flags: func(fs *pflag.FlagSet) {
+			fs.String("env", "dev", "target environment")
+		},
+		Run: func(ctx *Context) error {
+			run.ran = true
+			flagEnv, err := ctx.String("env")
+			if err != nil {
+				return err
+			}
+			run.flagEnv = flagEnv
+			run.configEnv = ctx.Config.String("env")
+			run.output = ctx.Output
+			return nil
+		},
+	})
+	return app
+}
+
+func combined(out, errOut *bytes.Buffer) string {
+	return out.String() + errOut.String()
+}
+
+func TestHelpIsOutOnly(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	if err := app.Execute(context.Background(), []string{"--help"}); err != nil {
+		t.Fatalf("Execute(--help) error = %v", err)
+	}
+	if run.ran {
+		t.Fatal("help must not run any command")
+	}
+
+	got := combined(&out, &errOut)
+	for _, want := range []string{"demo", "deploy", "deploy things"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("help %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestVersionIsOutOnly(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	if err := app.Execute(context.Background(), []string{"--version"}); err != nil {
+		t.Fatalf("Execute(--version) error = %v", err)
+	}
+
+	if got := combined(&out, &errOut); !strings.Contains(got, "9.9.9-test") {
+		t.Fatalf("version output %q does not contain version", got)
+	}
+}
+
+func TestCompletionIsOutOnly(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	if err := app.Execute(context.Background(), []string{"completion", "bash"}); err != nil {
+		t.Fatalf("Execute(completion bash) error = %v", err)
+	}
+
+	got := combined(&out, &errOut)
+	if len(got) == 0 || !strings.Contains(got, "demo") {
+		t.Fatalf("completion output %q is empty or missing app name", got)
+	}
+}
+
+func TestUnknownFlagExits2(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	err := app.Execute(context.Background(), []string{"deploy", "--bogus"})
+	if err == nil {
+		t.Fatal("Execute with unknown flag = nil, want error")
+	}
+	if run.ran {
+		t.Fatal("handler must not run on parse failure")
+	}
+	if got := core.ExitCodeOf(err); got != 2 {
+		t.Fatalf("ExitCodeOf = %d, want 2 for usage errors", got)
+	}
+}
+
+func TestTooManyArgsExits2(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	err := app.Execute(context.Background(), []string{"deploy", "a", "b"})
+	if err == nil {
+		t.Fatal("Execute over arg limit = nil, want error")
+	}
+	if got := core.ExitCodeOf(err); got != 2 {
+		t.Fatalf("ExitCodeOf = %d, want 2 for usage errors", got)
+	}
+}
+
+func TestInvalidOutputExits2(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	err := app.Execute(context.Background(), []string{"--output", "xml", "deploy"})
+	if err == nil {
+		t.Fatal("Execute with bad --output = nil, want error")
+	}
+	if got := core.ExitCodeOf(err); got != 2 {
+		t.Fatalf("ExitCodeOf = %d, want 2 for usage errors", got)
+	}
+}
+
+func TestEnvBeatsDefault(t *testing.T) {
+	t.Setenv("DEMO_ENV", "from-env")
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	if err := app.Execute(context.Background(), []string{"deploy"}); err != nil {
+		t.Fatalf("Execute(deploy) error = %v", err)
+	}
+	if run.flagEnv != "dev" {
+		t.Fatalf("flag env = %q, want default dev", run.flagEnv)
+	}
+	if run.configEnv != "from-env" {
+		t.Fatalf("config env = %q, want env to beat default", run.configEnv)
+	}
+}
+
+func TestFlagBeatsEnv(t *testing.T) {
+	t.Setenv("DEMO_ENV", "from-env")
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	if err := app.Execute(context.Background(), []string{"deploy", "--env", "from-flag"}); err != nil {
+		t.Fatalf("Execute(deploy --env) error = %v", err)
+	}
+	if run.flagEnv != "from-flag" || run.configEnv != "from-flag" {
+		t.Fatalf("flag=%q config=%q, want from-flag to win", run.flagEnv, run.configEnv)
+	}
+}
+
+func TestNestedChildren(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	ran := map[string]bool{}
+
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use:   "worker",
+		Short: "manage workers",
+		Children: []Command{
+			{
+				Use:   "run",
+				Short: "run a worker",
+				Run: func(_ *Context) error {
+					ran["run"] = true
+					return nil
+				},
+			},
+			{
+				Use:   "pause",
+				Short: "pause a worker",
+				Run: func(_ *Context) error {
+					ran["pause"] = true
+					return nil
+				},
+			},
+		},
+	})
+
+	if err := app.Execute(context.Background(), []string{"worker", "pause"}); err != nil {
+		t.Fatalf("Execute(worker pause) error = %v", err)
+	}
+	if !ran["pause"] || ran["run"] {
+		t.Fatalf("ran = %v, want only pause", ran)
+	}
+
+	// Bare group prints help.
+	out.Reset()
+	errOut.Reset()
+	if err := app.Execute(context.Background(), []string{"worker"}); err != nil {
+		t.Fatalf("Execute(worker) error = %v", err)
+	}
+	if got := combined(&out, &errOut); !strings.Contains(got, "run") || !strings.Contains(got, "pause") {
+		t.Fatalf("group help %q does not list children", got)
+	}
+}
