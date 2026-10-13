@@ -14,7 +14,7 @@ no breaking public names without a major version.
 
 # compat:
 
-go 1.23 and up.
+go 1.26 and up.
 linux amd64 arm64, mac amd64 arm64, windows amd64 arm64.
 windows conhost with cmd, windows terminal with pwsh, mac terminal, linux xterm.
 dumb terminal, ci mode, piped out, no color must all still work.

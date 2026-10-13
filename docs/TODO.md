@@ -31,10 +31,10 @@
 
 # phase 3 — code (reference: cirrus-cli/cmd/cirrus/main.go, internal/commands/root.go, logs/output.go, echelon/logger.go):
 
-- [ ] 3.1 `core/` signals context, ExitCodeError, version from build info, slog LevelVar
-- [ ] 3.2 `core/` tests: exit code mapping, signal cancel, version format
-- [ ] 3.3 `style/` tty detect (isatty), colorable writers, NO_COLOR + TERM=dumb + CI, runewidth helper
-- [ ] 3.4 `style/` tests: forced color/no-color, dumb, piped
+- [x] 3.1 `core/` signals context, ExitCodeError, version from build info, slog LevelVar
+- [x] 3.2 `core/` tests: exit code mapping, signal cancel, version format
+- [x] 3.3 `style/` tty detect (isatty), colorable writers, NO_COLOR + TERM=dumb + CI, runewidth helper
+- [x] 3.4 `style/` tests: forced color/no-color, dumb, piped
 - [ ] 3.5 `render/` fork of echelon as `CHE3MZ/terminull/render`: logger, Scoped, Simple/Interactive/Stub, Emoji vs SymbolsOnly, keep MIT header
 - [ ] 3.6 `render/` tests: scope tree, finish types, stub silent, simple golden
 - [ ] 3.7 `config/` koanf merge flag > env > file > default, strict yaml KnownFields, XDG + home lookup
