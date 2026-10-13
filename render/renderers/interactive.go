@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/CHE3MZ/terminull/render"
@@ -23,12 +24,17 @@ const defaultFrameBufSize = 38400 // 80 by 120 of 4 bytes UTF-8 characters
 //	renderer := renderers.NewInteractiveRenderer(os.Stdout, nil)
 //	go renderer.StartDrawing()
 //	defer renderer.StopDrawing()
+//
+// Foreign output (prompts, spinners) must pause the loop first with
+// PauseDrawing and resume after with ResumeDrawing, or both writers
+// garble the terminal.
 type InteractiveRenderer struct {
 	out               *bufio.Writer
 	rootNode          *node.EchelonNode
 	config            *config.InteractiveRendererConfig
 	currentFrameLines []string
 	drawLock          sync.Mutex
+	paused            atomic.Bool
 	terminalHeight    int
 
 	StubRenderer
@@ -108,14 +114,34 @@ func (r *InteractiveRenderer) StartDrawing() {
 func (r *InteractiveRenderer) StopDrawing() {
 	r.rootNode.Complete()
 	// one last redraw
+	r.paused.Store(false)
 	r.DrawFrame()
 	// don't leave autowrap disabled in the terminal
 	_, _ = r.out.WriteString(enableAutoWrap)
 	_ = r.out.Flush()
 }
 
-// DrawFrame renders one frame with an incremental terminal update.
+// PauseDrawing freezes redraws for foreign output (prompts, spinners,
+// bars) sharing the terminal. Tree state is untouched; ResumeDrawing
+// continues where it left off. Safe to call without StartDrawing.
+func (r *InteractiveRenderer) PauseDrawing() {
+	r.drawLock.Lock()
+	defer r.drawLock.Unlock()
+	r.paused.Store(true)
+	_ = r.out.Flush()
+}
+
+// ResumeDrawing unfreezes redraws after PauseDrawing.
+func (r *InteractiveRenderer) ResumeDrawing() {
+	r.paused.Store(false)
+}
+
+// DrawFrame renders one frame with an incremental terminal update,
+// unless paused.
 func (r *InteractiveRenderer) DrawFrame() {
+	if r.paused.Load() {
+		return
+	}
 	r.drawLock.Lock()
 	defer r.drawLock.Unlock()
 	var newFrameLines []string
