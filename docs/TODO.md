@@ -45,8 +45,8 @@
 - [x] 3.12 `prompt/` tests: piped stdio select, non-tty error message
 - [x] 3.13 `progress/` Progresser wrapping spinner + progressbar on single render writer, ascii fallback
 - [x] 3.14 `progress/` tests: spinner start/stop, bar incr, no garble smoke
-- [ ] 3.15 `output/` table (tablewriter ascii), json/yaml stable keys, asciigraph, humanize, shlex
-- [ ] 3.16 `output/` tests: table vs json vs yaml golden, wide letters, piped
+- [x] 3.15 `output/` table (tablewriter ascii), json/yaml stable keys, asciigraph, humanize, shlex
+- [x] 3.16 `output/` tests: table vs json vs yaml golden, wide letters, piped
 - [ ] 3.17 `static/` appname banner, help, version, completion scripts, out-only fast exit on ctrl+c
 - [ ] 3.18 `static/` tests: help/version golden, completion non-empty
 
