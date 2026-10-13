@@ -7,6 +7,18 @@ import (
 	"testing"
 )
 
+// readGenerated reads back a file the test itself generated under dir.
+func readGenerated(t *testing.T, dir string, elems ...string) string {
+	t.Helper()
+
+	// #nosec G304 -- test reads files it generated under t.TempDir().
+	content, err := os.ReadFile(filepath.Join(append([]string{dir}, elems...)...))
+	if err != nil {
+		t.Fatalf("ReadFile(%v) error = %v", elems, err)
+	}
+	return string(content)
+}
+
 func TestGenerateHappyPath(t *testing.T) {
 	t.Parallel()
 
@@ -36,26 +48,20 @@ func TestGenerateHappyPath(t *testing.T) {
 		}
 	}
 
-	gomod, err := os.ReadFile(filepath.Join(dir, "go.mod"))
-	if err != nil {
-		t.Fatalf("ReadFile(go.mod) error = %v", err)
-	}
+	gomod := readGenerated(t, dir, "go.mod")
 	for _, want := range []string{
 		"module example.com/app",
 		"require github.com/CHE3MZ/terminull v9.9.9",
-		"replace github.com/CHE3MZ/terminull => C:/fake/path",
+		"replace github.com/CHE3MZ/terminull => \"C:/fake/path\"",
 	} {
-		if !strings.Contains(string(gomod), want) {
+		if !strings.Contains(gomod, want) {
 			t.Fatalf("go.mod %q does not contain %q", gomod, want)
 		}
 	}
 
-	main, err := os.ReadFile(filepath.Join(dir, "cmd", "app", "main.go"))
-	if err != nil {
-		t.Fatalf("ReadFile(main.go) error = %v", err)
-	}
+	main := readGenerated(t, dir, "cmd", "app", "main.go")
 	for _, want := range []string{`commands.NewApp()`, `"example.com/app/internal/commands"`} {
-		if !strings.Contains(string(main), want) {
+		if !strings.Contains(main, want) {
 			t.Fatalf("main.go does not contain %q", want)
 		}
 	}
@@ -69,14 +75,11 @@ func TestGenerateDefaults(t *testing.T) {
 		t.Fatalf("Generate() error = %v", err)
 	}
 
-	gomod, err := os.ReadFile(filepath.Join(dir, "go.mod"))
-	if err != nil {
-		t.Fatalf("ReadFile(go.mod) error = %v", err)
-	}
-	if !strings.Contains(string(gomod), "module hello") {
+	gomod := readGenerated(t, dir, "go.mod")
+	if !strings.Contains(gomod, "module hello") {
 		t.Fatalf("go.mod %q defaults module to name", gomod)
 	}
-	if !strings.Contains(string(gomod), "require github.com/CHE3MZ/terminull "+DefaultTerminullVersion) {
+	if !strings.Contains(gomod, "require github.com/CHE3MZ/terminull "+DefaultTerminullVersion) {
 		t.Fatalf("go.mod %q defaults framework version", gomod)
 	}
 }

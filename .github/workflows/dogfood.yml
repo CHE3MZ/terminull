@@ -1,0 +1,40 @@
+name: Dogfood
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  dogfood:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+      - name: Scaffold, build, and run a generated project
+        shell: bash
+        run: |
+          go build -o dist/terminull ./cmd/terminull
+          WORK="$PWD/dist/dogfood-app"
+          rm -rf "$WORK"
+          ./dist/terminull new dogfood --dir "$WORK" --module example.com/dogfood --replace "$PWD" | tee "dogfood-${{ matrix.os }}.txt"
+          cd "$WORK"
+          go build ./...
+          go build -o dogfood ./cmd/dogfood
+          ./dogfood --help | tee -a "$GITHUB_WORKSPACE/dogfood-${{ matrix.os }}.txt"
+          ./dogfood hello --name dogfood | tee -a "$GITHUB_WORKSPACE/dogfood-${{ matrix.os }}.txt"
+          ./dogfood status -o json | tee -a "$GITHUB_WORKSPACE/dogfood-${{ matrix.os }}.txt"
+      - name: Upload dogfood output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dogfood-output-${{ matrix.os }}
+          path: dogfood-*.txt

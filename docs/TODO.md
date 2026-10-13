@@ -52,11 +52,11 @@
 
 # phase 4 — dogfood generator CLI (replaces demo):
 
-- [ ] 4.1 drop demo leftovers (cmd/demo, internal/demo, tests/demo_test)
-- [ ] 4.2 `internal/generator/` templates + Generate + validation + gofmt + tests
-- [ ] 4.3 `internal/terminull/` + `cmd/terminull/` new command (flags, prompt, spinner tidy, table)
-- [ ] 4.4 `tests/` generator integration (help golden, scaffold files, bad name, non-interactive default)
-- [ ] 4.5 `scripts/smoke.sh` + dogfood workflow: scaffold, tidy, build, run on 3 OSes with output artifacts
+- [x] 4.1 drop demo leftovers (cmd/demo, internal/demo, tests/demo_test)
+- [x] 4.2 `internal/generator/` templates + Generate + validation + gofmt + tests
+- [x] 4.3 `internal/terminull/` + `cmd/terminull/` new command (flags, prompt, spinner tidy, table)
+- [x] 4.4 `tests/` generator integration (help golden, scaffold files, bad name, non-interactive default)
+- [x] 4.5 `scripts/smoke.sh` + dogfood workflow: scaffold, tidy, build, run on 3 OSes with output artifacts
 - [ ] 4.3 docs: update `docs/index.md` mkdocs nav for TODO/spec/architecture when code lands
 
 # phase 5 — release hygiene:

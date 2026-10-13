@@ -6,7 +6,7 @@ go 1.26.0
 
 require github.com/CHE3MZ/terminull [[.TerminullVersion]]
 [[if .Replace]]
-replace github.com/CHE3MZ/terminull => [[.Replace]]
+replace github.com/CHE3MZ/terminull => "[[.Replace]]"
 [[end]]`
 
 const mainTemplate = `// Command [[.Name]] is a terminull app.

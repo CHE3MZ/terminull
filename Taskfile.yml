@@ -18,11 +18,11 @@ tasks:
       - sh scripts/test.sh
 
   build:
-    desc: Build all packages + demo into dist/.
+    desc: Build all packages into dist/.
     cmds:
       - sh scripts/build.sh
 
-  demo:
-    desc: Smoke-run demo-app non-interactively.
+  smoke:
+    desc: End-to-end smoke with the generator CLI.
     cmds:
-      - sh scripts/demo.sh
+      - sh scripts/smoke.sh

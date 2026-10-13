@@ -122,7 +122,7 @@ func Generate(opts Options) ([]string, error) {
 		if err := os.WriteFile(full, raw, 0o600); err != nil {
 			return nil, fmt.Errorf("generator: write %s: %w", path, err)
 		}
-		created = append(created, path)
+		created = append(created, filepath.ToSlash(path))
 	}
 	return created, nil
 }
