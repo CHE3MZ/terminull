@@ -17,6 +17,7 @@ func frameFile(t *testing.T) (*InteractiveRenderer, string) {
 	t.Helper()
 
 	path := filepath.Join(t.TempDir(), "frame.txt")
+	// #nosec G304 -- test frame file under t.TempDir().
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
@@ -30,6 +31,7 @@ func frameFile(t *testing.T) (*InteractiveRenderer, string) {
 func readFrame(t *testing.T, path string) string {
 	t.Helper()
 
+	// #nosec G304 -- test frame file under t.TempDir().
 	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("ReadFile() error = %v", err)

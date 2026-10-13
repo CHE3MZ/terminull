@@ -63,3 +63,22 @@ func (c *Context) StringSlice(name string) ([]string, error) {
 func (c *Context) Changed(name string) bool {
 	return c.cmd.Flags().Changed(name)
 }
+
+// PauseDrawing freezes live tree redraws for foreign terminal output
+// (prompts, spinners, bars) and ResumeDrawing continues afterwards.
+// Both are safe no-ops on non-interactive renderers. Always pair them:
+//
+//	ctx.PauseDrawing()
+//	defer ctx.ResumeDrawing()
+func (c *Context) PauseDrawing() {
+	if p, ok := c.Logger.Renderer().(interface{ PauseDrawing() }); ok {
+		p.PauseDrawing()
+	}
+}
+
+// ResumeDrawing unfreezes live tree redraws after PauseDrawing.
+func (c *Context) ResumeDrawing() {
+	if p, ok := c.Logger.Renderer().(interface{ ResumeDrawing() }); ok {
+		p.ResumeDrawing()
+	}
+}

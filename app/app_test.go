@@ -3,13 +3,19 @@ package app
 import (
 	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/CHE3MZ/terminull/core"
+	"github.com/CHE3MZ/terminull/render"
+	"github.com/CHE3MZ/terminull/render/renderers"
+	rendercfg "github.com/CHE3MZ/terminull/render/renderers/config"
 )
 
 // testDeployRun records what the handler saw.
@@ -236,5 +242,79 @@ func TestNestedChildren(t *testing.T) {
 	}
 	if got := combined(&out, &errOut); !strings.Contains(got, "run") || !strings.Contains(got, "pause") {
 		t.Fatalf("group help %q does not list children", got)
+	}
+}
+
+func TestPauseResumeSimpleNoop(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use:   "nop",
+		Short: "pause on simple renderer",
+		Run: func(ctx *Context) error {
+			ctx.PauseDrawing()
+			defer ctx.ResumeDrawing()
+			return nil
+		},
+	})
+
+	if err := app.Execute(context.Background(), []string{"nop"}); err != nil {
+		t.Fatalf("Execute(nop) error = %v", err)
+	}
+}
+
+func TestPauseResumeInteractive(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "frame.txt")
+	// #nosec G304 -- test frame file under t.TempDir().
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	t.Cleanup(func() { _ = f.Close() })
+
+	renderer := renderers.NewInteractiveRenderer(f, rendercfg.NewDefaultSymbolsOnlyRenderingConfig())
+	ctx := &Context{Logger: render.NewLogger(render.InfoLevel, renderer)}
+
+	size := func() int64 {
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatalf("Stat() error = %v", err)
+		}
+		return info.Size()
+	}
+
+	ctx.Logger.Scoped("a").Infof("x")
+
+	// The logger drains on its own goroutine: poll for the first frame.
+	var grown int64
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		renderer.DrawFrame()
+		if grown = size(); grown > 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("DrawFrame wrote nothing with an open scope")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	ctx.PauseDrawing()
+	ctx.Logger.Scoped("b").Infof("y")
+	renderer.DrawFrame()
+	if got := size(); got != grown {
+		t.Fatalf("paused DrawFrame changed %d to %d", grown, got)
+	}
+
+	ctx.ResumeDrawing()
+	renderer.DrawFrame()
+	if got := size(); got <= grown {
+		t.Fatal("resumed DrawFrame did not grow the frame")
 	}
 }
