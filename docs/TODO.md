@@ -8,25 +8,25 @@
 
 # phase 0 — foundation:
 
-- [ ] 0.1 pin go directive + add direct deps to go.mod (cobra, koanf, survey, color, isatty, colorable, runewidth, spinner, progressbar, asciigraph, tablewriter, yaml, sync, sys, text, humanize, shlex, retry-go)
-- [ ] 0.2 add `.golangci.yml` + `golangci.json` strict presets (vet, staticcheck, errcheck, govulncheck, gosec)
-- [ ] 0.3 expand `Taskfile.yml` (lint, test, build, demo, ops tasks calling scripts/)
-- [ ] 0.4 add `.gitattributes` for sh LF + go files (windows safe)
+- [x] 0.1 pin go directive + add direct deps to go.mod (cobra, koanf, survey, color, isatty, colorable, runewidth, spinner, progressbar, asciigraph, tablewriter, yaml, sys, text, humanize, shlex)
+- [x] 0.2 add `.golangci.yml` strict presets (vet, staticcheck, errcheck, govulncheck, gosec)
+- [x] 0.3 expand `Taskfile.yml` (lint, test, build, smoke, ops tasks calling scripts/)
+- [x] 0.4 add `.gitattributes` for sh LF + go files (windows safe)
 
 # phase 1 — scripts (sh, dist/):
 
-- [ ] 1.1 `scripts/build.sh` builds all packages + demo-app into `dist/` (GOOS/GOARCH matrix locally)
-- [ ] 1.2 `scripts/test.sh` runs `go test ./...` with logs/ output
-- [ ] 1.3 `scripts/demo.sh` runs demo-app non-interactive (`--yes --output table|json`) for smoke
-- [ ] 1.4 verify existing `scripts/ops/go-bugcheck.sh` + `go-seccheck.sh` pass on empty repo
+- [x] 1.1 `scripts/build.sh` builds all packages + terminull CLI into `dist/`
+- [x] 1.2 `scripts/test.sh` runs `go test ./...` with logs/ output
+- [x] 1.3 `scripts/smoke.sh` end-to-end generator smoke (scaffold, tidy, build, run)
+- [x] 1.4 verify existing `scripts/ops/go-bugcheck.sh` + `go-seccheck.sh` pass
 
 # phase 2 — workflows (.github/workflows, gh cli green):
 
-- [ ] 2.1 `ci.yml` on push/PR: setup-go, cache, `go build ./...`, `go test ./...`, upload logs/
-- [ ] 2.2 `lint.yml`: golangci-lint + reviewdog (uses existing `.reviewdog.yml`), gosec, govulncheck, staticcheck, errcheck, vet
-- [ ] 2.3 `build-matrix.yml`: cross build linux/mac/windows amd64+arm64 into `dist/`, upload artifacts
-- [ ] 2.4 `test-matrix.yml`: cross test ubuntu/macos/windows-latest, `go test -v ./...`
-- [ ] 2.5 `demo.yml`: run demo-app on all 3 OS, capture text output as artifact for visual check
+- [x] 2.1 `ci.yml` on push/PR: setup-go, cache, `go build ./...`, `go test ./...`, upload logs/
+- [x] 2.2 `lint.yml`: golangci-lint + gosec + govulncheck via ops scripts
+- [x] 2.3 `build-matrix.yml`: cross build linux/mac/windows amd64+arm64 into `dist/`, upload artifacts
+- [x] 2.4 `test-matrix.yml`: cross test ubuntu/macos/windows-latest, `go test -v ./...`
+- [x] 2.5 `dogfood.yml`: scaffold, tidy, build, run generated project on 3 OSes with output artifacts
 - [ ] 2.6 verify with `gh workflow list` + `gh run watch` all green
 
 # phase 3 — code (reference: cirrus-cli/cmd/cirrus/main.go, internal/commands/root.go, logs/output.go, echelon/logger.go):
