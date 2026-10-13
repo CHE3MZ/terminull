@@ -35,8 +35,8 @@
 - [x] 3.2 `core/` tests: exit code mapping, signal cancel, version format
 - [x] 3.3 `style/` tty detect (isatty), colorable writers, NO_COLOR + TERM=dumb + CI, runewidth helper
 - [x] 3.4 `style/` tests: forced color/no-color, dumb, piped
-- [ ] 3.5 `render/` fork of echelon as `CHE3MZ/terminull/render`: logger, Scoped, Simple/Interactive/Stub, Emoji vs SymbolsOnly, keep MIT header
-- [ ] 3.6 `render/` tests: scope tree, finish types, stub silent, simple golden
+- [x] 3.5 `render/` fork of echelon as `CHE3MZ/terminull/render`: logger, Scoped, Simple/Interactive/Stub, Emoji vs SymbolsOnly, keep MIT header
+- [x] 3.6 `render/` tests: scope tree, finish types, stub silent, simple golden
 - [ ] 3.7 `config/` koanf merge flag > env > file > default, strict yaml KnownFields, XDG + home lookup
 - [ ] 3.8 `config/` tests: precedence, unknown key fails, missing file ok
 - [ ] 3.9 `app/` cobra wrapper: New, Add, global flags (--config --output --no-color --verbose --debug), PersistentPreRunE order, ctx build, SilenceUsage/Errors

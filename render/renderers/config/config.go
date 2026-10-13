@@ -65,6 +65,7 @@ func NewDefaultSymbolsOnlyRenderingConfig() *InteractiveRendererConfig {
 		SkippedStatus:                  "!",
 		DescriptionLinesWhenFailed:     100,
 		DescriptionLinesWhenSkipped:    0,
+		VisibleDescriptionLines:        defaultVisibleLines,
 	}
 }
 

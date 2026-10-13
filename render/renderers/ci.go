@@ -25,10 +25,11 @@ func (r FoldableLogsRenderer) RenderScopeStarted(entry *render.LogScopeStarted) 
 	r.delegate.RenderScopeStarted(entry)
 }
 
-// RenderScopeFinished delegates, then closes the fold.
+// RenderScopeFinished delegates, then closes the fold with the scope name
+// (upstream left a literal %s here; the name is required to match folds).
 func (r FoldableLogsRenderer) RenderScopeFinished(entry *render.LogScopeFinished) {
 	r.delegate.RenderScopeFinished(entry)
-	r.printFoldMessage(entry.GetScopes(), r.endFoldTemplate, false)
+	r.printFoldMessage(entry.GetScopes(), r.endFoldTemplate, true)
 }
 
 // RenderMessage delegates the message unchanged.
@@ -51,7 +52,9 @@ func (r FoldableLogsRenderer) printFoldMessage(scopes []string, template string,
 
 		var args []any
 
-		if needsLastScope {
+		// Templates without a verb (e.g. GitHub's ##[endgroup]) take no
+		// args: surplus Sprintf args would print as %!(EXTRA ...).
+		if needsLastScope && strings.Contains(template, "%s") {
 			args = append(args, lastScope)
 		}
 
