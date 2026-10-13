@@ -43,8 +43,8 @@
 - [x] 3.10 `app/` tests: help/version/completion out-only, unknown flag exit 2
 - [x] 3.11 `prompt/` survey wrapper: Select/MultiSelect/Confirm/Input/Password, WithStdio, non-tty flag-required error, pause render contract
 - [x] 3.12 `prompt/` tests: piped stdio select, non-tty error message
-- [ ] 3.13 `progress/` Progresser wrapping spinner + progressbar on single render writer, ascii fallback
-- [ ] 3.14 `progress/` tests: spinner start/stop, bar incr, no garble smoke
+- [x] 3.13 `progress/` Progresser wrapping spinner + progressbar on single render writer, ascii fallback
+- [x] 3.14 `progress/` tests: spinner start/stop, bar incr, no garble smoke
 - [ ] 3.15 `output/` table (tablewriter ascii), json/yaml stable keys, asciigraph, humanize, shlex
 - [ ] 3.16 `output/` tests: table vs json vs yaml golden, wide letters, piped
 - [ ] 3.17 `static/` appname banner, help, version, completion scripts, out-only fast exit on ctrl+c
