@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/internal/terminull"
 )
 
@@ -109,6 +110,40 @@ func TestNewBadName(t *testing.T) {
 	_, err := runTerminull(t, nil, "new", "has space", "--skip-tidy")
 	if err == nil {
 		t.Fatal("Execute(new bad name) = nil, want error")
+	}
+}
+
+func TestNewNoArgsNonInteractive(t *testing.T) {
+	isolateEnv(t)
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = r.Close()
+		_ = w.Close()
+	})
+
+	_, err = runTerminull(t, r, "new")
+	if err == nil || !strings.Contains(err.Error(), "NAME") {
+		t.Fatalf("Execute(new) error = %v, want usage naming NAME", err)
+	}
+	if got := core.ExitCodeOf(err); got != 2 {
+		t.Fatalf("ExitCodeOf = %d, want 2 for usage errors", got)
+	}
+}
+
+func TestNewInvalidNameFailsFast(t *testing.T) {
+	isolateEnv(t)
+
+	got, err := runTerminull(t, nil, "new", ".", "--skip-tidy")
+	if err == nil || !strings.Contains(err.Error(), "invalid app name") {
+		t.Fatalf("Execute(new .) error = %v, want validation error", err)
+	}
+	// Validation runs before the banner: nothing was printed or created.
+	if strings.Contains(got, "terminull v") {
+		t.Fatalf("output %q prints a banner before failing validation", got)
 	}
 }
 

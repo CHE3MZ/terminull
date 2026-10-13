@@ -63,9 +63,11 @@ how every app runs from start to finish:
 
 rules:
 only render writes to the screen.
-prompt pauses render before asking and resumes after.
+prompt pauses render before asking and resumes after via ctx PauseDrawing and ResumeDrawing.
+spinners and bars do the same: pause, draw, resume, never beside live tree output.
 static help version completion always use simple plain output even on tty.
 every prompt has a flag fallback, non terminal must still work with flags alone.
+validate names and flags before banners and logs, so usage errors print clean and fast.
 
 # app:
 

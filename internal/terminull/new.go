@@ -11,6 +11,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/CHE3MZ/terminull/app"
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/internal/generator"
 	"github.com/CHE3MZ/terminull/output"
 	"github.com/CHE3MZ/terminull/progress"
@@ -30,7 +31,7 @@ func newCommand() app.Command {
 	return app.Command{
 		Use:   "new NAME",
 		Short: "scaffold a new terminull project",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		Flags: func(fs *pflag.FlagSet) {
 			fs.String("module", "", "go module path (default: NAME)")
 			fs.String("dir", "", "target directory (default: ./NAME)")
@@ -43,19 +44,18 @@ func newCommand() app.Command {
 }
 
 func runNew(ctx *app.Context) error {
-	name := ctx.Args()[0]
+	name, err := appName(ctx)
+	if err != nil {
+		return err
+	}
+	if err := generator.ValidateName(name); err != nil {
+		return core.NewExitCodeError(2, err)
+	}
 
 	module, err := ctx.String("module")
 	if err != nil {
 		return err
 	}
-	if module == "" {
-		module, err = defaultModule(ctx, name)
-		if err != nil {
-			return err
-		}
-	}
-
 	dir, err := ctx.String("dir")
 	if err != nil {
 		return err
@@ -78,6 +78,13 @@ func runNew(ctx *app.Context) error {
 
 	if err := static.Banner(ctx.Out, "terminull", version, !ctx.NoColor); err != nil {
 		return err
+	}
+
+	if module == "" {
+		module, err = defaultModule(ctx, name)
+		if err != nil {
+			return err
+		}
 	}
 
 	log := ctx.Logger.Scoped("scaffold")
@@ -117,16 +124,50 @@ func runNew(ctx *app.Context) error {
 	return nil
 }
 
+// appName returns the NAME arg, asks for it on interactive terminals,
+// or fails with usage when there is nowhere to ask.
+func appName(ctx *app.Context) (string, error) {
+	if args := ctx.Args(); len(args) > 0 {
+		return args[0], nil
+	}
+	if !stdinTerminal(ctx) {
+		return "", core.NewExitCodeError(2, errors.New("missing app NAME\n\nUsage: terminull new NAME [flags]"))
+	}
+	name, err := solo(ctx, func(io prompt.IO) (string, error) {
+		return prompt.Input(io, prompt.InputOptions{
+			Message: "App name?",
+			Flag:    "NAME",
+		})
+	})
+	if err != nil {
+		return "", err
+	}
+	if name == "" {
+		return "", core.NewExitCodeError(2, errors.New("missing app NAME\n\nUsage: terminull new NAME [flags]"))
+	}
+	return name, nil
+}
+
+// solo pauses live drawing while fn produces foreign terminal output
+// (prompts, spinners, bars), then resumes. Tree state is untouched.
+func solo[T any](ctx *app.Context, fn func(prompt.IO) (T, error)) (T, error) {
+	ctx.PauseDrawing()
+	defer ctx.ResumeDrawing()
+	return fn(promptIO(ctx))
+}
+
 // defaultModule returns the --module flag, asks interactively when a
 // terminal is present, or falls back to the app name non-interactively.
 func defaultModule(ctx *app.Context, name string) (string, error) {
 	if !stdinTerminal(ctx) {
 		return name, nil
 	}
-	return prompt.Input(promptIO(ctx), prompt.InputOptions{
-		Message: "Go module path?",
-		Default: name,
-		Flag:    "--module",
+	return solo(ctx, func(io prompt.IO) (string, error) {
+		return prompt.Input(io, prompt.InputOptions{
+			Message: "Go module path?",
+			Default: name,
+			Flag:    "--module",
+		})
 	})
 }
 
@@ -151,9 +192,13 @@ func promptIO(ctx *app.Context) prompt.IO {
 	return io
 }
 
-// tidyWithSpinner runs go mod tidy in dir with a spinner. The constant
-// "go" binary keeps gosec happy; a missing toolchain is a clear error.
+// tidyWithSpinner runs go mod tidy in dir with a spinner. Drawing stays
+// paused throughout: the spinner owns the terminal until it stops. The
+// constant "go" binary keeps gosec happy; a missing toolchain is clear.
 func tidyWithSpinner(ctx *app.Context, dir string) error {
+	ctx.PauseDrawing()
+	defer ctx.ResumeDrawing()
+
 	spin := progress.NewSpinner(ctx.Out, "resolving modules", style.Emoji())
 	spin.Start()
 	out, err := runGoModTidy(dir)

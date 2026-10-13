@@ -39,6 +39,15 @@ var reservedNames = map[string]bool{
 	"lpt1": true, "lpt2": true, "lpt3": true, "lpt4": true,
 }
 
+// ValidateName rejects empty names, path characters, and Windows-reserved
+// device names before any prompting or file work happens.
+func ValidateName(name string) error {
+	if !validName.MatchString(name) || reservedNames[strings.ToLower(name)] {
+		return fmt.Errorf("generator: invalid app name %q: use letters, digits, _ and -", name)
+	}
+	return nil
+}
+
 type resolved struct {
 	Name             string
 	Module           string
@@ -55,8 +64,8 @@ func (opts Options) resolve() (resolved, error) {
 		Replace:          strings.ReplaceAll(opts.Replace, "\\", "/"),
 	}
 
-	if !validName.MatchString(r.Name) || reservedNames[strings.ToLower(r.Name)] {
-		return resolved{}, fmt.Errorf("generator: invalid app name %q: use letters, digits, _ and -", opts.Name)
+	if err := ValidateName(r.Name); err != nil {
+		return resolved{}, err
 	}
 	if r.Module == "" {
 		r.Module = r.Name
