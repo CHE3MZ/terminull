@@ -4,8 +4,8 @@ tasks:
   default:
     desc: Run bugcheck + seccheck locally.
     cmds:
-      - sh scripts/ops/go-bugcheck.sh
-      - sh scripts/ops/go-seccheck.sh
+      - bash scripts/ops/go-bugcheck.sh
+      - bash scripts/ops/go-seccheck.sh
 
   lint:
     desc: Run golangci-lint.
