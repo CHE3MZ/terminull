@@ -130,7 +130,7 @@ tables use olekukonko/tablewriter with runewidth, ascii borders only for windows
 graphs use guptarohit/asciigraph plain ascii, no color codes inside.
 sizes and durations use dustin/go-humanize.
 command splitting uses google/shlex.
-retry helper uses avast/retry-go v5.
+retry helper uses avast/retry-go v4.
 output never reads input, it is out only, same static rules as static.
 json and yaml must be stable key order for tests and pipes.
 
