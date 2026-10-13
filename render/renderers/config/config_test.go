@@ -29,13 +29,22 @@ func TestDefaultConfigs(t *testing.T) {
 func TestCurrentProgressIndicatorFrameCycles(t *testing.T) {
 	t.Parallel()
 
-	cfg := &InteractiveRendererConfig{
+	// A single frame always wins regardless of wall-clock time.
+	single := &InteractiveRendererConfig{
+		ProgressIndicatorFrames:        []string{"only"},
+		ProgressIndicatorCycleDuration: time.Second,
+	}
+	if got := single.CurrentProgressIndicatorFrame(); got != "only" {
+		t.Fatalf("frame = %q, want only", got)
+	}
+
+	// Multiple frames rotate with the clock: assert membership, never
+	// an exact frame, or the test flakes by time of hour.
+	multi := &InteractiveRendererConfig{
 		ProgressIndicatorFrames:        []string{"a", "b"},
 		ProgressIndicatorCycleDuration: time.Hour,
 	}
-
-	// With an hour-long cycle the frame stays "a" for the whole test run.
-	if got := cfg.CurrentProgressIndicatorFrame(); got != "a" {
-		t.Fatalf("frame = %q, want a", got)
+	if got := multi.CurrentProgressIndicatorFrame(); got != "a" && got != "b" {
+		t.Fatalf("frame = %q, want a or b", got)
 	}
 }
