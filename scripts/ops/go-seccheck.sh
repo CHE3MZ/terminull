@@ -7,6 +7,11 @@ cd "$(dirname "$0")/../.."
 
 mkdir -p logs
 
+if [ -z "$(go list ./... 2>/dev/null)" ]; then
+    echo "no Go packages yet, skipping gosec"
+    exit 0
+fi
+
 failed=0
 
 run_check() {
