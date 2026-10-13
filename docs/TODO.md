@@ -37,8 +37,8 @@
 - [x] 3.4 `style/` tests: forced color/no-color, dumb, piped
 - [x] 3.5 `render/` fork of echelon as `CHE3MZ/terminull/render`: logger, Scoped, Simple/Interactive/Stub, Emoji vs SymbolsOnly, keep MIT header
 - [x] 3.6 `render/` tests: scope tree, finish types, stub silent, simple golden
-- [ ] 3.7 `config/` koanf merge flag > env > file > default, strict yaml KnownFields, XDG + home lookup
-- [ ] 3.8 `config/` tests: precedence, unknown key fails, missing file ok
+- [x] 3.7 `config/` koanf merge flag > env > file > default, strict yaml KnownFields, XDG + home lookup
+- [x] 3.8 `config/` tests: precedence, unknown key fails, missing file ok
 - [ ] 3.9 `app/` cobra wrapper: New, Add, global flags (--config --output --no-color --verbose --debug), PersistentPreRunE order, ctx build, SilenceUsage/Errors
 - [ ] 3.10 `app/` tests: help/version/completion out-only, unknown flag exit 2
 - [ ] 3.11 `prompt/` survey wrapper: Select/MultiSelect/Confirm/Input/Password, WithStdio, non-tty flag-required error, pause render contract
