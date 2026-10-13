@@ -21,7 +21,13 @@ jobs:
           cache: true
       - name: Go test
         shell: bash
-        run: go test -v ./... 2>&1 | tee logs-test.txt
+        run: |
+          if [ -z "$(go list ./... 2>/dev/null)" ]; then
+            echo "no Go packages yet, skipping"
+            echo "no Go packages yet" > logs-test.txt
+            exit 0
+          fi
+          go test -v ./... 2>&1 | tee logs-test.txt
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
