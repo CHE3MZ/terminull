@@ -15,4 +15,10 @@ echo "==> $BIN --version"
 "$BIN" --version || true
 echo "==> $BIN deploy --help"
 "$BIN" deploy --help || true
+echo "==> $BIN deploy --env prod --yes --output table"
+"$BIN" deploy --env prod --yes --output table
+echo "==> $BIN deploy --env staging --yes --output json"
+"$BIN" deploy --env staging --yes --output json
+echo "==> $BIN status --output yaml"
+"$BIN" status --output yaml
 echo "demo smoke OK"
