@@ -50,10 +50,13 @@
 - [x] 3.17 `static/` appname banner, help, version, completion scripts, out-only fast exit on ctrl+c
 - [x] 3.18 `static/` tests: help/version golden, completion non-empty
 
-# phase 4 — demo + integration:
+# phase 4 — dogfood generator CLI (replaces demo):
 
-- [x] 4.1 `cmd/demo/` demo-app using everything: deploy cmd with --env flag + select fallback, spinner + bar + tree logs, table/json out
-- [x] 4.2 `tests/` integration: demo --help/--version golden, demo --output json golden, non-tty select error
+- [ ] 4.1 drop demo leftovers (cmd/demo, internal/demo, tests/demo_test)
+- [ ] 4.2 `internal/generator/` templates + Generate + validation + gofmt + tests
+- [ ] 4.3 `internal/terminull/` + `cmd/terminull/` new command (flags, prompt, spinner tidy, table)
+- [ ] 4.4 `tests/` generator integration (help golden, scaffold files, bad name, non-interactive default)
+- [ ] 4.5 `scripts/smoke.sh` + dogfood workflow: scaffold, tidy, build, run on 3 OSes with output artifacts
 - [ ] 4.3 docs: update `docs/index.md` mkdocs nav for TODO/spec/architecture when code lands
 
 # phase 5 — release hygiene:
