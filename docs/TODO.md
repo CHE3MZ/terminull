@@ -52,8 +52,8 @@
 
 # phase 4 — demo + integration:
 
-- [ ] 4.1 `cmd/demo/` demo-app using everything: deploy cmd with --env flag + select fallback, spinner + bar + tree logs, table/json out
-- [ ] 4.2 `tests/` integration: demo --help/--version golden, demo --output json golden, non-tty select error
+- [x] 4.1 `cmd/demo/` demo-app using everything: deploy cmd with --env flag + select fallback, spinner + bar + tree logs, table/json out
+- [x] 4.2 `tests/` integration: demo --help/--version golden, demo --output json golden, non-tty select error
 - [ ] 4.3 docs: update `docs/index.md` mkdocs nav for TODO/spec/architecture when code lands
 
 # phase 5 — release hygiene:
