@@ -1,0 +1,47 @@
+version: 2
+
+project_name: terminull
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: terminull
+    main: ./cmd/terminull
+    binary: terminull
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/CHE3MZ/terminull/core.Version={{.Version}}
+      - -X github.com/CHE3MZ/terminull/core.Commit={{.Commit}}
+
+archives:
+  - id: terminull
+    ids:
+      - terminull
+    name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"

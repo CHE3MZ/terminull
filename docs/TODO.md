@@ -64,3 +64,5 @@
 - [x] 5.1 `go mod tidy` + `govulncheck` clean, no charmbracelet in `go.sum`
 - [x] 5.2 `scripts/ops/*` green locally, `gh run list` green on master
 - [x] 5.3 tag via existing gitagger workflow (patch) after green
+- [x] 5.4 goreleaser config + release workflow (tag-triggered, ldflags version)
+- [x] 5.5 reviewdog workflow checked + pushed
