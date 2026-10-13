@@ -16,11 +16,9 @@ gopkg.in/yaml.v3 ( as a mod )
 
 # other:
 
-golang.org/x/sync ( as a mod )
 golang.org/x/sys ( as a mod )
 golang.org/x/text ( as a mod )
 github.com/dustin/go-humanize ( as a mod )
 github.com/google/shlex ( as a mod )
-github.com/avast/retry-go/v4 ( as a mod )
 log/slog ( comes with go )
 fmt ( comes with go )

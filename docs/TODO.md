@@ -58,6 +58,6 @@
 
 # phase 5 — release hygiene:
 
-- [ ] 5.1 `go mod tidy` + `govulncheck` clean, no charmbracelet in `go.sum`
+- [x] 5.1 `go mod tidy` + `govulncheck` clean, no charmbracelet in `go.sum`
 - [ ] 5.2 `scripts/ops/*` green locally, `gh run list` green on master
 - [ ] 5.3 tag via existing gitagger workflow (patch) after green
