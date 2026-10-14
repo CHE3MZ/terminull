@@ -3,12 +3,15 @@ package prompt
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/creack/pty"
 )
 
 // pipeIO builds non-terminal stdio. Pipes are never TTYs, so prompt calls
@@ -308,4 +311,55 @@ func TestBulletQuestionIcon(t *testing.T) {
 	if got := opts.PromptConfig.Icons.Question.Text; got != "•" {
 		t.Fatalf("question icon = %q, want bullet", got)
 	}
+}
+
+// TestInputPtyRenderDiagnostic drives a real survey prompt through a
+// pseudo-terminal with pre-fed input, then logs the raw byte stream and
+// the prompt render count. Diagnostic only: it documents real-console
+// rendering (double-render reports) on each OS without asserting a
+// count, which varies by terminal backend. Skip when no pty exists.
+func TestInputPtyRenderDiagnostic(t *testing.T) {
+	master, slave, err := pty.Open()
+	if err != nil {
+		t.Skipf("no pty: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = master.Close()
+		_ = slave.Close()
+	})
+
+	pio := IO{In: slave, Out: slave, Err: &bytes.Buffer{}}
+	done := make(chan struct{})
+	var answer string
+	var askErr error
+	go func() {
+		defer close(done)
+		answer, askErr = inputSurvey(pio, InputOptions{Message: "App name?", Flag: "NAME"})
+	}()
+
+	// The pty buffers input, so feed timing is lenient.
+	time.Sleep(time.Second)
+	if _, err := master.Write([]byte("IDK\n")); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+
+	select {
+	case <-done:
+	case <-time.After(30 * time.Second):
+		t.Fatal("inputSurvey hung on pty input")
+	}
+
+	// Let survey flush and exit, then drain whatever arrived.
+	time.Sleep(2 * time.Second)
+	_ = slave.Close()
+	raw, _ := io.ReadAll(master)
+
+	if askErr != nil {
+		t.Fatalf("inputSurvey() error = %v", askErr)
+	}
+	if answer != "IDK" {
+		t.Fatalf("inputSurvey() = %q, want IDK", answer)
+	}
+	t.Logf("pty bytes: %q", raw)
+	t.Logf("prompt renders: %d", strings.Count(string(raw), "App name?"))
 }
