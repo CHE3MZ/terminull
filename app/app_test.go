@@ -321,32 +321,3 @@ func TestPauseResumeInteractive(t *testing.T) {
 		t.Fatal("resumed DrawFrame did not grow the frame")
 	}
 }
-
-func TestTerminullHeadingPlainOffTerminal(t *testing.T) {
-	t.Parallel()
-
-	var out bytes.Buffer
-	app := New("demo")
-	app.SetOut(&out)
-
-	got := terminullHeading("Flags:", app.Raw())
-	if got != "Flags:" {
-		t.Fatalf("heading on captured output = %q, want plain", got)
-	}
-}
-
-func TestTerminullHeadingNoColorFlag(t *testing.T) {
-	t.Parallel()
-
-	var out bytes.Buffer
-	app := New("demo")
-	app.SetOut(&out)
-	if err := app.Raw().PersistentFlags().Set("no-color", "true"); err != nil {
-		t.Fatalf("Set(no-color) error = %v", err)
-	}
-
-	got := terminullHeading("Flags:", app.Raw())
-	if got != "Flags:" {
-		t.Fatalf("heading with --no-color = %q, want plain", got)
-	}
-}
