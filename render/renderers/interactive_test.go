@@ -84,3 +84,16 @@ func TestStopDrawingFinalizesPaused(t *testing.T) {
 		t.Fatalf("final frame %q misses scope", got)
 	}
 }
+
+func TestSetupWritesNoWrapOnce(t *testing.T) {
+	t.Parallel()
+
+	r, path := frameFile(t)
+	r.Setup()
+	r.Setup()
+
+	got := readFrame(t, path)
+	if got != "\x1b[?7l\x1b[?7l" {
+		t.Fatalf("Setup output = %q, want two nowrap escapes", got)
+	}
+}

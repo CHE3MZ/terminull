@@ -98,15 +98,27 @@ func (r *InteractiveRenderer) RenderMessage(entry *render.LogEntryMessage) {
 	findScopedNode(entry.GetScopes(), r).AppendDescription(entry.GetMessage())
 }
 
-// StartDrawing redraws until the root node completes. Run it in a goroutine.
+// StartDrawing prepares the terminal and redraws until the root node
+// completes. Run it in a goroutine; setup itself is synchronous so
+// prompts started afterwards see a stable terminal.
 func (r *InteractiveRenderer) StartDrawing() {
-	_ = console.PrepareTerminalEnvironment()
-	// don't wrap lines since it breaks incremental redraws
-	_, _ = r.out.WriteString(disableAutoWrap)
+	r.Setup()
 	for !r.rootNode.HasCompleted() {
 		r.DrawFrame()
 		time.Sleep(r.config.RefreshRate)
 	}
+}
+
+// Setup prepares the terminal once: VT processing plus no-autowrap,
+// flushed immediately. Idempotent: StartDrawing calls it too. Call it
+// synchronously before any prompt runs so terminal configuration never
+// races interactive input.
+func (r *InteractiveRenderer) Setup() {
+	_ = console.PrepareTerminalEnvironment()
+	r.drawLock.Lock()
+	defer r.drawLock.Unlock()
+	_, _ = r.out.WriteString(disableAutoWrap)
+	_ = r.out.Flush()
 }
 
 // StopDrawing completes the tree, draws the final frame, restores
