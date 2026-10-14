@@ -14,6 +14,8 @@ type Command struct {
 	Short string
 	// Long is the full help text.
 	Long string
+	// Example shows usage examples under an Examples heading.
+	Example string
 	// Args validates positional args (e.g. cobra.MaximumNArgs(1)).
 	Args cobra.PositionalArgs
 	// Flags registers command-local flags. Read them back with

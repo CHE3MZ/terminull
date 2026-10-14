@@ -58,17 +58,20 @@ func TestTerminullHelpGolden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Execute(--help) error = %v", err)
 	}
-	for _, want := range []string{"terminull", "scaffold", "--output"} {
+	for _, want := range []string{"terminull", "scaffold", "--output", "Scaffold batteries-included"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("help %q does not contain %q", got, want)
 		}
+	}
+	if strings.Contains(got, "\x1b[") {
+		t.Fatalf("piped help %q contains ANSI escapes, want plain", got)
 	}
 
 	got, err = runTerminull(t, nil, "new", "--help")
 	if err != nil {
 		t.Fatalf("Execute(new --help) error = %v", err)
 	}
-	for _, want := range []string{"new NAME", "--module", "--dir", "--replace", "--skip-tidy"} {
+	for _, want := range []string{"new NAME", "--module", "--dir", "--replace", "--skip-tidy", "Examples:", "terminull new myapp"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("new help %q does not contain %q", got, want)
 		}

@@ -76,6 +76,9 @@ func TestHelpIsOutOnly(t *testing.T) {
 			t.Fatalf("help %q does not contain %q", got, want)
 		}
 	}
+	if strings.Contains(got, "\x1b[") {
+		t.Fatalf("piped help %q contains ANSI escapes, want plain", got)
+	}
 }
 
 func TestVersionIsOutOnly(t *testing.T) {
@@ -316,5 +319,34 @@ func TestPauseResumeInteractive(t *testing.T) {
 	renderer.DrawFrame()
 	if got := size(); got <= grown {
 		t.Fatal("resumed DrawFrame did not grow the frame")
+	}
+}
+
+func TestTerminullHeadingPlainOffTerminal(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	app := New("demo")
+	app.SetOut(&out)
+
+	got := terminullHeading("Flags:", app.Raw())
+	if got != "Flags:" {
+		t.Fatalf("heading on captured output = %q, want plain", got)
+	}
+}
+
+func TestTerminullHeadingNoColorFlag(t *testing.T) {
+	t.Parallel()
+
+	var out bytes.Buffer
+	app := New("demo")
+	app.SetOut(&out)
+	if err := app.Raw().PersistentFlags().Set("no-color", "true"); err != nil {
+		t.Fatalf("Set(no-color) error = %v", err)
+	}
+
+	got := terminullHeading("Flags:", app.Raw())
+	if got != "Flags:" {
+		t.Fatalf("heading with --no-color = %q, want plain", got)
 	}
 }

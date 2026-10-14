@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers"
 	"github.com/CHE3MZ/terminull/render/terminal"
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // App owns the root cobra command. Build one per process with New,
@@ -22,6 +25,8 @@ import (
 type App struct {
 	name    string
 	version string
+	short   string
+	long    string
 	cmd     *cobra.Command
 	ran     bool
 
@@ -42,6 +47,20 @@ func WithVersion(version string) Option {
 	}
 }
 
+// WithShort sets the one-line description shown atop help.
+func WithShort(short string) Option {
+	return func(a *App) {
+		a.short = short
+	}
+}
+
+// WithLong sets the full description shown atop help.
+func WithLong(long string) Option {
+	return func(a *App) {
+		a.long = long
+	}
+}
+
 // New builds an App with the five global flags:
 //
 //	--config/-f, --output/-o table|json|yaml, --no-color, --verbose, --debug
@@ -57,6 +76,8 @@ func New(name string, opts ...Option) *App {
 
 	cmd := &cobra.Command{
 		Use:           name,
+		Short:         a.short,
+		Long:          a.long,
 		Version:       a.version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -64,6 +85,8 @@ func New(name string, opts ...Option) *App {
 			return a.preRun(cmd, args)
 		},
 	}
+	cmd.SetUsageTemplate(usageTemplate)
+	cobra.AddTemplateFunc("terminullHeading", terminullHeading)
 
 	cmd.PersistentFlags().StringVarP(&a.configFile, "config", "f", "", "config file (default search: home, user config dir, cwd)")
 	cmd.PersistentFlags().StringVarP(&a.output, "output", "o", "table", "output format: table|json|yaml")
@@ -184,6 +207,7 @@ func (a *App) build(c Command) *cobra.Command {
 		Use:           c.Use,
 		Short:         c.Short,
 		Long:          c.Long,
+		Example:       c.Example,
 		Args:          c.Args,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -192,7 +216,14 @@ func (a *App) build(c Command) *cobra.Command {
 			if !ok || tctx == nil {
 				return fmt.Errorf("terminull: missing context (was PersistentPreRunE skipped?)")
 			}
-			if starter, ok := tctx.Logger.Renderer().(interface{ StartDrawing() }); ok {
+			// Terminal setup runs synchronously so prompts started by
+			// Run never race console configuration; only the idle draw
+			// loop runs in the background.
+			if starter, ok := tctx.Logger.Renderer().(interface {
+				Setup()
+				StartDrawing()
+			}); ok {
+				starter.Setup()
 				go starter.StartDrawing()
 			}
 			defer tctx.stop()
@@ -203,6 +234,7 @@ func (a *App) build(c Command) *cobra.Command {
 			return c.Run(tctx)
 		},
 	}
+	cmd.SetUsageTemplate(usageTemplate)
 
 	if c.Flags != nil {
 		c.Flags(cmd.Flags())
@@ -243,4 +275,69 @@ func collectOverrides(cmd *cobra.Command) map[string]any {
 	collect(cmd.PersistentFlags())
 	collect(cmd.InheritedFlags())
 	return overrides
+}
+
+// usageTemplate mirrors cobra's stock usage text so upgrades stay safe;
+// only the section headings route through terminullHeading for subtle
+// emphasis on capable terminals (plain everywhere else).
+const usageTemplate = `Usage:{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+{{terminullHeading "Aliases:" .}}
+  {{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+{{terminullHeading "Examples:" .}}
+  {{.Example}}{{end}}{{if .HasAvailableSubCommands}}
+
+{{terminullHeading "Available Commands:" .}}{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+{{terminullHeading "Flags:" .}}
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+{{terminullHeading "Global Flags:" .}}
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+{{terminullHeading "Additional help topics:" .}}{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+`
+
+// terminullHeading bolds a help section heading on capable terminals
+// and returns it unchanged everywhere else (pipes, CI, dumb terminals,
+// --no-color, legacy Windows consoles). Registered as a cobra template
+// func under a namespaced name so direct cobra use never collides.
+func terminullHeading(s string, cmd *cobra.Command) string {
+	out := cmd.OutOrStdout()
+	f, ok := out.(*os.File)
+	if !ok || !style.Color(f, lookupNoColor(cmd)) {
+		return s
+	}
+	if runtime.GOOS == "windows" {
+		if _, ok := os.LookupEnv("WT_SESSION"); !ok {
+			return s
+		}
+	}
+	return color.New(color.Bold).Sprint(s)
+}
+
+// lookupNoColor finds the --no-color flag across local, persistent, and
+// inherited sets (help may render before persistent flags merge).
+func lookupNoColor(cmd *cobra.Command) bool {
+	for _, fs := range []*pflag.FlagSet{cmd.Flags(), cmd.PersistentFlags(), cmd.InheritedFlags()} {
+		if fs == nil {
+			continue
+		}
+		if v, err := fs.GetBool("no-color"); err == nil && v {
+			return true
+		}
+	}
+	if root := cmd.Root(); root != nil && root != cmd {
+		if v, err := root.PersistentFlags().GetBool("no-color"); err == nil && v {
+			return true
+		}
+	}
+	return false
 }

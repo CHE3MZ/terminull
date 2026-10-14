@@ -22,7 +22,10 @@ import (
 
 // NewApp builds the terminull CLI.
 func NewApp() *app.App {
-	a := app.New("terminull")
+	a := app.New("terminull",
+		app.WithShort("Scaffold batteries-included Go CLI apps."),
+		app.WithLong("Scaffold batteries-included Go CLI apps with prompting, logging, and multi-format output built in."),
+	)
 	a.Add(newCommand())
 	return a
 }
@@ -31,7 +34,10 @@ func newCommand() app.Command {
 	return app.Command{
 		Use:   "new NAME",
 		Short: "scaffold a new terminull project",
+		Long:  "Scaffold a new terminull project: go.mod, a main package, sample commands, and a README.",
 		Args:  cobra.MaximumNArgs(1),
+		Example: `terminull new myapp --module example.com/myapp
+  terminull new myapp --dir ./myapp --skip-tidy`,
 		Flags: func(fs *pflag.FlagSet) {
 			fs.String("module", "", "go module path (default: NAME)")
 			fs.String("dir", "", "target directory (default: ./NAME)")
