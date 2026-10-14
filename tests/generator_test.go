@@ -144,9 +144,9 @@ func TestNewInvalidNameFailsFast(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "invalid app name") {
 		t.Fatalf("Execute(new .) error = %v, want validation error", err)
 	}
-	// Validation runs before the banner: nothing was printed or created.
-	if strings.Contains(got, "terminull v") {
-		t.Fatalf("output %q prints a banner before failing validation", got)
+	// Validation runs before any work: no tree output, no files listed.
+	if strings.Contains(got, "scaffold' succeeded") || strings.Contains(got, "CREATED") {
+		t.Fatalf("output %q shows work done despite invalid name", got)
 	}
 }
 

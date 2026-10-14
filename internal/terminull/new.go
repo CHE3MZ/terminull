@@ -50,14 +50,6 @@ func newCommand() app.Command {
 }
 
 func runNew(ctx *app.Context) error {
-	name, err := appName(ctx)
-	if err != nil {
-		return err
-	}
-	if err := generator.ValidateName(name); err != nil {
-		return core.NewExitCodeError(2, err)
-	}
-
 	module, err := ctx.String("module")
 	if err != nil {
 		return err
@@ -65,9 +57,6 @@ func runNew(ctx *app.Context) error {
 	dir, err := ctx.String("dir")
 	if err != nil {
 		return err
-	}
-	if dir == "" {
-		dir = name
 	}
 	replace, err := ctx.String("replace")
 	if err != nil {
@@ -86,15 +75,23 @@ func runNew(ctx *app.Context) error {
 		return err
 	}
 
+	name, err := appName(ctx)
+	if err != nil {
+		return err
+	}
+	if err := generator.ValidateName(name); err != nil {
+		return core.NewExitCodeError(2, err)
+	}
+
 	if module == "" {
 		module, err = defaultModule(ctx, name)
 		if err != nil {
 			return err
 		}
 	}
-
-	log := ctx.Logger.Scoped("scaffold")
-	log.Infof("creating %s in %s", name, dir)
+	if dir == "" {
+		dir = name
+	}
 
 	files, err := generator.Generate(generator.Options{
 		Name:             name,
@@ -104,20 +101,26 @@ func runNew(ctx *app.Context) error {
 		Replace:          replace,
 	})
 	if err != nil {
-		log.Finish(false)
 		return err
-	}
-	for _, file := range files {
-		log.Infof("wrote %s", file)
 	}
 
 	if !skipTidy {
 		if err := tidyWithSpinner(ctx, dir); err != nil {
-			log.Finish(false)
 			return err
 		}
 	}
+
+	// The tree opens only after all foreign output (prompts, spinners)
+	// is done, and completes before the result table prints: a single
+	// writer owns the terminal in every phase, so frames never stomp
+	// tables and tables never split frames.
+	log := ctx.Logger.Scoped("scaffold")
+	log.Infof("creating %s in %s", name, dir)
+	for _, file := range files {
+		log.Infof("wrote %s", file)
+	}
 	log.Finish(true)
+	ctx.StopDrawing()
 
 	rows := make([][]string, 0, len(files))
 	for _, file := range files {
@@ -126,8 +129,8 @@ func runNew(ctx *app.Context) error {
 	if err := output.Table(ctx.Out, []string{"CREATED"}, rows); err != nil {
 		return err
 	}
-	log.Infof("next: cd %s && go run ./cmd/%s --help", dir, name)
-	return nil
+	_, err = fmt.Fprintln(ctx.Out, "next: cd "+dir+" && go run ./cmd/"+name+" --help")
+	return err
 }
 
 // appName returns the NAME arg, asks for it on interactive terminals,
