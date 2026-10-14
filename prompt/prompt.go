@@ -36,7 +36,15 @@ func IsInterrupt(err error) bool {
 }
 
 func stdio(io IO) []survey.AskOpt {
-	return []survey.AskOpt{survey.WithStdio(io.In, io.Out, io.Err)}
+	return []survey.AskOpt{
+		survey.WithStdio(io.In, io.Out, io.Err),
+		survey.WithIcons(func(icons *survey.IconSet) {
+			// Bullet instead of survey's default "?", kept in the
+			// default green+hb format. U+2022 ships in every modern
+			// console font (Consolas, Lucida, Menlo, DejaVu).
+			icons.Question.Text = "•"
+		}),
+	}
 }
 
 func interactive(in terminal.FileReader) bool {

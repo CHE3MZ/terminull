@@ -125,8 +125,8 @@ func TestSelectSurveyWiring(t *testing.T) {
 		if sel.Message != "Env?" || len(sel.Options) != 2 || sel.Options[1] != "prod" || sel.Default != "dev" {
 			t.Fatalf("select = %+v, want message/options/default wired", sel)
 		}
-		if len(opts) != 1 {
-			t.Fatalf("ask opts = %d, want stdio wired", len(opts))
+		if len(opts) != 2 {
+			t.Fatalf("ask opts = %d, want stdio + icons wired", len(opts))
 		}
 		*(response.(*string)) = "prod"
 		return nil
@@ -295,5 +295,17 @@ func TestIsInterrupt(t *testing.T) {
 	}
 	if IsInterrupt(errors.New("boom")) || IsInterrupt(nil) {
 		t.Fatal("IsInterrupt(other/nil) = true")
+	}
+}
+
+func TestBulletQuestionIcon(t *testing.T) {
+	var opts survey.AskOptions
+	for _, opt := range stdio(pipeIO(t)) {
+		if err := opt(&opts); err != nil {
+			t.Fatalf("AskOpt error = %v", err)
+		}
+	}
+	if got := opts.PromptConfig.Icons.Question.Text; got != "•" {
+		t.Fatalf("question icon = %q, want bullet", got)
 	}
 }
