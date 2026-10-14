@@ -12,6 +12,7 @@ import (
 
 	"github.com/CHE3MZ/terminull/config"
 	"github.com/CHE3MZ/terminull/core"
+	"github.com/CHE3MZ/terminull/output"
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers"
 	"github.com/CHE3MZ/terminull/render/terminal"
@@ -65,7 +66,7 @@ func New(name string, opts ...Option) *App {
 	a := &App{
 		name:    name,
 		version: core.FullVersion(),
-		output:  "table",
+		output:  output.FormatTable,
 	}
 	for _, opt := range opts {
 		opt(a)
@@ -144,7 +145,7 @@ func (a *App) Execute(ctx context.Context, args []string) error {
 func (a *App) preRun(cmd *cobra.Command, args []string) error {
 	core.SetDebug(a.debug || a.verbose)
 
-	if a.output != "table" && a.output != "json" && a.output != "yaml" {
+	if a.output != output.FormatTable && a.output != output.FormatJSON && a.output != output.FormatYAML {
 		return fmt.Errorf("invalid --output %q: want table|json|yaml", a.output)
 	}
 

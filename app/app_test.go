@@ -321,3 +321,31 @@ func TestPauseResumeInteractive(t *testing.T) {
 		t.Fatal("resumed DrawFrame did not grow the frame")
 	}
 }
+
+func TestChangedTracksExplicitFlags(t *testing.T) {
+	t.Setenv("DEMO_ENV", "from-env")
+
+	var out, errOut bytes.Buffer
+	seen := map[string]bool{}
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use: "deploy",
+		Flags: func(fs *pflag.FlagSet) {
+			fs.String("env", "dev", "target environment")
+		},
+		Run: func(ctx *Context) error {
+			seen["env"] = ctx.Changed("env")
+			seen["missing"] = ctx.Changed("missing")
+			return nil
+		},
+	})
+
+	if err := app.Execute(context.Background(), []string{"deploy", "--env", "x"}); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+	if !seen["env"] || seen["missing"] {
+		t.Fatalf("Changed = %v, want env true and missing false", seen)
+	}
+}

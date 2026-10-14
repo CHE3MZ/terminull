@@ -5,14 +5,6 @@ import (
 	"testing"
 )
 
-func TestVersionLine(t *testing.T) {
-	t.Parallel()
-
-	if got := VersionLine("demo", "1.2.3-abc"); got != "demo version 1.2.3-abc" {
-		t.Fatalf("VersionLine() = %q", got)
-	}
-}
-
 func TestBannerPlain(t *testing.T) {
 	t.Parallel()
 

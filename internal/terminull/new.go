@@ -191,11 +191,12 @@ func stdinTerminal(ctx *app.Context) bool {
 	return false
 }
 
-// promptIO bridges app IO to prompt IO; nil streams become
-// flag-required errors instead of hangs. Icon colors follow the same
-// terminal detection as every other output.
+// promptIO bridges app IO to prompt IO, starting from process stdio and
+// narrowing to file streams. Nil streams become flag-required errors
+// instead of hangs. Icon colors follow the same terminal detection as
+// every other output.
 func promptIO(ctx *app.Context) prompt.IO {
-	var io prompt.IO
+	io := prompt.StdIO()
 	io.Err = ctx.Err
 	io.NoColor = !style.ColorFor(ctx.Out, ctx.NoColor)
 	if f, ok := ctx.In.(terminal.FileReader); ok {
