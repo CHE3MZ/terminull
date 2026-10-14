@@ -12,6 +12,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/tw"
 	"gopkg.in/yaml.v3"
+
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // Formats for Render and the --output flag.
@@ -49,6 +51,24 @@ type TableValue struct {
 
 // Table writes an ASCII-bordered table with a header row.
 func Table(w io.Writer, header []string, rows [][]string) error {
+	return writeTable(w, header, rows)
+}
+
+// TableWith renders like Table but styles the header through scheme:
+// uppercased and underlined when enabled, verbatim otherwise so piped
+// output stays script-friendly.
+func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
+	header := tv.Header
+	if scheme.Enabled {
+		header = make([]string, len(tv.Header))
+		for i, h := range tv.Header {
+			header[i] = scheme.TableHeader(h)
+		}
+	}
+	return writeTable(w, header, tv.Rows)
+}
+
+func writeTable(w io.Writer, header []string, rows [][]string) error {
 	table := tablewriter.NewTable(w,
 		tablewriter.WithHeader(header),
 		tablewriter.WithRendition(tw.Rendition{

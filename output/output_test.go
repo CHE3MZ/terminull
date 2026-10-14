@@ -3,6 +3,8 @@ package output
 import (
 	"strings"
 	"testing"
+
+	"github.com/CHE3MZ/terminull/style"
 )
 
 func TestTableGolden(t *testing.T) {
@@ -45,6 +47,31 @@ func TestJSONGolden(t *testing.T) {
 	want := "{\n  \"name\": \"x\",\n  \"count\": 2\n}\n"
 	if b.String() != want {
 		t.Fatalf("JSON() = %q, want %q", b.String(), want)
+	}
+}
+
+func TestTableWithScheme(t *testing.T) {
+	t.Parallel()
+
+	tv := TableValue{Header: []string{"name"}, Rows: [][]string{{"x"}}}
+
+	var plain strings.Builder
+	if err := TableWith(&plain, tv, style.NewScheme(false)); err != nil {
+		t.Fatalf("TableWith() error = %v", err)
+	}
+	// tablewriter itself uppercases headers; disabled only guarantees
+	// no escapes (header styling is scheme-owned, unit-tested in style).
+	if got := plain.String(); !strings.Contains(got, "NAME") || strings.Contains(got, "\x1b[") {
+		t.Fatalf("TableWith(disabled) = %q, want plain header, no escapes", got)
+	}
+
+	var styled strings.Builder
+	if err := TableWith(&styled, tv, style.NewScheme(true)); err != nil {
+		t.Fatalf("TableWith() error = %v", err)
+	}
+	got := styled.String()
+	if !strings.Contains(got, "NAME") || !strings.Contains(got, "\x1b[") {
+		t.Fatalf("TableWith(enabled) = %q, want uppercased styled header", got)
 	}
 }
 
