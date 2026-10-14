@@ -71,7 +71,7 @@ func runNew(ctx *app.Context) error {
 		return err
 	}
 
-	if err := static.Banner(ctx.Out, "terminull", version, !ctx.NoColor); err != nil {
+	if err := static.Banner(ctx.Out, "terminull", version, style.ColorFor(ctx.Out, ctx.NoColor)); err != nil {
 		return err
 	}
 
@@ -126,7 +126,11 @@ func runNew(ctx *app.Context) error {
 	for _, file := range files {
 		rows = append(rows, []string{file})
 	}
-	if err := output.Table(ctx.Out, []string{"CREATED"}, rows); err != nil {
+	scheme := style.NewScheme(style.ColorFor(ctx.Out, ctx.NoColor))
+	if err := output.TableWith(ctx.Out, output.TableValue{
+		Header: []string{"created"},
+		Rows:   rows,
+	}, scheme); err != nil {
 		return err
 	}
 	_, err = fmt.Fprintln(ctx.Out, "next: cd "+dir+" && go run ./cmd/"+name+" --help")
@@ -188,10 +192,12 @@ func stdinTerminal(ctx *app.Context) bool {
 }
 
 // promptIO bridges app IO to prompt IO; nil streams become
-// flag-required errors instead of hangs.
+// flag-required errors instead of hangs. Icon colors follow the same
+// terminal detection as every other output.
 func promptIO(ctx *app.Context) prompt.IO {
 	var io prompt.IO
 	io.Err = ctx.Err
+	io.NoColor = !style.ColorFor(ctx.Out, ctx.NoColor)
 	if f, ok := ctx.In.(terminal.FileReader); ok {
 		io.In = f
 	}

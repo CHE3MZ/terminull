@@ -18,6 +18,9 @@ type IO struct {
 	In  terminal.FileReader
 	Out terminal.FileWriter
 	Err io.Writer
+	// NoColor strips prompt icon colors (dumb terminals, --no-color).
+	// The bullet glyph itself always renders.
+	NoColor bool
 }
 
 // StdIO wires the process standard streams for prompts.
@@ -36,13 +39,18 @@ func IsInterrupt(err error) bool {
 }
 
 func stdio(io IO) []survey.AskOpt {
+	iconFormat := "green+hb"
+	if io.NoColor {
+		iconFormat = ""
+	}
 	return []survey.AskOpt{
 		survey.WithStdio(io.In, io.Out, io.Err),
 		survey.WithIcons(func(icons *survey.IconSet) {
-			// Bullet instead of survey's default "?", kept in the
-			// default green+hb format. U+2022 ships in every modern
-			// console font (Consolas, Lucida, Menlo, DejaVu).
+			// Bullet instead of survey's default "?". An empty format
+			// renders plain (verified against mgutz/ansi); U+2022
+			// ships in every modern console font.
 			icons.Question.Text = "•"
+			icons.Question.Format = iconFormat
 		}),
 	}
 }

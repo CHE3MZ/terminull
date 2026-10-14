@@ -308,6 +308,24 @@ func TestBulletQuestionIcon(t *testing.T) {
 	if got := opts.PromptConfig.Icons.Question.Text; got != "•" {
 		t.Fatalf("question icon = %q, want bullet", got)
 	}
+	if got := opts.PromptConfig.Icons.Question.Format; got != "green+hb" {
+		t.Fatalf("question format = %q, want survey green", got)
+	}
+
+	var plain survey.AskOptions
+	pio := pipeIO(t)
+	pio.NoColor = true
+	for _, opt := range stdio(pio) {
+		if err := opt(&plain); err != nil {
+			t.Fatalf("AskOpt error = %v", err)
+		}
+	}
+	if got := plain.PromptConfig.Icons.Question.Format; got != "" {
+		t.Fatalf("no-color format = %q, want empty (plain)", got)
+	}
+	if got := plain.PromptConfig.Icons.Question.Text; got != "•" {
+		t.Fatalf("no-color icon = %q, want bullet kept", got)
+	}
 }
 
 // NOTE: do not drive real survey prompts with pipes or headless ptys in
