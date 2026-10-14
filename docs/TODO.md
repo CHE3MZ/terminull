@@ -66,3 +66,9 @@
 - [x] 5.3 tag via existing gitagger workflow (patch) after green
 - [x] 5.4 goreleaser config + release workflow (tag-triggered, ldflags version)
 - [x] 5.5 reviewdog workflow checked + pushed
+
+# phase 6 — polish (gh-cli inspired, skills-assisted):
+
+- [x] 6.1 ponytail-audit sweep: drop VersionLine, unify painting on Scheme, promptIO on StdIO, app on Format consts, cover Changed
+- [x] 6.2 wire TerminalWidth into bars, EnsureConsole up front with render delegation
+- [x] 6.3 security guidance pass: govulncheck clean, perms/exec/paths/scripts reviewed, no findings
