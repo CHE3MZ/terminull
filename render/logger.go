@@ -6,6 +6,8 @@ type genericLogEntry struct {
 	LogStarted  *LogScopeStarted
 	LogFinished *LogScopeFinished
 	LogEntry    *LogEntryMessage
+	// barrier, when non-nil, is closed after all prior entries process.
+	barrier chan struct{}
 }
 
 // LogRendered is the decoupling point: the same *Logger drives a live
@@ -80,6 +82,10 @@ func (logger *Logger) Scoped(scope string) *Logger {
 func (logger *Logger) streamEntries(renderer LogRendered) {
 	for {
 		entry := <-logger.entriesChannel
+		if entry.barrier != nil {
+			close(entry.barrier)
+			continue
+		}
 		if entry.LogStarted != nil {
 			renderer.RenderScopeStarted(entry.LogStarted)
 		}
@@ -155,4 +161,14 @@ func (logger *Logger) FinishWithType(finishType FinishType) {
 // IsLogLevelEnabled reports whether level passes the logger's max.
 func (logger *Logger) IsLogLevelEnabled(level LogLevel) bool {
 	return level <= logger.maxLogLevel
+}
+
+// Sync blocks until every entry sent so far is processed by the
+// consumer goroutine. Call it before reading renderer state (or before
+// StopDrawing) to avoid racing the drain: without Sync, Finish returns
+// at channel handoff while the finish event may still be unprocessed.
+func (logger *Logger) Sync() {
+	done := make(chan struct{})
+	logger.entriesChannel <- &genericLogEntry{barrier: done}
+	<-done
 }

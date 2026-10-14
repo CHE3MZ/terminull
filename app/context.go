@@ -83,11 +83,16 @@ func (c *Context) ResumeDrawing() {
 	}
 }
 
-// StopDrawing completes the tree and finalizes terminal output. Call it
-// before printing result tables so nothing redraws over them; the
-// deferred stop in RunE remains as a backstop. Safe to call twice and a
-// no-op on non-interactive renderers.
+// StopDrawing drains pending log entries, then completes the tree and
+// finalizes terminal output. Call it before printing result tables so
+// nothing redraws over them; the deferred stop in RunE remains as a
+// backstop. Safe to call twice and a no-op on non-interactive
+// renderers or a nil logger.
 func (c *Context) StopDrawing() {
+	if c.Logger == nil {
+		return
+	}
+	c.Logger.Sync()
 	if s, ok := c.Logger.Renderer().(interface{ StopDrawing() }); ok {
 		s.StopDrawing()
 	}

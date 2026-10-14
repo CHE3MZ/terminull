@@ -139,3 +139,23 @@ func TestLoggerFinishSkipped(t *testing.T) {
 		t.Fatalf("event[1] = %+v, want skipped finish", got[1])
 	}
 }
+
+func TestLoggerSyncDrains(t *testing.T) {
+	t.Parallel()
+
+	rec := &recorder{}
+	root := NewLogger(InfoLevel, rec)
+	child := root.Scoped("build")
+	child.Infof("hello")
+	child.Finish(true)
+	root.Sync()
+
+	// After Sync returns, everything sent so far is processed: no polling.
+	got := rec.snapshot()
+	if len(got) != 3 {
+		t.Fatalf("events after Sync = %+v, want start/msg/finish", got)
+	}
+	if got[0].kind != "start" || got[1].kind != "msg" || got[2].kind != "finish" {
+		t.Fatalf("event order after Sync = %+v", got)
+	}
+}

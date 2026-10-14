@@ -153,8 +153,14 @@ func (a *App) preRun(cmd *cobra.Command, args []string) error {
 		level = render.DebugLevel
 	}
 
-	renderer, stop := a.selectRenderer(cmd)
+	renderer, renderStop := a.selectRenderer(cmd)
 	logger := render.NewLogger(level, renderer)
+	// The full stop drains the logger before finalizing, so deferred
+	// and explicit stops never race unprocessed events.
+	stopAll := func() {
+		logger.Sync()
+		renderStop()
+	}
 
 	cfg, err := config.Load(config.Options{
 		AppName:    a.name,
@@ -162,7 +168,7 @@ func (a *App) preRun(cmd *cobra.Command, args []string) error {
 		Overrides:  collectOverrides(cmd),
 	})
 	if err != nil {
-		stop()
+		stopAll()
 		return err
 	}
 
@@ -170,7 +176,7 @@ func (a *App) preRun(cmd *cobra.Command, args []string) error {
 		Context: cmd.Context(),
 		cmd:     cmd,
 		args:    args,
-		stop:    stop,
+		stop:    stopAll,
 		Config:  cfg,
 		Logger:  logger,
 		Out:     cmd.OutOrStdout(),
