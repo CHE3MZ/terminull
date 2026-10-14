@@ -55,7 +55,7 @@ how every app runs from start to finish:
 2. app.New creates root cobra command with SilenceUsage true and SilenceErrors true.
 3. app adds global flags once: config, output, no-color, verbose, debug.
 4. app redirects cobra out err in to colorable writers from style, never os.Stdout directly.
-5. PersistentPreRunE runs in fixed order: core signals, style detect, config load, render start.
+5. PersistentPreRunE runs in fixed order: console ANSI setup, debug switch, output validation, style detect, config load, render start.
 6. cobra parses flags and finds subcommand, help and version bypass live render.
 7. RunE wrapper builds ctx with context, config, logger, prompt, progress, output, io.
 8. app code runs with ctx only, returns error or nil.

@@ -16,6 +16,7 @@ import (
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers"
 	"github.com/CHE3MZ/terminull/render/terminal"
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // App owns the root cobra command. Build one per process with New,
@@ -140,10 +141,15 @@ func (a *App) Execute(ctx context.Context, args []string) error {
 	return nil
 }
 
-// preRun boots, in order: debug switch, output validation, renderer +
-// logger, layered config. The *Context travels via cmd.Context().
+// preRun boots, in order: console setup, debug switch, output
+// validation, renderer + logger, layered config. The *Context travels
+// via cmd.Context().
 func (a *App) preRun(cmd *cobra.Command, args []string) error {
 	core.SetDebug(a.debug || a.verbose)
+
+	// Best effort: legacy Windows consoles need VT enabled before any
+	// ANSI is written. Failure just means plain output there.
+	_ = style.EnsureConsole()
 
 	if a.output != output.FormatTable && a.output != output.FormatJSON && a.output != output.FormatYAML {
 		return fmt.Errorf("invalid --output %q: want table|json|yaml", a.output)

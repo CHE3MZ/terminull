@@ -98,6 +98,28 @@ func TestBarAddFinish(t *testing.T) {
 	}
 }
 
+func TestBarWidthDefaultsOffTerminal(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	if _, ok := barWidth(&out); ok {
+		t.Fatal("barWidth(buffer) = true, want default width")
+	}
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = r.Close()
+		_ = w.Close()
+	})
+	// Pipes report the 80 fallback, which keeps the default width.
+	if _, ok := barWidth(w); ok {
+		t.Fatal("barWidth(pipe) = true, want default width at 80 columns")
+	}
+}
+
 // TestSharedWriterSmoke runs a spinner, a bar, and a simple logger on one
 // writer concurrently: all three markers must land, proving the shared
 // writer contract at smoke level.

@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // PrepareTerminalEnvironment is a no-op on Unix: ANSI just works.
 func PrepareTerminalEnvironment() error {
-	return nil
+	return style.EnsureConsole()
 }
 
 // TerminalHeight returns the terminal row count, or -1 when unknown

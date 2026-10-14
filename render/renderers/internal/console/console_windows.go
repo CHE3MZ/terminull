@@ -3,28 +3,13 @@ package console
 import (
 	"os"
 
-	"golang.org/x/sys/windows"
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // PrepareTerminalEnvironment enables ANSI processing on Windows consoles
 // (a no-op where already on, an error where unsupported).
 func PrepareTerminalEnvironment() error {
-	// enable handling ASCII codes
-	err := addConsoleMode(windows.Stdout, windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-	if err != nil {
-		return err
-	}
-	return addConsoleMode(windows.Stderr, windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-}
-
-func addConsoleMode(handle windows.Handle, flags uint32) error {
-	var mode uint32
-
-	err := windows.GetConsoleMode(handle, &mode)
-	if err != nil {
-		return err
-	}
-	return windows.SetConsoleMode(handle, mode|flags)
+	return style.EnsureConsole()
 }
 
 // TerminalHeight is unimplemented on Windows: figure out how to query
