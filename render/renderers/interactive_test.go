@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers/config"
@@ -83,6 +84,49 @@ func TestStopDrawingFinalizesPaused(t *testing.T) {
 	if got := readFrame(t, path); !strings.Contains(got, "a") {
 		t.Fatalf("final frame %q misses scope", got)
 	}
+}
+
+// stopWithTimeout fails instead of hanging forever if StopDrawing deadlocks.
+func stopWithTimeout(t *testing.T, r *InteractiveRenderer) {
+	t.Helper()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		r.StopDrawing()
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("StopDrawing did not return")
+	}
+}
+
+func TestStopDrawingJoinsLoop(t *testing.T) {
+	t.Parallel()
+
+	r, path := frameFile(t)
+	r.RenderScopeStarted(render.NewLogScopeStarted("a"))
+	go r.StartDrawing()
+	stopWithTimeout(t, r)
+
+	// The joined loop must not write after StopDrawing returns.
+	before := readFrame(t, path)
+	time.Sleep(300 * time.Millisecond)
+	if got := readFrame(t, path); got != before {
+		t.Fatalf("loop wrote after join:\n%q\nvs\n%q", before, got)
+	}
+	if !strings.Contains(before, "a") {
+		t.Fatalf("final frame %q misses scope", before)
+	}
+}
+
+func TestStopDrawingWithoutStart(t *testing.T) {
+	t.Parallel()
+
+	r, _ := frameFile(t)
+	stopWithTimeout(t, r)
+	stopWithTimeout(t, r)
 }
 
 func TestSetupWritesNoWrapOnce(t *testing.T) {

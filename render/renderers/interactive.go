@@ -36,10 +36,11 @@ type InteractiveRenderer struct {
 	drawLock          sync.Mutex
 	paused            atomic.Bool
 	terminalHeight    int
-	// loopStarted guards single loop ownership; drawDone closes when the
-	// loop observes completion and exits, letting StopDrawing join it.
+	// loopStarted guards single loop ownership; loopWG tracks the loop so
+	// StopDrawing joins it. WaitGroup orderings are safe here because
+	// exactly one Add ever happens (CAS winner) before any Wait can block.
 	loopStarted atomic.Bool
-	drawDone    chan struct{}
+	loopWG      sync.WaitGroup
 
 	StubRenderer
 }
@@ -55,7 +56,6 @@ func NewInteractiveRenderer(out *os.File, rendererConfig *config.InteractiveRend
 		rootNode:       node.NewEchelonNode("root", rendererConfig),
 		config:         rendererConfig,
 		terminalHeight: console.TerminalHeight(out),
-		drawDone:       make(chan struct{}),
 	}
 }
 
@@ -112,7 +112,8 @@ func (r *InteractiveRenderer) StartDrawing() {
 	if !r.loopStarted.CompareAndSwap(false, true) {
 		return
 	}
-	defer close(r.drawDone)
+	r.loopWG.Add(1)
+	defer r.loopWG.Done()
 	r.drawLoop()
 }
 
@@ -147,9 +148,10 @@ func (r *InteractiveRenderer) StopDrawing() {
 	// one last redraw
 	r.paused.Store(false)
 	r.DrawFrame()
-	if r.loopStarted.Load() {
-		<-r.drawDone
-	}
+	// Join a running loop, if any. No loop (never started or already
+	// exited) means a zero counter and an immediate return; the single
+	// Add rule keeps concurrent Add/Wait sound in every ordering.
+	r.loopWG.Wait()
 	// don't leave autowrap disabled in the terminal
 	r.drawLock.Lock()
 	defer r.drawLock.Unlock()
