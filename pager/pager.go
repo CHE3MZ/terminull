@@ -89,7 +89,7 @@ func resolvePager(pagerFlag, envPager, term string, lookPath func(string) (strin
 // terminal file. LESS defaults to FRX (quit-if-fits, raw, no init)
 // unless the caller already sets it.
 func spawn(prog string, args []string, stdout *os.File, baseEnv []string) (io.Writer, func(), error) {
-	// #nosec G204 -- pager binary is user-configured (PAGER flag/env),
+	// #nosec G204,G702 -- pager binary is user-configured (PAGER flag/env),
 	// the documented equivalent of typing `| $PAGER` in a shell.
 	cmd := exec.Command(prog, args...)
 	cmd.Stdout = stdout

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -103,14 +104,7 @@ func TestSpawnCat(t *testing.T) {
 		t.Skipf("no cat: %v", err)
 	}
 
-	dir := t.TempDir()
-	outPath := dir + "/out.txt"
-	out, err := os.Create(outPath)
-	if err != nil {
-		t.Fatalf("Create() error = %v", err)
-	}
-	t.Cleanup(func() { _ = out.Close() })
-
+	outPath, out := createOut(t)
 	feed, stop, err := spawn(cat, nil, out, []string{"PAGER_TEST=1"})
 	if err != nil {
 		t.Fatalf("spawn() error = %v", err)
@@ -120,12 +114,8 @@ func TestSpawnCat(t *testing.T) {
 	}
 	stop()
 
-	content, err := os.ReadFile(outPath)
-	if err != nil {
-		t.Fatalf("ReadFile() error = %v", err)
-	}
-	if !strings.Contains(string(content), "hello") {
-		t.Fatalf("spawned output %q misses feed", content)
+	if got := readOut(t, outPath); !strings.Contains(got, "hello") {
+		t.Fatalf("spawned output %q misses feed", got)
 	}
 }
 
@@ -140,53 +130,57 @@ func TestSpawnEnv(t *testing.T) {
 	}
 
 	t.Run("less default", func(t *testing.T) {
-		dir := t.TempDir()
-		outPath := dir + "/out.txt"
-		out, err := os.Create(outPath)
-		if err != nil {
-			t.Fatalf("Create() error = %v", err)
-		}
-		t.Cleanup(func() { _ = out.Close() })
-
+		outPath, out := createOut(t)
 		_, stop, err := spawn(envBin, nil, out, []string{"PAGER_TEST=1"})
 		if err != nil {
 			t.Fatalf("spawn() error = %v", err)
 		}
 		stop()
 
-		content, err := os.ReadFile(outPath)
-		if err != nil {
-			t.Fatalf("ReadFile() error = %v", err)
-		}
-		if !strings.Contains(string(content), "LESS=FRX") {
-			t.Fatalf("spawned env %q misses default LESS", content)
+		if got := readOut(t, outPath); !strings.Contains(got, "LESS=FRX") {
+			t.Fatalf("spawned env %q misses default LESS", got)
 		}
 	})
 
 	t.Run("less respected", func(t *testing.T) {
-		dir := t.TempDir()
-		outPath := dir + "/out.txt"
-		out, err := os.Create(outPath)
-		if err != nil {
-			t.Fatalf("Create() error = %v", err)
-		}
-		t.Cleanup(func() { _ = out.Close() })
-
+		outPath, out := createOut(t)
 		_, stop, err := spawn(envBin, nil, out, []string{"LESS=Rx"})
 		if err != nil {
 			t.Fatalf("spawn() error = %v", err)
 		}
 		stop()
 
-		content, err := os.ReadFile(outPath)
-		if err != nil {
-			t.Fatalf("ReadFile() error = %v", err)
+		got := readOut(t, outPath)
+		if !strings.Contains(got, "LESS=Rx") {
+			t.Fatalf("spawned env %q misses preset LESS", got)
 		}
-		if !strings.Contains(string(content), "LESS=Rx") {
-			t.Fatalf("spawned env %q misses preset LESS", content)
-		}
-		if strings.Contains(string(content), "LESS=FRX") {
-			t.Fatalf("spawned env %q overrides preset LESS", content)
+		if strings.Contains(got, "LESS=FRX") {
+			t.Fatalf("spawned env %q overrides preset LESS", got)
 		}
 	})
+}
+
+// createOut makes a temp output file for spawned processes.
+func createOut(t *testing.T) (string, *os.File) {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "out.txt")
+	// #nosec G304 -- test-owned temp path.
+	out, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	t.Cleanup(func() { _ = out.Close() })
+	return path, out
+}
+
+func readOut(t *testing.T, path string) string {
+	t.Helper()
+
+	// #nosec G304 -- test-owned temp path, written by createOut.
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("ReadFile() error = %v", err)
+	}
+	return string(content)
 }
