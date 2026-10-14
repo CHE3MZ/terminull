@@ -36,6 +36,10 @@ type InteractiveRenderer struct {
 	drawLock          sync.Mutex
 	paused            atomic.Bool
 	terminalHeight    int
+	// loopStarted guards single loop ownership; drawDone closes when the
+	// loop observes completion and exits, letting StopDrawing join it.
+	loopStarted atomic.Bool
+	drawDone    chan struct{}
 
 	StubRenderer
 }
@@ -51,6 +55,7 @@ func NewInteractiveRenderer(out *os.File, rendererConfig *config.InteractiveRend
 		rootNode:       node.NewEchelonNode("root", rendererConfig),
 		config:         rendererConfig,
 		terminalHeight: console.TerminalHeight(out),
+		drawDone:       make(chan struct{}),
 	}
 }
 
@@ -100,9 +105,19 @@ func (r *InteractiveRenderer) RenderMessage(entry *render.LogEntryMessage) {
 
 // StartDrawing prepares the terminal and redraws until the root node
 // completes. Run it in a goroutine; setup itself is synchronous so
-// prompts started afterwards see a stable terminal.
+// prompts started afterwards see a stable terminal. Only the first call
+// owns the loop; further calls return after setup.
 func (r *InteractiveRenderer) StartDrawing() {
 	r.Setup()
+	if !r.loopStarted.CompareAndSwap(false, true) {
+		return
+	}
+	defer close(r.drawDone)
+	r.drawLoop()
+}
+
+// drawLoop redraws until completion, skipping paused frames.
+func (r *InteractiveRenderer) drawLoop() {
 	for !r.rootNode.HasCompleted() {
 		r.DrawFrame()
 		time.Sleep(r.config.RefreshRate)
@@ -110,9 +125,10 @@ func (r *InteractiveRenderer) StartDrawing() {
 }
 
 // Setup prepares the terminal once: VT processing plus no-autowrap,
-// flushed immediately. Idempotent: StartDrawing calls it too. Call it
+// flushed immediately. Idempotent; StartDrawing calls it too. Call it
 // synchronously before any prompt runs so terminal configuration never
-// races interactive input.
+// races interactive input. All writer access holds the draw lock, so
+// Setup is safe beside a running draw loop.
 func (r *InteractiveRenderer) Setup() {
 	_ = console.PrepareTerminalEnvironment()
 	r.drawLock.Lock()
@@ -121,14 +137,22 @@ func (r *InteractiveRenderer) Setup() {
 	_ = r.out.Flush()
 }
 
-// StopDrawing completes the tree, draws the final frame, restores
-// autowrap, and flushes.
+// StopDrawing completes the tree, draws the final frame, waits for the
+// background loop to observe completion and exit, then restores autowrap
+// and flushes. Only after it returns is the terminal free for other
+// output: that join is what keeps tables and subsequent writes intact.
+// Safe to call twice and without StartDrawing.
 func (r *InteractiveRenderer) StopDrawing() {
 	r.rootNode.Complete()
 	// one last redraw
 	r.paused.Store(false)
 	r.DrawFrame()
+	if r.loopStarted.Load() {
+		<-r.drawDone
+	}
 	// don't leave autowrap disabled in the terminal
+	r.drawLock.Lock()
+	defer r.drawLock.Unlock()
 	_, _ = r.out.WriteString(enableAutoWrap)
 	_ = r.out.Flush()
 }
