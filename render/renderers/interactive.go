@@ -108,10 +108,17 @@ func (r *InteractiveRenderer) RenderMessage(entry *render.LogEntryMessage) {
 // prompts started afterwards see a stable terminal. Only the first call
 // owns the loop; further calls return after setup.
 func (r *InteractiveRenderer) StartDrawing() {
-	r.Setup()
+	if r.rootNode.HasCompleted() {
+		return
+	}
 	if !r.loopStarted.CompareAndSwap(false, true) {
 		return
 	}
+	if r.rootNode.HasCompleted() {
+		// Stopped while starting: leave the finalized terminal alone.
+		return
+	}
+	r.Setup()
 	r.loopWG.Add(1)
 	defer r.loopWG.Done()
 	r.drawLoop()
