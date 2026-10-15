@@ -72,3 +72,5 @@
 - [x] 6.1 ponytail-audit sweep: drop VersionLine, unify painting on Scheme, promptIO on StdIO, app on Format consts, cover Changed
 - [x] 6.2 wire TerminalWidth into bars, EnsureConsole up front with render delegation
 - [x] 6.3 security guidance pass: govulncheck clean, perms/exec/paths/scripts reviewed, no findings
+- [x] 6.4 retry helper with backoff, used for go mod tidy
+- [x] 6.5 positional arg completion (ValidArgs/ValidArgsFunction via __complete)
