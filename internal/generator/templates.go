@@ -18,7 +18,6 @@ import (
 	"os"
 
 	"github.com/CHE3MZ/terminull/core"
-	"github.com/CHE3MZ/terminull/prompt"
 	"[[.Module]]/internal/commands"
 )
 
@@ -29,9 +28,7 @@ func main() {
 	a := commands.NewApp()
 	if err := a.Execute(ctx, os.Args[1:]); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "[[.Name]]:", err)
-		if prompt.IsInterrupt(err) {
-			os.Exit(130)
-		}
+		// Cancelled prompts surface as context.Canceled, mapped to 130.
 		os.Exit(core.ExitCodeOf(err))
 	}
 }
