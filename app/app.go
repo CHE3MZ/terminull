@@ -212,13 +212,15 @@ func (a *App) selectRenderer(cmd *cobra.Command) (render.LogRendered, func()) {
 // inside RunE (not preRun) so --help/--version/completion never draw.
 func (a *App) build(c Command) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           c.Use,
-		Short:         c.Short,
-		Long:          c.Long,
-		Example:       c.Example,
-		Args:          c.Args,
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		Use:               c.Use,
+		Short:             c.Short,
+		Long:              c.Long,
+		Example:           c.Example,
+		Args:              c.Args,
+		ValidArgs:         c.ValidArgs,
+		ValidArgsFunction: c.ValidArgsFunction,
+		SilenceUsage:      true,
+		SilenceErrors:     true,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			tctx, ok := cmd.Context().Value(contextKey{}).(*Context)
 			if !ok || tctx == nil {

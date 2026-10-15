@@ -18,6 +18,11 @@ type Command struct {
 	Example string
 	// Args validates positional args (e.g. cobra.MaximumNArgs(1)).
 	Args cobra.PositionalArgs
+	// ValidArgs lists static shell completions for positional args.
+	ValidArgs []string
+	// ValidArgsFunction computes dynamic completions. It mirrors
+	// cobra's hook, including the ShellCompDirective return.
+	ValidArgsFunction func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective)
 	// Flags registers command-local flags. Read them back with
 	// Context.String/Bool/Int/StringSlice.
 	Flags func(*pflag.FlagSet)

@@ -349,3 +349,60 @@ func TestChangedTracksExplicitFlags(t *testing.T) {
 		t.Fatalf("Changed = %v, want env true and missing false", seen)
 	}
 }
+
+func TestStaticArgCompletion(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use:       "deploy",
+		ValidArgs: []string{"prod", "staging"},
+		Run:       func(*Context) error { return nil },
+	})
+
+	if err := app.Execute(context.Background(), []string{"__complete", "deploy", ""}); err != nil {
+		t.Fatalf("Execute(__complete) error = %v", err)
+	}
+	got := combined(&out, &errOut)
+	for _, want := range []string{"prod", "staging"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("completion %q does not contain %q", got, want)
+		}
+	}
+}
+
+func TestDynamicArgCompletion(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use: "deploy",
+		ValidArgsFunction: func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			var matches []string
+			for _, env := range []string{"prod", "staging", "dev"} {
+				if strings.HasPrefix(env, toComplete) {
+					matches = append(matches, env)
+				}
+			}
+			return matches, cobra.ShellCompDirectiveNoFileComp
+		},
+		Run: func(*Context) error { return nil },
+	})
+
+	if err := app.Execute(context.Background(), []string{"__complete", "deploy", "p"}); err != nil {
+		t.Fatalf("Execute(__complete) error = %v", err)
+	}
+	got := combined(&out, &errOut)
+	if !strings.Contains(got, "prod") {
+		t.Fatalf("completion %q does not contain filtered match", got)
+	}
+	if strings.Contains(got, "staging") || strings.Contains(got, "\ndev\n") {
+		t.Fatalf("completion %q leaks unfiltered entries", got)
+	}
+}
