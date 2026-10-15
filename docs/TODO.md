@@ -75,5 +75,12 @@
 - [x] 6.4 pager package with TTY gating and EPIPE tolerance
 - [x] 6.5 retry helper and positional arg completion
 - [x] 6.6 v1.1.0 tagged and released live (6 archives + checksums)
+
+# phase 7 — self-contained forks (absorb deps):
+
+- [x] 7.1 prompt line engine replaces survey (ctx cancel, numbered selects, no escape dependence)
+- [x] 7.2 spinner + bar owned by progress (TTY gating, ASCII-safe, narrow fit)
+- [x] 7.3 table + graph owned by output (ANSI-aware layout, verbatim pipes)
+- [x] 7.4 go.mod slimmed to 19 direct + 8 indirect
 - [x] 6.4 retry helper with backoff, used for go mod tidy
 - [x] 6.5 positional arg completion (ValidArgs/ValidArgsFunction via __complete)
