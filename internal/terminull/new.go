@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -16,6 +17,7 @@ import (
 	"github.com/CHE3MZ/terminull/output"
 	"github.com/CHE3MZ/terminull/progress"
 	"github.com/CHE3MZ/terminull/prompt"
+	"github.com/CHE3MZ/terminull/retry"
 	"github.com/CHE3MZ/terminull/static"
 	"github.com/CHE3MZ/terminull/style"
 )
@@ -217,7 +219,12 @@ func tidyWithSpinner(ctx *app.Context, dir string) error {
 
 	spin := progress.NewSpinner(ctx.Out, "resolving modules", style.Emoji())
 	spin.Start()
-	out, err := runGoModTidy(dir)
+	var out string
+	err := retry.Do(func() error {
+		var err error
+		out, err = runGoModTidy(dir)
+		return err
+	}, retry.Options{Attempts: 3, Delay: 2 * time.Second})
 	spin.Stop()
 	if err != nil {
 		return fmt.Errorf("go mod tidy: %w: %s", err, out)
