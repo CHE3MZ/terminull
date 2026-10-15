@@ -1,11 +1,13 @@
 package progress
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
-	"github.com/briandowns/spinner"
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // asciiFrames render on every console, including raster fonts.
@@ -18,7 +20,15 @@ const spinnerSpeed = 100 * time.Millisecond
 
 // Spinner draws a message with an animated prefix until Stop.
 type Spinner struct {
-	inner *spinner.Spinner
+	out     io.Writer
+	frames  []string
+	message string
+	tty     bool
+
+	mu     sync.Mutex
+	active bool
+	stop   chan struct{}
+	done   chan struct{}
 }
 
 // NewSpinner builds a stopped spinner writing to w. Pass style.Emoji()
@@ -32,29 +42,67 @@ func NewSpinner(w io.Writer, message string, emoji bool) *Spinner {
 	if emoji {
 		frames = dotFrames
 	}
-	opts := []spinner.Option{
-		spinner.WithWriter(w),
-		spinner.WithSuffix(" " + message),
-	}
-	// Gate animation on the actual destination when it is a file;
-	// otherwise the spinner falls back to os.Stdout for its check.
+	tty := false
 	if f, ok := w.(*os.File); ok {
-		opts = append(opts, spinner.WithWriterFile(f))
+		tty = style.IsTerminal(f)
 	}
-	return &Spinner{inner: spinner.New(frames, spinnerSpeed, opts...)}
+	return &Spinner{out: w, frames: frames, message: message, tty: tty}
 }
 
-// Start begins animation. The message stays until Stop.
+// Start begins animation. The message stays until Stop. Safe to call
+// twice; only the first starts the loop.
 func (s *Spinner) Start() {
-	s.inner.Start()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.active || !s.tty {
+		return
+	}
+	s.active = true
+	s.stop = make(chan struct{})
+	s.done = make(chan struct{})
+	go s.loop()
 }
 
-// Stop ends animation and restores the line.
+// Stop ends animation and restores the line. Safe to call twice and
+// without Start.
 func (s *Spinner) Stop() {
-	s.inner.Stop()
+	s.mu.Lock()
+	if !s.active {
+		s.mu.Unlock()
+		return
+	}
+	s.active = false
+	done := s.done
+	close(s.stop)
+	s.mu.Unlock()
+
+	<-done
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, _ = fmt.Fprintf(s.out, "\r%s\n", s.message)
 }
 
 // Active reports whether the spinner is animating.
 func (s *Spinner) Active() bool {
-	return s.inner.Active()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.active
+}
+
+func (s *Spinner) loop() {
+	defer close(s.done)
+	ticker := time.NewTicker(spinnerSpeed)
+	defer ticker.Stop()
+	i := 0
+	for {
+		select {
+		case <-s.stop:
+			return
+		case <-ticker.C:
+			s.mu.Lock()
+			_, _ = fmt.Fprintf(s.out, "\r%s %s", s.frames[i%len(s.frames)], s.message)
+			s.mu.Unlock()
+			i++
+		}
+	}
 }

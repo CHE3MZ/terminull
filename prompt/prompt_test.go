@@ -1,19 +1,17 @@
 package prompt
 
 import (
-	"bytes"
-	"errors"
+	"context"
+	"io"
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/AlecAivazis/survey/v2/terminal"
 )
 
-// pipeIO builds non-terminal stdio. Pipes are never TTYs, so prompt calls
-// without presets must fail with flag-required errors instead of hanging.
-func pipeIO(t *testing.T) IO {
+// pipeIO builds non-terminal stdio: writes feed answers, reads capture
+// output. Pipes are never TTYs, so prompt calls without presets must
+// fail with flag-required errors instead of hanging.
+func pipeIO(t *testing.T, input string) (IO, func() string) {
 	t.Helper()
 
 	inR, inW, err := os.Pipe()
@@ -30,35 +28,27 @@ func pipeIO(t *testing.T) IO {
 		_ = outR.Close()
 		_ = outW.Close()
 	})
-	return IO{In: inR, Out: outW, Err: &bytes.Buffer{}}
+	if _, err := inW.Write([]byte(input)); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+	_ = inW.Close()
+	drain := func() string {
+		_ = outW.Close()
+		data, _ := io.ReadAll(outR)
+		_ = outR.Close()
+		return string(data)
+	}
+	return IO{In: inR, Out: outW, Err: io.Discard}, drain
 }
 
 func boolPtr(b bool) *bool       { return &b }
 func stringPtr(s string) *string { return &s }
 
-// stubAskOne replaces the survey call site and restores it afterwards.
-// Nothing in this package may use t.Parallel: the shared var would race
-// under -race (parallel tests interleave with sequential ones).
-func stubAskOne(t *testing.T, stub func(p survey.Prompt, response any, opts ...survey.AskOpt) error) {
-	t.Helper()
-
-	previous := askOne
-	askOne = stub
-	t.Cleanup(func() { askOne = previous })
-}
-
-func failOnPrompt(t *testing.T) {
-	t.Helper()
-	stubAskOne(t, func(_ survey.Prompt, _ any, _ ...survey.AskOpt) error {
-		t.Fatal("survey must not prompt on the preset path")
-		return nil
-	})
-}
-
 func TestSelectPreset(t *testing.T) {
-	failOnPrompt(t)
+	t.Parallel()
 
-	got, err := Select(pipeIO(t), SelectOptions{
+	io, _ := pipeIO(t, "")
+	got, err := Select(context.Background(), io, SelectOptions{
 		Message: "Env?",
 		Options: []string{"dev", "prod"},
 		Preset:  "prod",
@@ -73,9 +63,10 @@ func TestSelectPreset(t *testing.T) {
 }
 
 func TestSelectBadPreset(t *testing.T) {
-	failOnPrompt(t)
+	t.Parallel()
 
-	_, err := Select(pipeIO(t), SelectOptions{
+	io, _ := pipeIO(t, "")
+	_, err := Select(context.Background(), io, SelectOptions{
 		Options: []string{"dev", "prod"},
 		Preset:  "qa",
 		Flag:    "--env",
@@ -86,16 +77,20 @@ func TestSelectBadPreset(t *testing.T) {
 }
 
 func TestSelectEmptyOptions(t *testing.T) {
-	_, err := Select(pipeIO(t), SelectOptions{Flag: "--env"})
+	t.Parallel()
+
+	io, _ := pipeIO(t, "")
+	_, err := Select(context.Background(), io, SelectOptions{Flag: "--env"})
 	if err == nil {
 		t.Fatal("Select() = nil, want error for empty options")
 	}
 }
 
 func TestSelectNonInteractive(t *testing.T) {
-	failOnPrompt(t)
+	t.Parallel()
 
-	_, err := Select(pipeIO(t), SelectOptions{
+	io, _ := pipeIO(t, "")
+	_, err := Select(context.Background(), io, SelectOptions{
 		Message: "Env?",
 		Options: []string{"dev", "prod"},
 		Flag:    "--env",
@@ -106,7 +101,10 @@ func TestSelectNonInteractive(t *testing.T) {
 }
 
 func TestSelectBadDefault(t *testing.T) {
-	_, err := Select(pipeIO(t), SelectOptions{
+	t.Parallel()
+
+	io, _ := pipeIO(t, "")
+	_, err := Select(context.Background(), io, SelectOptions{
 		Options: []string{"dev"},
 		Default: "qa",
 		Flag:    "--env",
@@ -116,220 +114,211 @@ func TestSelectBadDefault(t *testing.T) {
 	}
 }
 
-func TestSelectSurveyWiring(t *testing.T) {
-	stubAskOne(t, func(p survey.Prompt, response any, opts ...survey.AskOpt) error {
-		sel, ok := p.(*survey.Select)
-		if !ok {
-			t.Fatalf("prompt type = %T, want *survey.Select", p)
-		}
-		if sel.Message != "Env?" || len(sel.Options) != 2 || sel.Options[1] != "prod" || sel.Default != "dev" {
-			t.Fatalf("select = %+v, want message/options/default wired", sel)
-		}
-		if len(opts) != 2 {
-			t.Fatalf("ask opts = %d, want stdio + icons wired", len(opts))
-		}
-		*(response.(*string)) = "prod"
-		return nil
-	})
+func TestSelectNumbered(t *testing.T) {
+	t.Parallel()
 
-	got, err := selectSurvey(pipeIO(t), SelectOptions{
+	io, drain := pipeIO(t, "2\n")
+	got, err := selectPrompt(context.Background(), io, SelectOptions{
 		Message: "Env?",
 		Options: []string{"dev", "prod"},
-		Default: "dev",
+		Flag:    "--env",
 	})
 	if err != nil {
-		t.Fatalf("selectSurvey() error = %v", err)
+		t.Fatalf("Select() error = %v", err)
 	}
 	if got != "prod" {
-		t.Fatalf("selectSurvey() = %q, want stubbed answer", got)
+		t.Fatalf("Select() = %q, want second option", got)
+	}
+	gotOut := drain()
+	for _, want := range []string{"•", "Env?", "1) dev", "2) prod", "[1]"} {
+		if !strings.Contains(gotOut, want) {
+			t.Fatalf("select output %q does not contain %q", gotOut, want)
+		}
 	}
 }
 
-func TestSurveyErrorPropagates(t *testing.T) {
-	stubAskOne(t, func(_ survey.Prompt, _ any, _ ...survey.AskOpt) error {
-		return terminal.InterruptErr
-	})
+func TestSelectDefaultOnEmpty(t *testing.T) {
+	t.Parallel()
 
-	if _, err := selectSurvey(pipeIO(t), SelectOptions{Options: []string{"a"}}); !IsInterrupt(err) {
-		t.Fatalf("selectSurvey() error = %v, want interrupt", err)
+	io, _ := pipeIO(t, "\n")
+	got, err := selectPrompt(context.Background(), io, SelectOptions{
+		Options: []string{"dev", "prod"},
+		Default: "prod",
+		Flag:    "--env",
+	})
+	if err != nil {
+		t.Fatalf("Select() error = %v", err)
+	}
+	if got != "prod" {
+		t.Fatalf("Select() = %q, want default", got)
+	}
+}
+
+func TestSelectBadNumber(t *testing.T) {
+	t.Parallel()
+
+	io, _ := pipeIO(t, "9\n")
+	_, err := selectPrompt(context.Background(), io, SelectOptions{
+		Options: []string{"dev", "prod"},
+		Flag:    "--env",
+	})
+	if err == nil {
+		t.Fatal("Select(9) = nil, want range error")
 	}
 }
 
 func TestConfirmPresetAndGuard(t *testing.T) {
-	failOnPrompt(t)
+	t.Parallel()
 
-	io := pipeIO(t)
-	if got, err := Confirm(io, ConfirmOptions{Preset: boolPtr(true)}); err != nil || !got {
+	io, _ := pipeIO(t, "")
+	if got, err := Confirm(context.Background(), io, ConfirmOptions{Preset: boolPtr(true)}); err != nil || !got {
 		t.Fatalf("Confirm(preset) = %v, %v; want true, nil", got, err)
 	}
-	if _, err := Confirm(io, ConfirmOptions{Message: "Sure?", Flag: "--yes"}); err == nil || !strings.Contains(err.Error(), "--yes") {
-		t.Fatalf("Confirm() error = %v, want required flag named", err)
+	if _, err := Confirm(context.Background(), io, ConfirmOptions{Message: "Sure?", Flag: "--yes"}); err == nil {
+		t.Fatal("Confirm() = nil, want required-flag error")
 	}
 }
 
-func TestConfirmSurveyWiring(t *testing.T) {
-	stubAskOne(t, func(p survey.Prompt, response any, _ ...survey.AskOpt) error {
-		c, ok := p.(*survey.Confirm)
-		if !ok {
-			t.Fatalf("prompt type = %T, want *survey.Confirm", p)
-		}
-		if c.Message != "Sure?" || !c.Default {
-			t.Fatalf("confirm = %+v, want message/default wired", c)
-		}
-		*(response.(*bool)) = true
-		return nil
-	})
+func TestConfirmAnswers(t *testing.T) {
+	t.Parallel()
 
-	got, err := confirmSurvey(pipeIO(t), ConfirmOptions{Message: "Sure?", Default: true})
-	if err != nil || !got {
-		t.Fatalf("confirmSurvey() = %v, %v; want true, nil", got, err)
+	for _, tc := range []struct {
+		in   string
+		def  bool
+		want bool
+	}{
+		{"y\n", false, true},
+		{"YES\n", false, true},
+		{"n\n", true, false},
+		{"\n", true, true},
+		{"\n", false, false},
+	} {
+		io, drain := pipeIO(t, tc.in)
+		got, err := confirmPrompt(context.Background(), io, ConfirmOptions{Message: "Sure?", Default: tc.def})
+		if err != nil {
+			t.Fatalf("Confirm(%q) error = %v", tc.in, err)
+		}
+		if got != tc.want {
+			t.Fatalf("Confirm(%q) = %v, want %v", tc.in, got, tc.want)
+		}
+		if gotOut := drain(); !strings.Contains(gotOut, "Sure?") {
+			t.Fatalf("confirm output %q misses message", gotOut)
+		}
+	}
+
+	io, _ := pipeIO(t, "maybe\n")
+	if _, err := Confirm(context.Background(), io, ConfirmOptions{Message: "Sure?"}); err == nil {
+		t.Fatal("Confirm(maybe) = nil, want error")
 	}
 }
 
-func TestInputPresetGuardWiring(t *testing.T) {
-	failOnPrompt(t)
+func TestInputPresetGuardAnswers(t *testing.T) {
+	t.Parallel()
 
-	io := pipeIO(t)
-	if got, err := Input(io, InputOptions{Preset: stringPtr("")}); err != nil || got != "" {
+	io, _ := pipeIO(t, "")
+	if got, err := Input(context.Background(), io, InputOptions{Preset: stringPtr("")}); err != nil || got != "" {
 		t.Fatalf("Input(empty preset) = %q, %v; want empty, nil", got, err)
 	}
-	if _, err := Input(io, InputOptions{Message: "Name?", Flag: "--name"}); err == nil {
+	if _, err := Input(context.Background(), io, InputOptions{Message: "Name?", Flag: "--name"}); err == nil {
 		t.Fatal("Input() = nil, want required-flag error")
 	}
-}
 
-func TestInputSurveyWiring(t *testing.T) {
-	stubAskOne(t, func(p survey.Prompt, response any, _ ...survey.AskOpt) error {
-		in, ok := p.(*survey.Input)
-		if !ok {
-			t.Fatalf("prompt type = %T, want *survey.Input", p)
-		}
-		if in.Message != "Name?" || in.Default != "bob" {
-			t.Fatalf("input = %+v, want message/default wired", in)
-		}
-		*(response.(*string)) = "alice"
-		return nil
-	})
-
-	got, err := inputSurvey(pipeIO(t), InputOptions{Message: "Name?", Default: "bob"})
+	io, drain := pipeIO(t, "alice\n")
+	got, err := inputPrompt(context.Background(), io, InputOptions{Message: "Name?", Default: "bob"})
 	if err != nil || got != "alice" {
-		t.Fatalf("inputSurvey() = %q, %v; want alice, nil", got, err)
+		t.Fatalf("Input() = %q, %v; want alice, nil", got, err)
+	}
+	if gotOut := drain(); !strings.Contains(gotOut, "Name?") || !strings.Contains(gotOut, "(bob)") {
+		t.Fatalf("input output %q misses message and default", gotOut)
+	}
+
+	io, _ = pipeIO(t, "\n")
+	got, err = inputPrompt(context.Background(), io, InputOptions{Message: "Name?", Default: "bob"})
+	if err != nil || got != "bob" {
+		t.Fatalf("Input(empty) = %q, %v; want default bob", got, err)
 	}
 }
 
-func TestPasswordPresetGuardWiring(t *testing.T) {
-	failOnPrompt(t)
+func TestPasswordPresetGuard(t *testing.T) {
+	t.Parallel()
 
-	io := pipeIO(t)
-	if got, err := Password(io, PasswordOptions{Preset: stringPtr("s3cret")}); err != nil || got != "s3cret" {
+	io, _ := pipeIO(t, "")
+	if got, err := Password(context.Background(), io, PasswordOptions{Preset: stringPtr("s3cret")}); err != nil || got != "s3cret" {
 		t.Fatalf("Password(preset) = %q, %v", got, err)
 	}
-	if _, err := Password(io, PasswordOptions{Message: "Pass?", Flag: "--password"}); err == nil {
+	if _, err := Password(context.Background(), io, PasswordOptions{Message: "Pass?", Flag: "--password"}); err == nil {
 		t.Fatal("Password() = nil, want required-flag error")
 	}
 }
 
-func TestPasswordSurveyWiring(t *testing.T) {
-	stubAskOne(t, func(p survey.Prompt, response any, _ ...survey.AskOpt) error {
-		pw, ok := p.(*survey.Password)
-		if !ok {
-			t.Fatalf("prompt type = %T, want *survey.Password", p)
-		}
-		if pw.Message != "Pass?" {
-			t.Fatalf("password message = %q", pw.Message)
-		}
-		*(response.(*string)) = "s3cret"
-		return nil
-	})
-
-	got, err := passwordSurvey(pipeIO(t), PasswordOptions{Message: "Pass?"})
-	if err != nil || got != "s3cret" {
-		t.Fatalf("passwordSurvey() = %q, %v", got, err)
-	}
-}
-
 func TestMultiSelectPresetAndGuard(t *testing.T) {
-	failOnPrompt(t)
+	t.Parallel()
 
-	io := pipeIO(t)
+	io, _ := pipeIO(t, "")
 	opts := MultiSelectOptions{Options: []string{"a", "b"}, Flag: "--tags"}
 
-	got, err := MultiSelect(io, MultiSelectOptions{Options: opts.Options, Preset: []string{"a"}, Flag: "--tags"})
+	got, err := MultiSelect(context.Background(), io, MultiSelectOptions{Options: opts.Options, Preset: []string{"a"}, Flag: "--tags"})
 	if err != nil || len(got) != 1 || got[0] != "a" {
 		t.Fatalf("MultiSelect(preset) = %v, %v", got, err)
 	}
-	if _, err := MultiSelect(io, MultiSelectOptions{Options: opts.Options, Preset: []string{"z"}, Flag: "--tags"}); err == nil {
+	if _, err := MultiSelect(context.Background(), io, MultiSelectOptions{Options: opts.Options, Preset: []string{"z"}, Flag: "--tags"}); err == nil {
 		t.Fatal("MultiSelect(bad preset) = nil, want error")
 	}
-	if _, err := MultiSelect(io, opts); err == nil {
+	if _, err := MultiSelect(context.Background(), io, opts); err == nil {
 		t.Fatal("MultiSelect() = nil, want required-flag error")
 	}
 }
 
-func TestMultiSurveyWiring(t *testing.T) {
-	stubAskOne(t, func(p survey.Prompt, response any, _ ...survey.AskOpt) error {
-		ms, ok := p.(*survey.MultiSelect)
-		if !ok {
-			t.Fatalf("prompt type = %T, want *survey.MultiSelect", p)
-		}
-		if ms.Message != "Tags?" || len(ms.Options) != 2 {
-			t.Fatalf("multi = %+v, want message/options wired", ms)
-		}
-		*(response.(*[]string)) = []string{"b"}
-		return nil
-	})
+func TestMultiSelectNumbers(t *testing.T) {
+	t.Parallel()
 
-	got, err := multiSurvey(pipeIO(t), MultiSelectOptions{
+	io, drain := pipeIO(t, "2,1,2\n")
+	got, err := multiPrompt(context.Background(), io, MultiSelectOptions{
 		Message: "Tags?",
 		Options: []string{"a", "b"},
-		Default: []string{"a"},
+		Flag:    "--tags",
 	})
-	if err != nil || len(got) != 1 || got[0] != "b" {
-		t.Fatalf("multiSurvey() = %v, %v", got, err)
+	if err != nil {
+		t.Fatalf("MultiSelect() error = %v", err)
+	}
+	if len(got) != 2 || got[0] != "b" || got[1] != "a" {
+		t.Fatalf("MultiSelect() = %v, want [b a] deduplicated in order", got)
+	}
+	if gotOut := drain(); !strings.Contains(gotOut, "1) a") {
+		t.Fatalf("multi output %q misses numbered list", gotOut)
+	}
+
+	io, _ = pipeIO(t, "\n")
+	got, err = multiPrompt(context.Background(), io, MultiSelectOptions{
+		Options: []string{"a", "b"},
+		Default: []string{"a"},
+		Flag:    "--tags",
+	})
+	if err != nil || len(got) != 1 || got[0] != "a" {
+		t.Fatalf("MultiSelect(empty) = %v, %v; want default", got, err)
+	}
+
+	io, _ = pipeIO(t, "7\n")
+	if _, err := MultiSelect(context.Background(), io, MultiSelectOptions{Options: []string{"a"}, Flag: "--tags"}); err == nil {
+		t.Fatal("MultiSelect(7) = nil, want error")
 	}
 }
 
-func TestIsInterrupt(t *testing.T) {
-	if !IsInterrupt(terminal.InterruptErr) {
-		t.Fatal("IsInterrupt(interrupt) = false")
+func TestReadLineCancelled(t *testing.T) {
+	t.Parallel()
+
+	inR, inW, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe() error = %v", err)
 	}
-	if IsInterrupt(errors.New("boom")) || IsInterrupt(nil) {
-		t.Fatal("IsInterrupt(other/nil) = true")
+	t.Cleanup(func() {
+		_ = inR.Close()
+		_ = inW.Close()
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := readLine(ctx, inR); err != context.Canceled {
+		t.Fatalf("readLine(cancelled) error = %v, want context.Canceled", err)
 	}
 }
-
-func TestBulletQuestionIcon(t *testing.T) {
-	var opts survey.AskOptions
-	for _, opt := range stdio(pipeIO(t)) {
-		if err := opt(&opts); err != nil {
-			t.Fatalf("AskOpt error = %v", err)
-		}
-	}
-	if got := opts.PromptConfig.Icons.Question.Text; got != "•" {
-		t.Fatalf("question icon = %q, want bullet", got)
-	}
-	if got := opts.PromptConfig.Icons.Question.Format; got != "green+hb" {
-		t.Fatalf("question format = %q, want survey green", got)
-	}
-
-	var plain survey.AskOptions
-	pio := pipeIO(t)
-	pio.NoColor = true
-	for _, opt := range stdio(pio) {
-		if err := opt(&plain); err != nil {
-			t.Fatalf("AskOpt error = %v", err)
-		}
-	}
-	if got := plain.PromptConfig.Icons.Question.Format; got != "" {
-		t.Fatalf("no-color format = %q, want empty (plain)", got)
-	}
-	if got := plain.PromptConfig.Icons.Question.Text; got != "•" {
-		t.Fatalf("no-color icon = %q, want bullet kept", got)
-	}
-}
-
-// NOTE: do not drive real survey prompts with pipes or headless ptys in
-// tests. Survey issues console syscalls (pipes fail: "Incorrect function"
-// on Windows) and blocks on cursor-report responses no emulator sends
-// (headless pty hangs). Interactive paths stay stub-tested; real
-// terminals are covered by the demo matrix and manual runs.

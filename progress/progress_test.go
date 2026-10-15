@@ -30,21 +30,27 @@ func (g *guarded) String() string {
 	return g.b.String()
 }
 
-func TestSpinnerStartStop(t *testing.T) {
+func TestSpinnerBufferNoop(t *testing.T) {
 	t.Parallel()
 
-	// Buffers are not *os.File: the spinner falls back to os.Stdout for
-	// its terminal check. Either way Start/Stop must be safe and return.
-	var out guarded
-	s := NewSpinner(&out, "spin-msg", false)
-	s.Start()
-	time.Sleep(3 * spinnerSpeed)
-	s.Stop()
-
-	dots := NewSpinner(&out, "spin-msg", true)
-	dots.Start()
-	time.Sleep(3 * spinnerSpeed)
-	dots.Stop()
+	// Buffers are not terminals: Start is a safe no-op writing nothing,
+	// and Stop on a never-started spinner stays silent.
+	for _, emoji := range []bool{false, true} {
+		var out guarded
+		s := NewSpinner(&out, "spin-msg", emoji)
+		s.Start()
+		if s.Active() {
+			t.Fatal("spinner active on a buffer, want quiet no-op")
+		}
+		time.Sleep(3 * spinnerSpeed)
+		s.Stop()
+		if s.Active() {
+			t.Fatal("spinner active after Stop")
+		}
+		if got := out.String(); got != "" {
+			t.Fatalf("spinner output %q, want nothing on non-terminals", got)
+		}
+	}
 }
 
 // TestSpinnerPipeFileStaysQuiet pins the terminal check to a pipe, which
@@ -98,25 +104,21 @@ func TestBarAddFinish(t *testing.T) {
 	}
 }
 
-func TestBarWidthDefaultsOffTerminal(t *testing.T) {
+func TestBarWidthNarrowTerminal(t *testing.T) {
 	t.Parallel()
 
+	// Narrow terminals shrink the bar; the exact width follows the
+	// console, so assert shape (one bracketed run + percent + counts).
 	var out guarded
-	if _, ok := barWidth(&out); ok {
-		t.Fatal("barWidth(buffer) = true, want default width")
+	bar := NewBar(&out, 4, "bar-desc")
+	if err := bar.Add(2); err != nil {
+		t.Fatalf("Add() error = %v", err)
 	}
-
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("os.Pipe() error = %v", err)
-	}
-	t.Cleanup(func() {
-		_ = r.Close()
-		_ = w.Close()
-	})
-	// Pipes report the 80 fallback, which keeps the default width.
-	if _, ok := barWidth(w); ok {
-		t.Fatal("barWidth(pipe) = true, want default width at 80 columns")
+	got := out.String()
+	for _, want := range []string{"bar-desc", "[", "]", "50%", "(2/4)"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("bar output %q does not contain %q", got, want)
+		}
 	}
 }
 

@@ -1,24 +1,38 @@
 package prompt
 
 import (
-	"errors"
+	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/AlecAivazis/survey/v2/terminal"
+	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
+	"golang.org/x/term"
 )
+
+// FileReader is a readable file descriptor: consoles, pipes, files.
+type FileReader interface {
+	io.Reader
+	Fd() uintptr
+}
+
+// FileWriter is a writable file descriptor.
+type FileWriter interface {
+	io.Writer
+	Fd() uintptr
+}
 
 // IO carries stdio for prompts. Use StdIO in real apps; tests pass pipes.
 type IO struct {
-	In  terminal.FileReader
-	Out terminal.FileWriter
+	In  FileReader
+	Out FileWriter
 	Err io.Writer
-	// NoColor strips prompt icon colors (dumb terminals, --no-color).
+	// NoColor strips prompt styling (dumb terminals, --no-color).
 	// The bullet glyph itself always renders.
 	NoColor bool
 }
@@ -28,38 +42,22 @@ func StdIO() IO {
 	return IO{In: os.Stdin, Out: os.Stdout, Err: os.Stderr}
 }
 
-// askOne is the single survey call site, stubbed in unit tests.
-var askOne = func(p survey.Prompt, response any, opts ...survey.AskOpt) error {
-	return survey.AskOne(p, response, opts...)
-}
-
-// IsInterrupt reports Ctrl+C during a prompt (map to exit code 130).
-func IsInterrupt(err error) bool {
-	return errors.Is(err, terminal.InterruptErr)
-}
-
-func stdio(io IO) []survey.AskOpt {
-	iconFormat := "green+hb"
-	if io.NoColor {
-		iconFormat = ""
+// paint styles the bullet when colors are allowed: never on NoColor,
+// dumb terminals, or NO_COLOR. fatih/color auto-detects TTYs itself,
+// so pipes stay plain without any extra plumbing.
+func paint(noColor bool, s string) string {
+	if noColor || strings.EqualFold(os.Getenv("TERM"), "dumb") || os.Getenv("NO_COLOR") != "" {
+		return s
 	}
-	return []survey.AskOpt{
-		survey.WithStdio(io.In, io.Out, io.Err),
-		survey.WithIcons(func(icons *survey.IconSet) {
-			// Bullet instead of survey's default "?". An empty format
-			// renders plain (verified against mgutz/ansi); U+2022
-			// ships in every modern console font.
-			icons.Question.Text = "•"
-			icons.Question.Format = iconFormat
-		}),
-	}
+	return color.New(color.FgGreen).Sprint(s)
 }
 
-func interactive(in terminal.FileReader) bool {
-	if in == nil {
+func interactive(in io.Reader) bool {
+	f, ok := in.(*os.File)
+	if !ok {
 		return false
 	}
-	return isatty.IsTerminal(in.Fd())
+	return isatty.IsTerminal(f.Fd())
 }
 
 func flagName(flag string) string {
@@ -71,6 +69,47 @@ func flagName(flag string) string {
 
 func joinOptions(options []string) string {
 	return strings.Join(options, ", ")
+}
+
+func requiredError(flag string) error {
+	return fmt.Errorf("%s is required (non-interactive terminal, pass the flag)", flagName(flag))
+}
+
+// readLine reads one trimmed line, abandoning a blocked read on cancel.
+// A goroutine may linger on a cancelled read until input arrives; the
+// process exits right after, so nothing accumulates.
+func readLine(ctx context.Context, r io.Reader) (string, error) {
+	type result struct {
+		s   string
+		err error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		s, err := bufio.NewReader(r).ReadString('\n')
+		ch <- result{s, err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case v := <-ch:
+		if v.err != nil && v.err != io.EOF {
+			return "", v.err
+		}
+		return strings.TrimSpace(v.s), nil
+	}
+}
+
+// ask prints the bullet question and returns the raw answer line.
+func ask(ctx context.Context, io IO, message, hint string) (string, error) {
+	line := paint(io.NoColor, "•") + " " + message
+	if hint != "" {
+		line += " " + hint
+	}
+	if _, err := fmt.Fprintln(io.Out, line); err != nil {
+		return "", err
+	}
+	return readLine(ctx, io.In)
 }
 
 // SelectOptions tunes a Select call.
@@ -87,8 +126,8 @@ type SelectOptions struct {
 	Flag string
 }
 
-// Select picks one option with arrow keys and enter.
-func Select(io IO, opts SelectOptions) (string, error) {
+// Select picks one option from a numbered list.
+func Select(ctx context.Context, io IO, opts SelectOptions) (string, error) {
 	if len(opts.Options) == 0 {
 		return "", fmt.Errorf("prompt: no options for %s", flagName(opts.Flag))
 	}
@@ -98,30 +137,54 @@ func Select(io IO, opts SelectOptions) (string, error) {
 		}
 		return opts.Preset, nil
 	}
-	if opts.Default != "" && !slices.Contains(opts.Options, opts.Default) {
+	def := opts.Default
+	if def == "" {
+		def = opts.Options[0]
+	}
+	if !slices.Contains(opts.Options, def) {
 		return "", fmt.Errorf("invalid default %q for %s: choose from %s", opts.Default, flagName(opts.Flag), joinOptions(opts.Options))
 	}
 	if !interactive(io.In) {
-		return "", fmt.Errorf("%s is required (non-interactive terminal, pass the flag)", flagName(opts.Flag))
+		return "", requiredError(opts.Flag)
 	}
-	return selectSurvey(io, opts)
+	return selectPrompt(ctx, io, opts)
 }
 
-// selectSurvey prompts unconditionally; Select guards first.
-func selectSurvey(io IO, opts SelectOptions) (string, error) {
-	var def any
-	if opts.Default != "" {
-		def = opts.Default
+// selectPrompt asks unconditionally; Select guards first.
+func selectPrompt(ctx context.Context, io IO, opts SelectOptions) (string, error) {
+	def := opts.Default
+	if def == "" {
+		def = opts.Options[0]
 	}
-	var answer string
-	if err := askOne(&survey.Select{
-		Message: opts.Message,
-		Options: opts.Options,
-		Default: def,
-	}, &answer, stdio(io)...); err != nil {
+
+	var list strings.Builder
+	for i, opt := range opts.Options {
+		fmt.Fprintf(&list, "  %d) %s\n", i+1, opt)
+	}
+	if _, err := fmt.Fprint(io.Out, list.String()); err != nil {
 		return "", err
 	}
-	return answer, nil
+	answer, err := ask(ctx, io, opts.Message, fmt.Sprintf("[%d]", indexOf(opts.Options, def)+1))
+	if err != nil {
+		return "", err
+	}
+	if answer == "" {
+		return def, nil
+	}
+	n, err := strconv.Atoi(answer)
+	if err != nil || n < 1 || n > len(opts.Options) {
+		return "", fmt.Errorf("invalid %s %q: enter 1-%d", flagName(opts.Flag), answer, len(opts.Options))
+	}
+	return opts.Options[n-1], nil
+}
+
+func indexOf(options []string, value string) int {
+	for i, opt := range options {
+		if opt == value {
+			return i
+		}
+	}
+	return 0
 }
 
 // MultiSelectOptions tunes a MultiSelect call.
@@ -135,8 +198,8 @@ type MultiSelectOptions struct {
 	Flag   string
 }
 
-// MultiSelect picks zero or more options with space and enter.
-func MultiSelect(io IO, opts MultiSelectOptions) ([]string, error) {
+// MultiSelect picks options by comma-separated numbers.
+func MultiSelect(ctx context.Context, io IO, opts MultiSelectOptions) ([]string, error) {
 	if len(opts.Options) == 0 {
 		return nil, fmt.Errorf("prompt: no options for %s", flagName(opts.Flag))
 	}
@@ -150,22 +213,41 @@ func MultiSelect(io IO, opts MultiSelectOptions) ([]string, error) {
 		return nil, fmt.Errorf("invalid default %q for %s: choose from %s", bad, flagName(opts.Flag), joinOptions(opts.Options))
 	}
 	if !interactive(io.In) {
-		return nil, fmt.Errorf("%s is required (non-interactive terminal, pass the flag)", flagName(opts.Flag))
+		return nil, requiredError(opts.Flag)
 	}
-	return multiSurvey(io, opts)
+	return multiPrompt(ctx, io, opts)
 }
 
-// multiSurvey prompts unconditionally; MultiSelect guards first.
-func multiSurvey(io IO, opts MultiSelectOptions) ([]string, error) {
-	var answer []string
-	prompt := &survey.MultiSelect{Message: opts.Message, Options: opts.Options}
-	if len(opts.Default) > 0 {
-		prompt.Default = opts.Default
+// multiPrompt asks unconditionally; MultiSelect guards first.
+func multiPrompt(ctx context.Context, io IO, opts MultiSelectOptions) ([]string, error) {
+	var list strings.Builder
+	for i, opt := range opts.Options {
+		fmt.Fprintf(&list, "  %d) %s\n", i+1, opt)
 	}
-	if err := askOne(prompt, &answer, stdio(io)...); err != nil {
+	if _, err := fmt.Fprint(io.Out, list.String()); err != nil {
 		return nil, err
 	}
-	return answer, nil
+	answer, err := ask(ctx, io, opts.Message, "[1,2]")
+	if err != nil {
+		return nil, err
+	}
+	if answer == "" {
+		return opts.Default, nil
+	}
+	var picked []string
+	seen := map[string]bool{}
+	for _, part := range strings.Split(answer, ",") {
+		part = strings.TrimSpace(part)
+		n, err := strconv.Atoi(part)
+		if err != nil || n < 1 || n > len(opts.Options) {
+			return nil, fmt.Errorf("invalid %s %q: enter numbers like 1,3", flagName(opts.Flag), answer)
+		}
+		if value := opts.Options[n-1]; !seen[value] {
+			seen[value] = true
+			picked = append(picked, value)
+		}
+	}
+	return picked, nil
 }
 
 func firstOutside(values, options []string) string {
@@ -187,26 +269,36 @@ type ConfirmOptions struct {
 }
 
 // Confirm asks yes/no.
-func Confirm(io IO, opts ConfirmOptions) (bool, error) {
+func Confirm(ctx context.Context, io IO, opts ConfirmOptions) (bool, error) {
 	if opts.Preset != nil {
 		return *opts.Preset, nil
 	}
 	if !interactive(io.In) {
-		return false, fmt.Errorf("%s is required (non-interactive terminal, pass the flag)", flagName(opts.Flag))
+		return false, requiredError(opts.Flag)
 	}
-	return confirmSurvey(io, opts)
+	return confirmPrompt(ctx, io, opts)
 }
 
-// confirmSurvey prompts unconditionally; Confirm guards first.
-func confirmSurvey(io IO, opts ConfirmOptions) (bool, error) {
-	var answer bool
-	if err := askOne(&survey.Confirm{
-		Message: opts.Message,
-		Default: opts.Default,
-	}, &answer, stdio(io)...); err != nil {
+// confirmPrompt asks unconditionally; Confirm guards first.
+func confirmPrompt(ctx context.Context, io IO, opts ConfirmOptions) (bool, error) {
+	hint := "[y/N]"
+	if opts.Default {
+		hint = "[Y/n]"
+	}
+	answer, err := ask(ctx, io, opts.Message, hint)
+	if err != nil {
 		return false, err
 	}
-	return answer, nil
+	switch strings.ToLower(answer) {
+	case "y", "yes":
+		return true, nil
+	case "n", "no":
+		return false, nil
+	case "":
+		return opts.Default, nil
+	default:
+		return false, fmt.Errorf("invalid %s %q: answer y or n", flagName(opts.Flag), answer)
+	}
 }
 
 // InputOptions tunes an Input call.
@@ -219,24 +311,28 @@ type InputOptions struct {
 }
 
 // Input reads one line, echoing input.
-func Input(io IO, opts InputOptions) (string, error) {
+func Input(ctx context.Context, io IO, opts InputOptions) (string, error) {
 	if opts.Preset != nil {
 		return *opts.Preset, nil
 	}
 	if !interactive(io.In) {
-		return "", fmt.Errorf("%s is required (non-interactive terminal, pass the flag)", flagName(opts.Flag))
+		return "", requiredError(opts.Flag)
 	}
-	return inputSurvey(io, opts)
+	return inputPrompt(ctx, io, opts)
 }
 
-// inputSurvey prompts unconditionally; Input guards first.
-func inputSurvey(io IO, opts InputOptions) (string, error) {
-	var answer string
-	if err := askOne(&survey.Input{
-		Message: opts.Message,
-		Default: opts.Default,
-	}, &answer, stdio(io)...); err != nil {
+// inputPrompt asks unconditionally; Input guards first.
+func inputPrompt(ctx context.Context, io IO, opts InputOptions) (string, error) {
+	hint := ""
+	if opts.Default != "" {
+		hint = "(" + opts.Default + ")"
+	}
+	answer, err := ask(ctx, io, opts.Message, hint)
+	if err != nil {
 		return "", err
+	}
+	if answer == "" {
+		return opts.Default, nil
 	}
 	return answer, nil
 }
@@ -249,22 +345,44 @@ type PasswordOptions struct {
 	Flag   string
 }
 
-// Password reads one line masked with stars.
-func Password(io IO, opts PasswordOptions) (string, error) {
+// Password reads one line without echoing.
+func Password(ctx context.Context, io IO, opts PasswordOptions) (string, error) {
 	if opts.Preset != nil {
 		return *opts.Preset, nil
 	}
-	if !interactive(io.In) {
-		return "", fmt.Errorf("%s is required (non-interactive terminal, pass the flag)", flagName(opts.Flag))
+	f, ok := io.In.(*os.File)
+	if !ok || !isatty.IsTerminal(f.Fd()) {
+		return "", requiredError(opts.Flag)
 	}
-	return passwordSurvey(io, opts)
-}
-
-// passwordSurvey prompts unconditionally; Password guards first.
-func passwordSurvey(io IO, opts PasswordOptions) (string, error) {
-	var answer string
-	if err := askOne(&survey.Password{Message: opts.Message}, &answer, stdio(io)...); err != nil {
+	if _, err := fmt.Fprintln(io.Out, paint(io.NoColor, "•")+" "+opts.Message); err != nil {
 		return "", err
 	}
-	return answer, nil
+	secret, err := readPassword(ctx, f)
+	if err != nil {
+		return "", err
+	}
+	return secret, nil
+}
+
+// readPassword reads without echo, abandoning a blocked read on cancel.
+func readPassword(ctx context.Context, f *os.File) (string, error) {
+	type result struct {
+		s   []byte
+		err error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		s, err := term.ReadPassword(int(f.Fd()))
+		ch <- result{s, err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case v := <-ch:
+		if v.err != nil {
+			return "", v.err
+		}
+		return string(v.s), nil
+	}
 }

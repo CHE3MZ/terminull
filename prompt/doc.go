@@ -1,17 +1,18 @@
 // Package prompt asks one-shot questions: selects, confirms, inputs.
 //
+// The engine is deliberately plain: print the bullet question, read one
+// line, parse the answer. No cursor tracking, no re-renders, no second
+// render pass — so output cannot duplicate on any terminal, legacy
+// consoles included. Numbered lists replace arrow-key menus; masked
+// passwords use the OS no-echo read. Ctrl+C cancels through ctx.
+//
 // Every prompt takes a Preset (the already-parsed flag value). A valid
 // preset returns immediately without touching the terminal, so flags
 // always win. Without a preset the terminal must be interactive;
 // otherwise the prompt fails naming the required flag instead of
 // hanging on a pipe.
 //
-// Render pausing is the caller's job: stop or pause live drawing before
-// prompting and resume after, or the menu and the tree garble each other.
-// Ctrl+C surfaces as terminal.InterruptErr; use IsInterrupt to map it to
-// exit code 130 in main.
-//
-// The interactive survey path is intentionally thin: unit tests stub the
-// single askOne call site and assert the exact survey structs built.
-// Survey's own suite plus the demo matrix cover real TTYs.
+// Render pausing is the caller's job: pause live drawing before
+// prompting and resume after, or the menu and the tree garble each
+// other. See app.Context PauseDrawing and ResumeDrawing.
 package prompt

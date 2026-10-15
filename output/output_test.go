@@ -59,10 +59,10 @@ func TestTableWithScheme(t *testing.T) {
 	if err := TableWith(&plain, tv, style.NewScheme(false)); err != nil {
 		t.Fatalf("TableWith() error = %v", err)
 	}
-	// tablewriter itself uppercases headers; disabled only guarantees
-	// no escapes (header styling is scheme-owned, unit-tested in style).
-	if got := plain.String(); !strings.Contains(got, "NAME") || strings.Contains(got, "\x1b[") {
-		t.Fatalf("TableWith(disabled) = %q, want plain header, no escapes", got)
+	// Our own renderer keeps headers verbatim; tablewriter used to
+	// uppercase them. Disabled only guarantees no escapes.
+	if got := plain.String(); !strings.Contains(got, "name") || strings.Contains(got, "\x1b[") {
+		t.Fatalf("TableWith(disabled) = %q, want verbatim header, no escapes", got)
 	}
 
 	var styled strings.Builder

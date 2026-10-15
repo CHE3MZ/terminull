@@ -1,6 +1,7 @@
 package terminull
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/CHE3MZ/terminull/app"
 	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/internal/generator"
@@ -148,8 +148,8 @@ func appName(ctx *app.Context) (string, error) {
 	if !stdinTerminal(ctx) {
 		return "", core.NewExitCodeError(2, errors.New("missing app NAME\n\nUsage: terminull new NAME [flags]"))
 	}
-	name, err := solo(ctx, func(io prompt.IO) (string, error) {
-		return prompt.Input(io, prompt.InputOptions{
+	name, err := solo(ctx, func(c context.Context, io prompt.IO) (string, error) {
+		return prompt.Input(c, io, prompt.InputOptions{
 			Message: "App name?",
 			Flag:    "NAME",
 		})
@@ -165,10 +165,12 @@ func appName(ctx *app.Context) (string, error) {
 
 // solo pauses live drawing while fn produces foreign terminal output
 // (prompts, spinners, bars), then resumes. Tree state is untouched.
-func solo[T any](ctx *app.Context, fn func(prompt.IO) (T, error)) (T, error) {
+// Note: app.Context embeds context.Context but shadows Err with an
+// io.Writer field, so the inner context is passed explicitly.
+func solo[T any](ctx *app.Context, fn func(context.Context, prompt.IO) (T, error)) (T, error) {
 	ctx.PauseDrawing()
 	defer ctx.ResumeDrawing()
-	return fn(promptIO(ctx))
+	return fn(ctx.Context, promptIO(ctx))
 }
 
 // defaultModule returns the --module flag, asks interactively when a
@@ -177,8 +179,8 @@ func defaultModule(ctx *app.Context, name string) (string, error) {
 	if !stdinTerminal(ctx) {
 		return name, nil
 	}
-	return solo(ctx, func(io prompt.IO) (string, error) {
-		return prompt.Input(io, prompt.InputOptions{
+	return solo(ctx, func(c context.Context, io prompt.IO) (string, error) {
+		return prompt.Input(c, io, prompt.InputOptions{
 			Message: "Go module path?",
 			Default: name,
 			Flag:    "--module",
@@ -201,10 +203,10 @@ func promptIO(ctx *app.Context) prompt.IO {
 	io := prompt.StdIO()
 	io.Err = ctx.Err
 	io.NoColor = !style.ColorFor(ctx.Out, ctx.NoColor)
-	if f, ok := ctx.In.(terminal.FileReader); ok {
+	if f, ok := ctx.In.(prompt.FileReader); ok {
 		io.In = f
 	}
-	if f, ok := ctx.Out.(terminal.FileWriter); ok {
+	if f, ok := ctx.Out.(prompt.FileWriter); ok {
 		io.Out = f
 	}
 	return io

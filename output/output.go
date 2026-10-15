@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
+	"strings"
 
 	"github.com/dustin/go-humanize"
 	"github.com/google/shlex"
-	"github.com/guptarohit/asciigraph"
-	"github.com/olekukonko/tablewriter"
-	"github.com/olekukonko/tablewriter/tw"
 	"gopkg.in/yaml.v3"
 
 	"github.com/CHE3MZ/terminull/style"
@@ -51,36 +50,78 @@ type TableValue struct {
 
 // Table writes an ASCII-bordered table with a header row.
 func Table(w io.Writer, header []string, rows [][]string) error {
-	return writeTable(w, header, rows)
+	return writeTable(w, header, rows, nil)
 }
 
 // TableWith renders like Table but styles the header through scheme:
 // uppercased and underlined when enabled, verbatim otherwise so piped
 // output stays script-friendly.
 func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
-	header := tv.Header
+	var styleHeader func(string) string
 	if scheme.Enabled {
-		header = make([]string, len(tv.Header))
-		for i, h := range tv.Header {
-			header[i] = scheme.TableHeader(h)
-		}
+		styleHeader = scheme.TableHeader
 	}
-	return writeTable(w, header, tv.Rows)
+	return writeTable(w, tv.Header, tv.Rows, styleHeader)
 }
 
-func writeTable(w io.Writer, header []string, rows [][]string) error {
-	table := tablewriter.NewTable(w,
-		tablewriter.WithHeader(header),
-		tablewriter.WithRendition(tw.Rendition{
-			Symbols: tw.NewSymbols(tw.StyleASCII),
-		}),
-	)
+func writeTable(w io.Writer, header []string, rows [][]string, styleHeader func(string) string) error {
+	// Widths measure raw text so styled cells never misalign columns.
+	widths := make([]int, len(header))
+	for i, h := range header {
+		widths[i] = style.Width(h)
+	}
 	for _, row := range rows {
-		if err := table.Append(row); err != nil {
-			return fmt.Errorf("output: append table row: %w", err)
+		for i := range header {
+			if i < len(row) && style.Width(row[i]) > widths[i] {
+				widths[i] = style.Width(row[i])
+			}
 		}
 	}
-	return table.Render()
+
+	var b strings.Builder
+	border := func() {
+		b.WriteString("+")
+		for _, wd := range widths {
+			b.WriteString(strings.Repeat("-", wd+2))
+			b.WriteString("+")
+		}
+		b.WriteString("\n")
+	}
+	cells := func(values []string, styled bool) {
+		b.WriteString("|")
+		for i := range header {
+			value := ""
+			if i < len(values) {
+				value = values[i]
+			}
+			// Pad raw first so escapes never affect layout, then style.
+			value = padCell(value, widths[i])
+			if styled && styleHeader != nil {
+				value = styleHeader(value)
+			}
+			b.WriteString(" " + value + " |")
+		}
+		b.WriteString("\n")
+	}
+
+	border()
+	cells(header, true)
+	border()
+	for _, row := range rows {
+		cells(row, false)
+		border()
+	}
+	_, err := io.WriteString(w, b.String())
+	return err
+}
+
+// padCell pads s with spaces to the column width, counting wide runes
+// and ignoring the width (measured pre-style, so ANSI never misaligns).
+func padCell(s string, width int) string {
+	if pad := width - style.Width(s); pad > 0 {
+		return s + strings.Repeat(" ", pad)
+	}
+	return s
 }
 
 // JSON writes indented JSON plus a trailing newline. Map keys marshal
@@ -111,10 +152,51 @@ func YAML(w io.Writer, v any) error {
 	return err
 }
 
-// Graph renders values as a plain-ASCII line chart (no color codes,
-// safe on every console).
+// Graph renders values as a plain-ASCII point chart with a labeled
+// axis: pure ASCII, no color codes, safe on every console including
+// raster fonts.
 func Graph(values []float64) string {
-	return asciigraph.Plot(values)
+	if len(values) == 0 {
+		return ""
+	}
+
+	const height = 10
+	min, max := values[0], values[0]
+	for _, v := range values[1:] {
+		if v < min {
+			min = v
+		}
+		if v > max {
+			max = v
+		}
+	}
+
+	labels := make([]string, height)
+	labelWidth := 0
+	for r := 0; r < height; r++ {
+		labels[r] = fmt.Sprintf("%.2f", max-(max-min)*float64(r)/float64(height-1))
+		if len(labels[r]) > labelWidth {
+			labelWidth = len(labels[r])
+		}
+	}
+
+	rows := make([][]rune, height)
+	for r := range rows {
+		rows[r] = []rune(strings.Repeat(" ", len(values)))
+	}
+	for c, v := range values {
+		r := height / 2
+		if max > min {
+			r = int(math.Round((max - v) * float64(height-1) / (max - min)))
+		}
+		rows[r][c] = '*'
+	}
+
+	var b strings.Builder
+	for r := 0; r < height; r++ {
+		fmt.Fprintf(&b, "%*s |%s\n", labelWidth, labels[r], string(rows[r]))
+	}
+	return b.String()
 }
 
 // Bytes renders a byte count for humans, e.g. "1.5 kB".
