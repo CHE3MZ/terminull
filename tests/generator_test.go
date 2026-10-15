@@ -102,7 +102,7 @@ func TestNewScaffoldFiles(t *testing.T) {
 			t.Fatalf("Stat(%s) error = %v", path, err)
 		}
 	}
-	if !strings.Contains(got, "go.mod") || !strings.Contains(got, "CREATED") {
+	if !strings.Contains(got, "go.mod") || !strings.Contains(got, "created") {
 		t.Fatalf("new output %q does not list created files", got)
 	}
 }
