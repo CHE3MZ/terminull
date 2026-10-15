@@ -72,5 +72,8 @@
 - [x] 6.1 ponytail-audit sweep: drop VersionLine, unify painting on Scheme, promptIO on StdIO, app on Format consts, cover Changed
 - [x] 6.2 wire TerminalWidth into bars, EnsureConsole up front with render delegation
 - [x] 6.3 security guidance pass: govulncheck clean, perms/exec/paths/scripts reviewed, no findings
+- [x] 6.4 pager package with TTY gating and EPIPE tolerance
+- [x] 6.5 retry helper and positional arg completion
+- [x] 6.6 v1.1.0 tagged and released live (6 archives + checksums)
 - [x] 6.4 retry helper with backoff, used for go mod tidy
 - [x] 6.5 positional arg completion (ValidArgs/ValidArgsFunction via __complete)
