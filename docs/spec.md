@@ -118,6 +118,7 @@ ColorFor answers ansi-or-plain for any writer, pipes and buffers stay plain.
 EnsureConsole enables ansi on windows consoles up front, best effort elsewhere.
 Scheme paints named styles and icons, plain when disabled.
 Scheme.Faint dims a named color by half luminance, FaintRGB dims any rgb triple.
+style foreground constants mirror the engine, user code never imports fatih color.
 Muted dims the current color through sgr faint, Faint is the deterministic form.
 16 color terms downshift bright colors or snap rgb to the nearest base.
 TerminalWidth reports console columns or 80 fallback, used to fit bars.
