@@ -9,9 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
 	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers"
@@ -33,8 +30,8 @@ func newTestApp(out, errOut *bytes.Buffer, run *testDeployRun) *App {
 	app.Add(Command{
 		Use:   "deploy",
 		Short: "deploy things",
-		Args:  cobra.MaximumNArgs(1),
-		Flags: func(fs *pflag.FlagSet) {
+		Args:  MaximumNArgs(1),
+		Flags: func(fs *FlagSet) {
 			fs.String("env", "dev", "target environment")
 		},
 		Run: func(ctx *Context) error {
@@ -332,7 +329,7 @@ func TestChangedTracksExplicitFlags(t *testing.T) {
 	app.SetErr(&errOut)
 	app.Add(Command{
 		Use: "deploy",
-		Flags: func(fs *pflag.FlagSet) {
+		Flags: func(fs *FlagSet) {
 			fs.String("env", "dev", "target environment")
 		},
 		Run: func(ctx *Context) error {
@@ -411,14 +408,14 @@ func TestDynamicArgCompletion(t *testing.T) {
 	app.SetErr(&errOut)
 	app.Add(Command{
 		Use: "deploy",
-		ValidArgsFunction: func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		ValidArgsFunction: func(_ []string, toComplete string) ([]string, ShellCompDirective) {
 			var matches []string
 			for _, env := range []string{"prod", "staging", "dev"} {
 				if strings.HasPrefix(env, toComplete) {
 					matches = append(matches, env)
 				}
 			}
-			return matches, cobra.ShellCompDirectiveNoFileComp
+			return matches, ShellCompDirectiveNoFileComp
 		},
 		Run: func(*Context) error { return nil },
 	})

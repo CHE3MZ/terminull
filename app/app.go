@@ -246,9 +246,9 @@ func (a *App) build(c Command) *cobra.Command {
 		Short:             c.Short,
 		Long:              c.Long,
 		Example:           c.Example,
-		Args:              c.Args,
+		Args:              adaptArgs(c.Args),
 		ValidArgs:         c.ValidArgs,
-		ValidArgsFunction: c.ValidArgsFunction,
+		ValidArgsFunction: adaptCompletion(c.ValidArgsFunction),
 		Hidden:            c.Hidden,
 		SilenceUsage:      true,
 		SilenceErrors:     true,
@@ -277,12 +277,37 @@ func (a *App) build(c Command) *cobra.Command {
 	}
 
 	if c.Flags != nil {
-		c.Flags(cmd.Flags())
+		c.Flags(&FlagSet{FlagSet: cmd.Flags()})
 	}
 	for _, child := range c.Children {
 		cmd.AddCommand(a.build(child))
 	}
 	return cmd
+}
+
+// adaptArgs maps a terminull validator onto the engine hook. Nil keeps
+// the engine default, so group parents and bare commands behave exactly
+// as before.
+func adaptArgs(pa PositionalArgs) cobra.PositionalArgs {
+	if pa == nil {
+		return nil
+	}
+	return func(_ *cobra.Command, args []string) error {
+		return pa(args)
+	}
+}
+
+// adaptCompletion maps a terminull completion onto the engine hook. The
+// directive cast is safe: our values are bit-identical to the engine's
+// (see TestDirectivesMatchEngine).
+func adaptCompletion(fn CompletionFunc) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+	if fn == nil {
+		return nil
+	}
+	return func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		completions, directive := fn(args, toComplete)
+		return completions, cobra.ShellCompDirective(directive)
+	}
 }
 
 // collectOverrides gathers explicitly-changed flags with types, so CLI
