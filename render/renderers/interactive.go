@@ -39,8 +39,11 @@ type InteractiveRenderer struct {
 	// loopStarted guards single loop ownership; loopWG tracks the loop so
 	// StopDrawing joins it. WaitGroup orderings are safe here because
 	// exactly one Add ever happens (CAS winner) before any Wait can block.
+	// stopping, set first in StopDrawing, tells late starters to stay out
+	// so no setup bytes land after final output.
 	loopStarted atomic.Bool
 	loopWG      sync.WaitGroup
+	stopping    atomic.Bool
 
 	StubRenderer
 }
@@ -106,20 +109,18 @@ func (r *InteractiveRenderer) RenderMessage(entry *render.LogEntryMessage) {
 // StartDrawing prepares the terminal and redraws until the root node
 // completes. Run it in a goroutine; setup itself is synchronous so
 // prompts started afterwards see a stable terminal. Only the first call
-// owns the loop; further calls return after setup.
+// owns the loop; calls after stopping started return silently, so a
+// delayed start can never write past finalized output.
 func (r *InteractiveRenderer) StartDrawing() {
-	if r.rootNode.HasCompleted() {
+	_ = console.PrepareTerminalEnvironment()
+	r.drawLock.Lock()
+	if r.stopping.Load() || r.rootNode.HasCompleted() || !r.loopStarted.CompareAndSwap(false, true) {
+		r.drawLock.Unlock()
 		return
 	}
-	if !r.loopStarted.CompareAndSwap(false, true) {
-		return
-	}
-	if r.rootNode.HasCompleted() {
-		// Stopped while starting: leave the finalized terminal alone.
-		return
-	}
-	r.Setup()
+	r.writeNoWrapLocked()
 	r.loopWG.Add(1)
+	r.drawLock.Unlock()
 	defer r.loopWG.Done()
 	r.drawLoop()
 }
@@ -141,6 +142,11 @@ func (r *InteractiveRenderer) Setup() {
 	_ = console.PrepareTerminalEnvironment()
 	r.drawLock.Lock()
 	defer r.drawLock.Unlock()
+	r.writeNoWrapLocked()
+}
+
+// writeNoWrapLocked disables autowrap and flushes; the caller holds drawLock.
+func (r *InteractiveRenderer) writeNoWrapLocked() {
 	_, _ = r.out.WriteString(disableAutoWrap)
 	_ = r.out.Flush()
 }
@@ -151,6 +157,8 @@ func (r *InteractiveRenderer) Setup() {
 // output: that join is what keeps tables and subsequent writes intact.
 // Safe to call twice and without StartDrawing.
 func (r *InteractiveRenderer) StopDrawing() {
+	// First: no late starter may write past this point.
+	r.stopping.Store(true)
 	r.rootNode.Complete()
 	// one last redraw
 	r.paused.Store(false)

@@ -141,3 +141,20 @@ func TestSetupWritesNoWrapOnce(t *testing.T) {
 		t.Fatalf("Setup output = %q, want two nowrap escapes", got)
 	}
 }
+
+func TestLateStartAfterStopSilent(t *testing.T) {
+	t.Parallel()
+
+	r, path := frameFile(t)
+	r.RenderScopeStarted(render.NewLogScopeStarted("a"))
+	r.StopDrawing()
+	before := readFrame(t, path)
+
+	// A start racing in after a completed stop must not write: the
+	// stopping gate returns before any setup or loop ownership.
+	r.StartDrawing()
+	time.Sleep(200 * time.Millisecond)
+	if got := readFrame(t, path); got != before {
+		t.Fatalf("late StartDrawing changed %q to %q", before, got)
+	}
+}
