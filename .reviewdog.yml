@@ -1,0 +1,49 @@
+runner:
+  golangci-lint:
+    cmd: golangci-lint run ./...
+    errorformat:
+      - "%f:%l:%c: %m"
+      - "%f:%l: %m"
+    level: error
+    filter-mode: nofilter
+
+  gosec:
+    cmd: gosec -no-fail ./...
+    errorformat:
+      - "%f:%l:%c: %m"
+      - "%f:%l: %m"
+    level: warning
+    filter-mode: nofilter
+
+  staticcheck:
+    cmd: staticcheck ./...
+    errorformat:
+      - "%f:%l:%c: %m"
+      - "%f:%l: %m"
+    level: warning
+    filter-mode: nofilter
+
+  govet:
+    cmd: go vet ./...
+    errorformat:
+      - "%f:%l:%c: %m"
+      - "%f:%l: %m"
+    level: error
+    filter-mode: nofilter
+
+  errcheck:
+    cmd: errcheck ./...
+    errorformat:
+      - "%f:%l:%c:\t%m"
+      - "%f:%l:%c: %m"
+    level: error
+    filter-mode: nofilter
+
+  govulncheck:
+    cmd: govulncheck ./...
+    errorformat:
+      - "%f:%l:%c: %m"
+      - "%f:%l: %m"
+      - "%m"
+    level: error
+    filter-mode: nofilter
