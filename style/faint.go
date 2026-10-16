@@ -146,9 +146,10 @@ func abs(v int) int {
 }
 
 // Faint paints str in a half-luminance variant of attr, working on every
-// terminal that renders the color at all — unlike the SGR faint flag,
-// which most terminals silently ignore. Returns str unchanged when
-// disabled or when attr is not a foreground color.
+// terminal that renders the color at all — unlike the SGR faint flag
+// (SGR 2), whose dimming strength varies per terminal and whose reset
+// (SGR 22) also clears bold. Returns str unchanged when disabled or
+// when attr is not a foreground color.
 func (s Scheme) Faint(attr color.Attribute, str string) string {
 	if !s.Enabled {
 		return str
