@@ -88,5 +88,13 @@
 - [x] 8.1 fork aquasecurity/table + rodaine/table into table/ with facade
 - [x] 8.2 StyleAqua default, StyleRodaine script-friendly, unknown styles error
 - [x] 8.3 output rerouted (Table/TableWith/TableStyle), old renderer removed
-- [x] 6.4 retry helper with backoff, used for go mod tidy
-- [x] 6.5 positional arg completion (ValidArgs/ValidArgsFunction via __complete)
+
+# next (backlog, not scheduled):
+
+- [ ] prompt live verification on a real console (conhost vs terminal matrix)
+- [ ] docs nav for mkdocs once index content lands (see 4.3)
+- [ ] man pages via cobra doc generation
+- [ ] update notifier with state file throttle
+- [ ] brew scoop choco distribution extras
+- [ ] config file watching and toml codec
+- [ ] evaluate plain-line prompt fallback if a console family misbehaves
