@@ -30,9 +30,6 @@ func AutoRenderer(out *os.File, noColor bool) (render.LogRendered, func()) {
 	}
 
 	cfg := config.NewDefaultRenderingConfig()
-	if !style.Emoji() {
-		cfg = config.NewDefaultSymbolsOnlyRenderingConfig()
-	}
 	if noColor {
 		cfg.Colors = terminal.NoColorSchema()
 	}

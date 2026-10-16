@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -23,6 +25,32 @@ func TestDefaultConfigs(t *testing.T) {
 	def := NewDefaultRenderingConfig()
 	if def == nil || def.Colors == nil || def.RefreshRate <= 0 {
 		t.Fatal("default config is not usable")
+	}
+}
+
+func TestDefaultFollowsEmojiCapability(t *testing.T) {
+	t.Setenv("TERM", "xterm")
+	t.Setenv("CI", "")
+	previous, hadWT := os.LookupEnv("WT_SESSION")
+	if err := os.Unsetenv("WT_SESSION"); err != nil {
+		t.Fatalf("Unsetenv() error = %v", err)
+	}
+	t.Cleanup(func() {
+		if hadWT {
+			_ = os.Setenv("WT_SESSION", previous)
+		}
+	})
+
+	// Without Windows Terminal, only non-Windows gets emoji glyphs.
+	wantEmoji := runtime.GOOS != "windows"
+	if got := NewDefaultRenderingConfig().SuccessStatus == "✅"; got != wantEmoji {
+		t.Fatalf("default emoji = %v, want %v on %s", got, wantEmoji, runtime.GOOS)
+	}
+
+	// Windows Terminal joins the emoji set everywhere.
+	t.Setenv("WT_SESSION", "test-session")
+	if got := NewDefaultRenderingConfig().SuccessStatus; got != "✅" {
+		t.Fatalf("default status with WT_SESSION = %q, want emoji", got)
 	}
 }
 

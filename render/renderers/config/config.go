@@ -1,10 +1,10 @@
 package config
 
 import (
-	"runtime"
 	"time"
 
 	"github.com/CHE3MZ/terminull/render/terminal"
+	"github.com/CHE3MZ/terminull/style"
 )
 
 const defaultVisibleLines = 5
@@ -24,12 +24,14 @@ type InteractiveRendererConfig struct {
 	VisibleDescriptionLines        int
 }
 
-// NewDefaultRenderingConfig selects emoji on Unix and symbols-only on Windows.
+// NewDefaultRenderingConfig selects emoji where the terminal renders it
+// and symbols-only elsewhere, sharing style.Emoji's verdict so live
+// trees, spinners, and prompts always agree on glyphs.
 func NewDefaultRenderingConfig() *InteractiveRendererConfig {
-	if runtime.GOOS == "windows" {
-		return NewDefaultSymbolsOnlyRenderingConfig()
+	if style.Emoji() {
+		return NewDefaultEmojiRenderingConfig()
 	}
-	return NewDefaultEmojiRenderingConfig()
+	return NewDefaultSymbolsOnlyRenderingConfig()
 }
 
 // NewDefaultEmojiRenderingConfig builds the emoji config for modern terminals.
