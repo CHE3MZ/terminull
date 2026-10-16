@@ -201,7 +201,7 @@ func (a *App) preRun(cmd *cobra.Command, args []string) error {
 		Config:  cfg,
 		Logger:  logger,
 		Out:     cmd.OutOrStdout(),
-		Err:     cmd.ErrOrStderr(),
+		ErrOut:  cmd.ErrOrStderr(),
 		In:      cmd.InOrStdin(),
 		Output:  a.output,
 		NoColor: a.noColor,

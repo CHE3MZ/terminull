@@ -204,7 +204,7 @@ func stdinTerminal(ctx *app.Context) bool {
 // every other output.
 func promptIO(ctx *app.Context) prompt.IO {
 	io := prompt.StdIO()
-	io.Err = ctx.Err
+	io.Err = ctx.ErrOut
 	io.NoColor = !style.ColorFor(ctx.Out, ctx.NoColor)
 	if f, ok := ctx.In.(prompt.FileReader); ok {
 		io.In = f

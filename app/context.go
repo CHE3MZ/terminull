@@ -10,11 +10,16 @@ import (
 	"github.com/CHE3MZ/terminull/render"
 )
 
+// Compile-time proof that handlers can pass *Context anywhere a
+// context.Context is wanted.
+var _ context.Context = (*Context)(nil)
+
 // contextKey carries the *Context built by PersistentPreRunE.
 type contextKey struct{}
 
 // Context is what Run handlers receive: cancellation, layered config,
-// a scoped-capable logger, IO, and typed flag access.
+// a scoped-capable logger, IO, and typed flag access. It satisfies
+// context.Context, so pass it directly to cancellable helpers.
 type Context struct {
 	context.Context
 
@@ -24,7 +29,10 @@ type Context struct {
 	Config *config.Config
 	Logger *render.Logger
 	Out    io.Writer
-	Err    io.Writer
+	// ErrOut receives error output. Named to avoid shadowing the
+	// embedded context's Err method, so *Context itself satisfies
+	// context.Context and passes directly to cancellable helpers.
+	ErrOut io.Writer
 	In     io.Reader
 	// Output is the validated --output value: table, json, or yaml.
 	Output string
