@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/table"
 )
 
 // Formats for Render and the --output flag.
@@ -48,80 +49,40 @@ type TableValue struct {
 	Rows   [][]string
 }
 
-// Table writes an ASCII-bordered table with a header row.
+// Table writes a bordered table (StyleAqua default) with a header row.
 func Table(w io.Writer, header []string, rows [][]string) error {
-	return writeTable(w, header, rows, nil)
+	return TableStyle(w, TableValue{Header: header, Rows: rows}, table.StyleAqua)
 }
 
 // TableWith renders like Table but styles the header through scheme:
 // uppercased and underlined when enabled, verbatim otherwise so piped
-// output stays script-friendly.
+// output stays script-friendly. The aqua engine measures ANSI-aware,
+// so styled headers stay aligned.
 func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
-	var styleHeader func(string) string
+	header := tv.Header
 	if scheme.Enabled {
-		styleHeader = scheme.TableHeader
+		header = make([]string, len(tv.Header))
+		for i, h := range tv.Header {
+			header[i] = scheme.TableHeader(h)
+		}
 	}
-	return writeTable(w, tv.Header, tv.Rows, styleHeader)
+	tb := table.New(w)
+	tb.SetHeaders(header...)
+	for _, row := range tv.Rows {
+		tb.AddRow(row...)
+	}
+	return tb.Render()
 }
 
-func writeTable(w io.Writer, header []string, rows [][]string, styleHeader func(string) string) error {
-	// Widths measure raw text so styled cells never misalign columns.
-	widths := make([]int, len(header))
-	for i, h := range header {
-		widths[i] = style.Width(h)
+// TableStyle renders with an explicit table style: StyleAqua (bordered,
+// the default look) or StyleRodaine (borderless, most script-friendly).
+func TableStyle(w io.Writer, tv TableValue, s table.Style) error {
+	tb := table.New(w, table.WithStyle(s))
+	tb.SetHeaders(tv.Header...)
+	for _, row := range tv.Rows {
+		tb.AddRow(row...)
 	}
-	for _, row := range rows {
-		for i := range header {
-			if i < len(row) && style.Width(row[i]) > widths[i] {
-				widths[i] = style.Width(row[i])
-			}
-		}
-	}
-
-	var b strings.Builder
-	border := func() {
-		b.WriteString("+")
-		for _, wd := range widths {
-			b.WriteString(strings.Repeat("-", wd+2))
-			b.WriteString("+")
-		}
-		b.WriteString("\n")
-	}
-	cells := func(values []string, styled bool) {
-		b.WriteString("|")
-		for i := range header {
-			value := ""
-			if i < len(values) {
-				value = values[i]
-			}
-			// Pad raw first so escapes never affect layout, then style.
-			value = padCell(value, widths[i])
-			if styled && styleHeader != nil {
-				value = styleHeader(value)
-			}
-			b.WriteString(" " + value + " |")
-		}
-		b.WriteString("\n")
-	}
-
-	border()
-	cells(header, true)
-	border()
-	for _, row := range rows {
-		cells(row, false)
-		border()
-	}
-	_, err := io.WriteString(w, b.String())
-	return err
-}
-
-// padCell pads s with spaces to the column width, counting wide runes
-// and ignoring the width (measured pre-style, so ANSI never misaligns).
-func padCell(s string, width int) string {
-	if pad := width - style.Width(s); pad > 0 {
-		return s + strings.Repeat(" ", pad)
-	}
-	return s
+	return tb.Render()
 }
 
 // JSON writes indented JSON plus a trailing newline. Map keys marshal

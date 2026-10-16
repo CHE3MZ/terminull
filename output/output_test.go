@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/table"
 )
 
 func TestTableGolden(t *testing.T) {
@@ -25,9 +26,10 @@ func TestTableGolden(t *testing.T) {
 			t.Fatalf("table %q does not contain %q", got, want)
 		}
 	}
-	for _, r := range []string{"│", "─", "┌", "┐", "└", "┘", "├", "┤", "┬", "┴", "┼"} {
-		if strings.Contains(got, r) {
-			t.Fatalf("table %q contains box-drawing %q, want ASCII only", got, r)
+	// Default style is aqua: unicode borders.
+	for _, want := range []string{"┌", "│", "─"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("table %q does not contain border %q", got, want)
 		}
 	}
 }
@@ -59,8 +61,7 @@ func TestTableWithScheme(t *testing.T) {
 	if err := TableWith(&plain, tv, style.NewScheme(false)); err != nil {
 		t.Fatalf("TableWith() error = %v", err)
 	}
-	// Our own renderer keeps headers verbatim; tablewriter used to
-	// uppercase them. Disabled only guarantees no escapes.
+	// Disabled scheme keeps headers verbatim with no escapes.
 	if got := plain.String(); !strings.Contains(got, "name") || strings.Contains(got, "\x1b[") {
 		t.Fatalf("TableWith(disabled) = %q, want verbatim header, no escapes", got)
 	}
@@ -90,6 +91,28 @@ func TestYAMLGolden(t *testing.T) {
 	want := "name: x\ncount: 2\n"
 	if b.String() != want {
 		t.Fatalf("YAML() = %q, want %q", b.String(), want)
+	}
+}
+
+func TestTableStyleRodaine(t *testing.T) {
+	t.Parallel()
+
+	tv := TableValue{Header: []string{"NAME", "STATUS"}, Rows: [][]string{{"web", "ok"}}}
+
+	var b strings.Builder
+	if err := TableStyle(&b, tv, table.StyleRodaine); err != nil {
+		t.Fatalf("TableStyle() error = %v", err)
+	}
+	got := b.String()
+	for _, want := range []string{"NAME", "STATUS", "web", "ok"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("rodaine table %q does not contain %q", got, want)
+		}
+	}
+	for _, box := range []string{"┌", "┐", "└", "┘", "├", "┤", "─", "│", "+"} {
+		if strings.Contains(got, box) {
+			t.Fatalf("rodaine table %q contains border %q, want borderless", got, box)
+		}
 	}
 }
 
