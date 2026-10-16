@@ -135,7 +135,7 @@ func runNew(ctx *app.Context) error {
 	}, scheme); err != nil {
 		return err
 	}
-	_, err = fmt.Fprintln(ctx.Out, "next: cd "+dir+" && go run ./cmd/"+name+" --help")
+	_, err = fmt.Fprintln(ctx.Out, scheme.Faint(style.FgWhite, "next: cd "+dir+" && go run ./cmd/"+name+" --help"))
 	return err
 }
 

@@ -23,7 +23,7 @@ func NewScheme(enabled bool) Scheme {
 }
 
 // Paint wraps s in attr when enabled, mirroring package Paint.
-func (s Scheme) Paint(attr color.Attribute, str string) string {
+func (s Scheme) Paint(attr Attribute, str string) string {
 	return Paint(s.Enabled, attr, str)
 }
 

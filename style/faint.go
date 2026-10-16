@@ -22,7 +22,7 @@ var rgbCubeLevels = []int{0, 95, 135, 175, 215, 255}
 
 // ansiRGB maps the 16 ANSI foreground colors to approximate xterm RGB.
 // Values only feed the dimmer, so rounding is invisible in output.
-var ansiRGB = map[color.Attribute][3]int{
+var ansiRGB = map[Attribute][3]int{
 	color.FgBlack:     {0, 0, 0},
 	color.FgRed:       {205, 0, 0},
 	color.FgGreen:     {0, 205, 0},
@@ -58,7 +58,7 @@ func colorDepth() int {
 // or "" when attr is not a foreground color. The 16-color branch keeps
 // its legacy mapping (bright downshifts, normal stays); wider palettes
 // share dimRGB.
-func dimCode(attr color.Attribute, depth int) string {
+func dimCode(attr Attribute, depth int) string {
 	rgb, ok := ansiRGB[attr]
 	if !ok {
 		return ""
@@ -150,7 +150,7 @@ func abs(v int) int {
 // (SGR 2), whose dimming strength varies per terminal and whose reset
 // (SGR 22) also clears bold. Returns str unchanged when disabled or
 // when attr is not a foreground color.
-func (s Scheme) Faint(attr color.Attribute, str string) string {
+func (s Scheme) Faint(attr Attribute, str string) string {
 	if !s.Enabled {
 		return str
 	}

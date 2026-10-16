@@ -9,7 +9,7 @@ import (
 //
 // The per-instance switch (not the global color.NoColor) keeps this
 // hermetic: parallel code paths can paint differently without racing.
-func Paint(enabled bool, attr color.Attribute, s string) string {
+func Paint(enabled bool, attr Attribute, s string) string {
 	c := color.New(attr)
 	if enabled {
 		c.EnableColor()

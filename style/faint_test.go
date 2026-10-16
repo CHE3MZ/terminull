@@ -63,6 +63,26 @@ func TestFaintEnabled(t *testing.T) {
 	}
 }
 
+func TestAttributesMatchEngine(t *testing.T) {
+	t.Parallel()
+
+	pairs := map[Attribute]color.Attribute{
+		FgBlack: color.FgBlack, FgRed: color.FgRed,
+		FgGreen: color.FgGreen, FgYellow: color.FgYellow,
+		FgBlue: color.FgBlue, FgMagenta: color.FgMagenta,
+		FgCyan: color.FgCyan, FgWhite: color.FgWhite,
+		FgHiBlack: color.FgHiBlack, FgHiRed: color.FgHiRed,
+		FgHiGreen: color.FgHiGreen, FgHiYellow: color.FgHiYellow,
+		FgHiBlue: color.FgHiBlue, FgHiMagenta: color.FgHiMagenta,
+		FgHiCyan: color.FgHiCyan, FgHiWhite: color.FgHiWhite,
+	}
+	for ours, engine := range pairs {
+		if color.Attribute(ours) != engine {
+			t.Fatalf("attribute %d != engine %d", int(ours), int(engine))
+		}
+	}
+}
+
 func TestFaintDisabled(t *testing.T) {
 	t.Parallel()
 
