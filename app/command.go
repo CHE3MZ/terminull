@@ -23,6 +23,9 @@ type Command struct {
 	// ValidArgsFunction computes dynamic completions. It mirrors
 	// cobra's hook, including the ShellCompDirective return.
 	ValidArgsFunction func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective)
+	// Hidden removes the command from help lists without disabling it,
+	// for internal and deprecated commands.
+	Hidden bool
 	// Flags registers command-local flags. Read them back with
 	// Context.String/Bool/Int/StringSlice.
 	Flags func(*pflag.FlagSet)

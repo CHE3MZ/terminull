@@ -248,6 +248,7 @@ func (a *App) build(c Command) *cobra.Command {
 		Args:              c.Args,
 		ValidArgs:         c.ValidArgs,
 		ValidArgsFunction: c.ValidArgsFunction,
+		Hidden:            c.Hidden,
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		RunE: func(cmd *cobra.Command, _ []string) error {

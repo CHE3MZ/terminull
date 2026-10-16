@@ -374,6 +374,34 @@ func TestStaticArgCompletion(t *testing.T) {
 	}
 }
 
+func TestHiddenCommandAbsentFromHelp(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{Use: "visible", Short: "shown", Run: func(*Context) error { return nil }})
+	app.Add(Command{Use: "secret", Short: "hidden", Hidden: true, Run: func(*Context) error { return nil }})
+
+	if err := app.Execute(context.Background(), []string{"--help"}); err != nil {
+		t.Fatalf("Execute(--help) error = %v", err)
+	}
+	got := combined(&out, &errOut)
+	if !strings.Contains(got, "visible") {
+		t.Fatalf("help %q misses visible command", got)
+	}
+	if strings.Contains(got, "secret") {
+		t.Fatalf("help %q lists hidden command", got)
+	}
+
+	out.Reset()
+	errOut.Reset()
+	if err := app.Execute(context.Background(), []string{"secret"}); err != nil {
+		t.Fatalf("Execute(secret) error = %v, hidden must still run", err)
+	}
+}
+
 func TestDynamicArgCompletion(t *testing.T) {
 	t.Parallel()
 
