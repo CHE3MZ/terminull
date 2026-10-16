@@ -46,13 +46,9 @@ jobs:
         run: |
           mkdir -p dist logs
           go build ./... 2>&1 | tee "logs/build-${{ matrix.goos }}-${{ matrix.goarch }}.txt"
-          if [ -d cmd/demo ]; then
-            OUT="dist/demo-${{ matrix.goos }}-${{ matrix.goarch }}"
-            if [ "${{ matrix.goos }}" = "windows" ]; then OUT="$OUT.exe"; fi
-            go build -o "$OUT" ./cmd/demo
-          else
-            echo "no cmd/demo yet, skipping binary"
-          fi
+          OUT="dist/terminull-${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then OUT="$OUT.exe"; fi
+          go build -o "$OUT" ./cmd/terminull 2>&1 | tee -a "logs/build-${{ matrix.goos }}-${{ matrix.goarch }}.txt"
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
