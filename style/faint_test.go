@@ -70,4 +70,33 @@ func TestFaintDisabled(t *testing.T) {
 	if got := s.Faint(color.FgRed, "x"); got != "x" {
 		t.Fatalf("Faint(disabled) = %q", got)
 	}
+	if got := s.FaintRGB(255, 0, 0, "x"); got != "x" {
+		t.Fatalf("FaintRGB(disabled) = %q", got)
+	}
+}
+
+func TestFaintRGB(t *testing.T) {
+	t.Setenv("COLORTERM", "truecolor")
+	t.Setenv("TERM", "xterm")
+
+	s := NewScheme(true)
+	if got := s.FaintRGB(255, 0, 0, "x"); got != "\x1b[38;2;127;0;0mx\x1b[0m" {
+		t.Fatalf("FaintRGB(true) = %q", got)
+	}
+
+	t.Setenv("COLORTERM", "")
+	t.Setenv("TERM", "xterm-256color")
+	if got := s.FaintRGB(255, 0, 0, "x"); got != "\x1b[38;5;88mx\x1b[0m" {
+		t.Fatalf("FaintRGB(256) = %q", got)
+	}
+
+	t.Setenv("TERM", "xterm")
+	if got := s.FaintRGB(255, 165, 0, "x"); got != "\x1b[31mx\x1b[0m" {
+		t.Fatalf("FaintRGB(16) = %q, want nearest base red", got)
+	}
+
+	t.Setenv("COLORTERM", "truecolor")
+	if got := s.FaintRGB(300, -10, 128, "x"); got != "\x1b[38;2;127;0;64mx\x1b[0m" {
+		t.Fatalf("FaintRGB(clamped) = %q", got)
+	}
 }
