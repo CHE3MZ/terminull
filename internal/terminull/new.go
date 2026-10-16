@@ -22,11 +22,14 @@ import (
 	"github.com/CHE3MZ/terminull/style"
 )
 
-// NewApp builds the terminull CLI.
+// NewApp builds the terminull CLI in its house style: plain ASCII
+// spinners and tree glyphs on every terminal. Framework default stays
+// capability-based (emoji where supported).
 func NewApp() *app.App {
 	a := app.New("terminull",
 		app.WithShort("Scaffold batteries-included Go CLI apps."),
 		app.WithLong("Scaffold batteries-included Go CLI apps with prompting, logging, and multi-format output built in."),
+		app.WithSymbolsOnly(),
 	)
 	a.Add(newCommand())
 	return a
@@ -219,7 +222,7 @@ func tidyWithSpinner(ctx *app.Context, dir string) error {
 	ctx.PauseDrawing()
 	defer ctx.ResumeDrawing()
 
-	spin := progress.NewSpinner(ctx.Out, "resolving modules", style.Emoji())
+	spin := progress.NewSpinner(ctx.Out, "resolving modules", false)
 	spin.Start()
 	var out string
 	err := retry.Do(func() error {

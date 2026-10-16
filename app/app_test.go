@@ -406,3 +406,40 @@ func TestDynamicArgCompletion(t *testing.T) {
 		t.Fatalf("completion %q leaks unfiltered entries", got)
 	}
 }
+
+func TestWithSymbolsOnlySetsField(t *testing.T) {
+	t.Parallel()
+
+	if got := New("demo", WithSymbolsOnly()); !got.symbolsOnly {
+		t.Fatal("WithSymbolsOnly did not set the flag")
+	}
+	if got := New("demo"); got.symbolsOnly {
+		t.Fatal("default app forces symbols")
+	}
+}
+
+func TestSymbolsOnlyMatchesDefaultOffTerminal(t *testing.T) {
+	t.Parallel()
+
+	run := func(opts ...Option) string {
+		var out, errOut bytes.Buffer
+		app := New("demo", append([]Option{WithVersion("1-test")}, opts...)...)
+		app.SetOut(&out)
+		app.SetErr(&errOut)
+		app.Add(Command{
+			Use:   "deploy",
+			Short: "deploy things",
+			Run:   func(*Context) error { return nil },
+		})
+		if err := app.Execute(context.Background(), []string{"deploy"}); err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		return combined(&out, &errOut)
+	}
+
+	// Off-terminal both take the simple branch: identical bytes prove the
+	// flag changes TTY glyphs only, never piped output.
+	if plain, symbols := run(), run(WithSymbolsOnly()); plain != symbols {
+		t.Fatalf("outputs differ off-terminal:\n%q\nvs\n%q", plain, symbols)
+	}
+}

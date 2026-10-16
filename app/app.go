@@ -15,6 +15,7 @@ import (
 	"github.com/CHE3MZ/terminull/output"
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers"
+	renderconfig "github.com/CHE3MZ/terminull/render/renderers/config"
 	"github.com/CHE3MZ/terminull/render/terminal"
 	"github.com/CHE3MZ/terminull/style"
 )
@@ -34,6 +35,10 @@ type App struct {
 	noColor    bool
 	verbose    bool
 	debug      bool
+	// symbolsOnly forces ASCII spinners and statuses even where emoji
+	// would render: deterministic output for logs, scripts, and house
+	// styles that prefer it.
+	symbolsOnly bool
 }
 
 // Option tunes an App at construction.
@@ -57,6 +62,15 @@ func WithShort(short string) Option {
 func WithLong(long string) Option {
 	return func(a *App) {
 		a.long = long
+	}
+}
+
+// WithSymbolsOnly forces ASCII spinners and statuses on terminals that
+// could render emoji. Use it for deterministic output and house styles
+// that prefer the classic look; default follows terminal capability.
+func WithSymbolsOnly() Option {
+	return func(a *App) {
+		a.symbolsOnly = true
 	}
 }
 
@@ -199,13 +213,28 @@ func (a *App) preRun(cmd *cobra.Command, args []string) error {
 
 // selectRenderer uses the auto renderer for real terminal files and a
 // plain simple renderer for captured writers (tests, pipes without files),
-// so static output stays assertion-friendly.
+// so static output stays assertion-friendly. WithSymbolsOnly pins the
+// interactive tree to ASCII glyphs on terminals.
 func (a *App) selectRenderer(cmd *cobra.Command) (render.LogRendered, func()) {
 	if outFile, ok := cmd.OutOrStdout().(*os.File); ok {
+		if a.symbolsOnly {
+			return a.symbolsRenderer(outFile)
+		}
 		return renderers.AutoRenderer(outFile, a.noColor)
 	}
 	renderer := renderers.NewSimpleRenderer(cmd.OutOrStdout(), terminal.NoColorSchema())
 	return renderer, func() {}
+}
+
+// symbolsRenderer mirrors AutoRenderer's interactive branch with a
+// symbols-only config, so house styles stay ASCII on any terminal.
+func (a *App) symbolsRenderer(outFile *os.File) (render.LogRendered, func()) {
+	cfg := renderconfig.NewDefaultSymbolsOnlyRenderingConfig()
+	if a.noColor {
+		cfg.Colors = terminal.NoColorSchema()
+	}
+	interactive := renderers.NewInteractiveRenderer(outFile, cfg)
+	return interactive, interactive.StopDrawing
 }
 
 // build converts a Command, recursing into Children groups. Drawing starts
