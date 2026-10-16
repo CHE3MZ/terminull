@@ -82,5 +82,11 @@
 - [x] 7.2 spinner + bar owned by progress (TTY gating, ASCII-safe, narrow fit)
 - [x] 7.3 table + graph owned by output (ANSI-aware layout, verbatim pipes)
 - [x] 7.4 go.mod slimmed to 19 direct + 8 indirect
+
+# phase 8 — merged table library:
+
+- [x] 8.1 fork aquasecurity/table + rodaine/table into table/ with facade
+- [x] 8.2 StyleAqua default, StyleRodaine script-friendly, unknown styles error
+- [x] 8.3 output rerouted (Table/TableWith/TableStyle), old renderer removed
 - [x] 6.4 retry helper with backoff, used for go mod tidy
 - [x] 6.5 positional arg completion (ValidArgs/ValidArgsFunction via __complete)

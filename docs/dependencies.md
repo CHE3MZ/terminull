@@ -3,6 +3,7 @@
 spf13/cobra ( as a mod )
 knadh/koanf ( as a mod , for config )
 CHE3MZ/terminull/render ( internal , fork of cirruslabs/echelon , for hierarchical logs )
+CHE3MZ/terminull/table ( internal , aqua + rodaine styles )
 CHE3MZ/terminull/prompt ( internal , line engine , for selects and dialogs )
 CHE3MZ/terminull/progress ( internal , for spinners and progress bars )
 CHE3MZ/terminull/output ( internal , for tables and graphs )
