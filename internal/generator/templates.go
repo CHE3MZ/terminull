@@ -38,8 +38,6 @@ const commandsTemplate = `// Package commands wires the [[.Name]] commands.
 package commands
 
 import (
-	"github.com/spf13/pflag"
-
 	"github.com/CHE3MZ/terminull/app"
 	"github.com/CHE3MZ/terminull/output"
 )
@@ -56,7 +54,7 @@ func helloCommand() app.Command {
 	return app.Command{
 		Use:   "hello",
 		Short: "greet someone",
-		Flags: func(fs *pflag.FlagSet) {
+		Flags: func(fs *app.FlagSet) {
 			fs.String("name", "world", "who to greet")
 		},
 		Run: func(ctx *app.Context) error {

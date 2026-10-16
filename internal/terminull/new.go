@@ -8,9 +8,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
 	"github.com/CHE3MZ/terminull/app"
 	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/internal/generator"
@@ -40,10 +37,10 @@ func newCommand() app.Command {
 		Use:   "new NAME",
 		Short: "scaffold a new terminull project",
 		Long:  "Scaffold a new terminull project: go.mod, a main package, sample commands, and a README.",
-		Args:  cobra.MaximumNArgs(1),
+		Args:  app.MaximumNArgs(1),
 		Example: `terminull new myapp --module example.com/myapp
   terminull new myapp --dir ./myapp --skip-tidy`,
-		Flags: func(fs *pflag.FlagSet) {
+		Flags: func(fs *app.FlagSet) {
 			fs.String("module", "", "go module path (default: NAME)")
 			fs.String("dir", "", "target directory (default: ./NAME)")
 			fs.String("replace", "", "replace framework with local path (dogfood)")
