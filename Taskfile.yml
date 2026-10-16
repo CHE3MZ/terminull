@@ -16,18 +16,20 @@ tasks:
     desc: Run golangci-lint.
     cmds:
       - golangci-lint run ./...
-
   test:
     desc: Run go tests via script.
     cmds:
       - sh scripts/test.sh
-
   build:
     desc: Build all packages into dist/.
     cmds:
       - sh scripts/build.sh
-
   smoke:
     desc: End-to-end smoke with the generator CLI.
     cmds:
       - sh scripts/smoke.sh
+  scan:
+    desc: Run other ops tools on the repo.
+    cmds:
+      - cmd: opengrep scan
+      - cmd: osv-scanner scan .
