@@ -74,9 +74,10 @@ func WithSymbolsOnly() Option {
 	}
 }
 
-// New builds an App with the five global flags:
+// New builds an App with the five global flags (no shorthands, so
+// subcommands own -f -o -e -v freely):
 //
-//	--config/-f, --output/-o table|json|yaml, --no-color, --verbose, --debug
+//	--config, --output table|json|yaml, --no-color, --verbose, --debug
 func New(name string, opts ...Option) *App {
 	a := &App{
 		name:    name,
@@ -99,8 +100,8 @@ func New(name string, opts ...Option) *App {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&a.configFile, "config", "f", "", "config file (default search: home, user config dir, cwd)")
-	cmd.PersistentFlags().StringVarP(&a.output, "output", "o", "table", "output format: table|json|yaml")
+	cmd.PersistentFlags().StringVar(&a.configFile, "config", "", "config file (default search: home, user config dir, cwd)")
+	cmd.PersistentFlags().StringVar(&a.output, "output", "table", "output format: table|json|yaml")
 	cmd.PersistentFlags().BoolVar(&a.noColor, "no-color", false, "disable color output")
 	cmd.PersistentFlags().BoolVar(&a.verbose, "verbose", false, "verbose logging")
 	cmd.PersistentFlags().BoolVar(&a.debug, "debug", false, "debug logging")

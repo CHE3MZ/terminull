@@ -31,7 +31,7 @@ jobs:
           go build -o dogfood ./cmd/dogfood
           ./dogfood --help | tee -a "$GITHUB_WORKSPACE/dogfood-${{ matrix.os }}.txt"
           ./dogfood hello --name dogfood | tee -a "$GITHUB_WORKSPACE/dogfood-${{ matrix.os }}.txt"
-          ./dogfood status -o json | tee -a "$GITHUB_WORKSPACE/dogfood-${{ matrix.os }}.txt"
+          ./dogfood status --output json | tee -a "$GITHUB_WORKSPACE/dogfood-${{ matrix.os }}.txt"
       - name: Upload dogfood output
         if: always()
         uses: actions/upload-artifact@v4

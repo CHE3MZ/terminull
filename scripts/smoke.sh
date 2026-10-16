@@ -15,5 +15,5 @@ go build ./...
 go build -o smokeapp ./cmd/smokeapp
 ./smokeapp --help
 ./smokeapp hello --name smoke
-./smokeapp status -o json
+./smokeapp status --output json
 echo "smoke OK"

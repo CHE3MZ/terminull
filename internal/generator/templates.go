@@ -121,5 +121,5 @@ Built with [terminull](https://github.com/CHE3MZ/terminull) [[.TerminullVersion]
     go mod tidy
     go run ./cmd/[[.Name]] --help
     go run ./cmd/[[.Name]] hello --name world
-    go run ./cmd/[[.Name]] status -o json
+    go run ./cmd/[[.Name]] status --output json
 `

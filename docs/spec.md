@@ -82,7 +82,8 @@ validate names and flags before banners and logs, so usage errors print clean an
 
 app is the boss, it owns cobra inside and never exposes it except one Raw escape.
 app holds name, version, root command, subcommands.
-app owns global flags: --config -f, --output table json yaml, --no-color, --verbose, --debug.
+app owns global flags: --config, --output table json yaml, --no-color, --verbose, --debug.
+globals carry no shorthands, so subcommands own -f -o -e -v freely.
 app uses stock cobra help, version, completion output.
 apps declare Command with use, short, flags, run with ctx, plus Args and ValidArgs completion.
 flag callbacks take pflag and arg validation takes cobra types by design, as narrow escape hatches.
