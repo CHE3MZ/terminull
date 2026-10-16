@@ -41,6 +41,7 @@
 - [x] 3.7 `config/` koanf merge flag > env > file > default, strict yaml KnownFields, XDG + home lookup
 - [x] 3.8 `config/` tests: precedence, unknown key fails, missing file ok
 - [x] 3.9 `app/` cobra wrapper: New, Add, global flags (--config --output --no-color --verbose --debug), PersistentPreRunE order, ctx build, SilenceUsage/Errors
+- [x] 3.9b `app/` owned facade: FlagSet embeds pflag, PositionalArgs validators, ShellCompDirective + CompletionFunc, engine mapping with directive parity test
 - [x] 3.10 `app/` tests: help/version/completion out-only, unknown flag exit 2
 - [x] 3.11 `prompt/` survey wrapper: Select/MultiSelect/Confirm/Input/Password, WithStdio, non-tty flag-required error, pause render contract
 - [x] 3.12 `prompt/` tests: piped stdio select, non-tty error message

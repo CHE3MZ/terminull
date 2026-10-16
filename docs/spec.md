@@ -86,7 +86,8 @@ app owns global flags: --config, --output table json yaml, --no-color, --verbose
 globals carry no shorthands, so subcommands own -f -o -e -v freely.
 app uses stock cobra help, version, completion output.
 apps declare Command with use, short, flags, run with ctx, plus Args and ValidArgs completion.
-flag callbacks take pflag and arg validation takes cobra types by design, as narrow escape hatches.
+flag callbacks take app.FlagSet, arg validation takes app validators, completions take app directives.
+Raw and Unwrap stay as narrow escape hatches, user code never imports cobra or pflag.
 WithSymbolsOnly pins ascii spinners and statuses on any terminal.
 
 # config:
