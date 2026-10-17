@@ -10,6 +10,7 @@ import (
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers"
 	"github.com/CHE3MZ/terminull/render/terminal"
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // guarded serializes concurrent widget writes with test reads.
@@ -101,6 +102,44 @@ func TestBarAddFinish(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Fatalf("bar output %q does not contain %q", got, want)
 		}
+	}
+	if strings.Contains(got, "\x1b") {
+		t.Fatalf("bar output %q has escapes without a scheme", got)
+	}
+}
+
+func TestSpinnerSchemeFrame(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	s := NewSpinner(&out, "spin-msg", false).WithScheme(style.NewScheme(true))
+	s.draw(0)
+	if got := out.String(); got != "\r\x1b[36m|\x1b[0m spin-msg" {
+		t.Fatalf("spinner frame %q, want cyan frame", got)
+	}
+
+	var plain guarded
+	p := NewSpinner(&plain, "spin-msg", false)
+	p.draw(0)
+	if got := plain.String(); got != "\r| spin-msg" {
+		t.Fatalf("plain spinner frame %q, want raw frame", got)
+	}
+}
+
+func TestBarSchemeFill(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	bar := NewBar(&out, 4, "bar-desc").WithScheme(style.NewScheme(true))
+	if err := bar.Add(2); err != nil {
+		t.Fatalf("Add() error = %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "\x1b[36m") || !strings.Contains(got, "50%") {
+		t.Fatalf("bar output %q misses cyan fill or percent", got)
+	}
+	if strings.Contains(got, "\x1b[36m ") {
+		t.Fatalf("bar output %q paints padding", got)
 	}
 }
 

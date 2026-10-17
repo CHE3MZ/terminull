@@ -26,6 +26,7 @@ type Spinner struct {
 	tty     bool
 
 	mu     sync.Mutex
+	scheme style.Scheme
 	active bool
 	stop   chan struct{}
 	done   chan struct{}
@@ -47,6 +48,15 @@ func NewSpinner(w io.Writer, message string, emoji bool) *Spinner {
 		tty = style.IsTerminal(f)
 	}
 	return &Spinner{out: w, frames: frames, message: message, tty: tty}
+}
+
+// WithScheme paints the frame through scheme; the zero Scheme keeps
+// frames plain, so widgets stay plain unless callers opt in.
+func (s *Spinner) WithScheme(scheme style.Scheme) *Spinner {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.scheme = scheme
+	return s
 }
 
 // Start begins animation. The message stays until Stop. Safe to call
@@ -99,10 +109,15 @@ func (s *Spinner) loop() {
 		case <-s.stop:
 			return
 		case <-ticker.C:
-			s.mu.Lock()
-			_, _ = fmt.Fprintf(s.out, "\r%s %s", s.frames[i%len(s.frames)], s.message)
-			s.mu.Unlock()
+			s.draw(i)
 			i++
 		}
 	}
+}
+
+// draw writes one frame line.
+func (s *Spinner) draw(i int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, _ = fmt.Fprintf(s.out, "\r%s %s", s.scheme.Cyan(s.frames[i%len(s.frames)]), s.message)
 }

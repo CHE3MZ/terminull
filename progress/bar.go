@@ -23,6 +23,7 @@ type Bar struct {
 	width       int
 
 	mu      sync.Mutex
+	scheme  style.Scheme
 	current int
 	done    bool
 }
@@ -37,6 +38,15 @@ func NewBar(w io.Writer, total int, description string) *Bar {
 		}
 	}
 	return &Bar{out: w, description: description, total: total, width: width}
+}
+
+// WithScheme paints the filled run through scheme; the zero Scheme keeps
+// the bar plain, so pipes and CI logs stay raw text.
+func (b *Bar) WithScheme(scheme style.Scheme) *Bar {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.scheme = scheme
+	return b
 }
 
 // Add advances n units, redrawing the bar. Negative totals clamp at zero;
@@ -77,7 +87,11 @@ func (b *Bar) line() string {
 		percent = b.current * 100 / b.total
 		filled = b.current * b.width / b.total
 	}
-	bar := strings.Repeat("=", filled) + strings.Repeat(" ", b.width-filled)
+	fill := strings.Repeat("=", filled)
+	if filled > 0 {
+		fill = b.scheme.Cyan(fill)
+	}
+	bar := fill + strings.Repeat(" ", b.width-filled)
 	count := ""
 	if b.total > 0 {
 		count = fmt.Sprintf(" (%d/%d)", b.current, b.total)

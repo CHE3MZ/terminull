@@ -15,4 +15,8 @@
 // Frame rule: braille dots on capable terminals, plain ASCII spinners
 // (|/-\ differences) on legacy Windows consoles and anywhere else
 // style.Emoji() is false.
+//
+// Scheme rule: widgets paint through an optional style.Scheme
+// (WithScheme); the zero scheme stays plain, so pipes and CI logs keep
+// raw text.
 package progress
