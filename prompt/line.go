@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/mattn/go-isatty"
+	"github.com/CHE3MZ/terminull/style"
 	"github.com/peterh/liner"
 )
 
@@ -126,7 +126,7 @@ func interactiveWriter(w io.Writer) bool {
 	if !ok {
 		return false
 	}
-	return isatty.IsTerminal(f.Fd())
+	return style.IsTerminal(f)
 }
 
 // fallbackLine is the pipe and dumb-terminal path: print the prefix and

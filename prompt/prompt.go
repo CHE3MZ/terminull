@@ -10,8 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
+	"github.com/CHE3MZ/terminull/style"
 	"golang.org/x/term"
 )
 
@@ -42,14 +41,15 @@ func StdIO() IO {
 	return IO{In: os.Stdin, Out: os.Stdout, Err: os.Stderr}
 }
 
-// paint styles the bullet when colors are allowed: never on NoColor,
-// dumb terminals, or NO_COLOR. fatih/color auto-detects TTYs itself,
-// so pipes stay plain without any extra plumbing.
-func paint(noColor bool, s string) string {
-	if noColor || strings.EqualFold(os.Getenv("TERM"), "dumb") || os.Getenv("NO_COLOR") != "" {
+// paint styles the bullet green when colors are allowed. The gate is
+// style.Color on the actual destination: NoColor flag, NO_COLOR, dumb
+// terminals, CI, and non-terminal writers all stay plain.
+func paint(w FileWriter, noColor bool, s string) string {
+	f, ok := w.(*os.File)
+	if !ok {
 		return s
 	}
-	return color.New(color.FgGreen).Sprint(s)
+	return style.NewScheme(style.Color(f, noColor)).Green(s)
 }
 
 func interactive(in io.Reader) bool {
@@ -57,7 +57,7 @@ func interactive(in io.Reader) bool {
 	if !ok {
 		return false
 	}
-	return isatty.IsTerminal(f.Fd())
+	return style.IsTerminal(f)
 }
 
 func flagName(flag string) string {
@@ -102,7 +102,7 @@ func readLine(ctx context.Context, r io.Reader) (string, error) {
 
 // ask prints the bullet question and returns the raw answer line.
 func ask(ctx context.Context, io IO, message, hint string) (string, error) {
-	line := paint(io.NoColor, "•") + " " + message
+	line := paint(io.Out, io.NoColor, "•") + " " + message
 	if hint != "" {
 		line += " " + hint
 	}
@@ -351,10 +351,10 @@ func Password(ctx context.Context, io IO, opts PasswordOptions) (string, error) 
 		return *opts.Preset, nil
 	}
 	f, ok := io.In.(*os.File)
-	if !ok || !isatty.IsTerminal(f.Fd()) {
+	if !ok || !style.IsTerminal(f) {
 		return "", requiredError(opts.Flag)
 	}
-	if _, err := fmt.Fprintln(io.Out, paint(io.NoColor, "•")+" "+opts.Message); err != nil {
+	if _, err := fmt.Fprintln(io.Out, paint(io.Out, io.NoColor, "•")+" "+opts.Message); err != nil {
 		return "", err
 	}
 	secret, err := readPassword(ctx, f)
