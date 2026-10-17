@@ -28,6 +28,10 @@ tasks:
     desc: End-to-end smoke with the generator CLI.
     cmds:
       - sh scripts/smoke.sh
+  demo:
+    desc: Render one table in every termtable style.
+    cmds:
+      - go run ./examples/termtable
   scan:
     desc: Run other ops tools on the repo.
     cmds:
