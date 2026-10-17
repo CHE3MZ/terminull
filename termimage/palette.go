@@ -1,6 +1,11 @@
 package termimage
 
-import "sync"
+import (
+	"image"
+	"image/color"
+	"sort"
+	"sync"
+)
 
 // xtermPalette is the standard 256-color xterm palette: 16 base colors,
 // a 6x6x6 RGB cube, and 24 grays. Sixel and 256-color ANSI output both
@@ -77,6 +82,162 @@ func bruteIndex(r, g, b uint8) int {
 		dr := int(r) - int(c[0])
 		dg := int(g) - int(c[1])
 		db := int(b) - int(c[2])
+		d := dr*dr + dg*dg + db*db
+		if d < bestDist {
+			best, bestDist = i, d
+		}
+	}
+	return best
+}
+
+// paletteEntry is one histogram cell of the 15-bit color space.
+type paletteEntry struct {
+	r, g, b uint8
+	n       uint64
+}
+
+// adaptivePalette builds up to max colors from the image itself with a
+// weighted median cut over a 15-bit histogram, so gradients follow the
+// actual picture instead of the coarse fixed xterm cube.
+func adaptivePalette(img *image.RGBA, max int) []color.RGBA {
+	type bucket struct {
+		n          uint64
+		rs, gs, bs uint64
+	}
+	hist := make([]bucket, 32768)
+	pix := img.Pix
+	for i := 0; i < len(pix); i += 4 {
+		key := int(pix[i]>>3)<<10 | int(pix[i+1]>>3)<<5 | int(pix[i+2]>>3)
+		h := &hist[key]
+		h.n++
+		h.rs += uint64(pix[i])
+		h.gs += uint64(pix[i+1])
+		h.bs += uint64(pix[i+2])
+	}
+
+	var entries []paletteEntry
+	for _, h := range hist {
+		if h.n == 0 {
+			continue
+		}
+		entries = append(entries, paletteEntry{
+			r: uint8(h.rs / h.n), // #nosec G115 -- average of uint8 samples is bounded by 255.
+			g: uint8(h.gs / h.n), // #nosec G115 -- same bound as above.
+			b: uint8(h.bs / h.n), // #nosec G115 -- same bound as above.
+			n: h.n,
+		})
+	}
+	if len(entries) <= max {
+		pal := make([]color.RGBA, len(entries))
+		for i, e := range entries {
+			pal[i] = color.RGBA{R: e.r, G: e.g, B: e.b, A: 255}
+		}
+		return pal
+	}
+
+	type box struct{ lo, hi int }
+	boxes := []box{{0, len(entries)}}
+	channel := func(e paletteEntry, c int) int {
+		switch c {
+		case 0:
+			return int(e.r)
+		case 1:
+			return int(e.g)
+		default:
+			return int(e.b)
+		}
+	}
+	// widest reports the channel with the largest spread and its value.
+	widest := func(b box) (int, int) {
+		ch, spread := 0, -1
+		for c := 0; c < 3; c++ {
+			lo, hi := 255, 0
+			for i := b.lo; i < b.hi; i++ {
+				v := channel(entries[i], c)
+				if v < lo {
+					lo = v
+				}
+				if v > hi {
+					hi = v
+				}
+			}
+			if hi-lo > spread {
+				ch, spread = c, hi-lo
+			}
+		}
+		return ch, spread
+	}
+
+	for len(boxes) < max {
+		bi, bestSpread := -1, 0
+		for i, b := range boxes {
+			if b.hi-b.lo < 2 {
+				continue
+			}
+			if _, spread := widest(b); spread > bestSpread {
+				bi, bestSpread = i, spread
+			}
+		}
+		if bi < 0 {
+			break
+		}
+		b := boxes[bi]
+		ch, _ := widest(b)
+		seg := entries[b.lo:b.hi]
+		sort.Slice(seg, func(i, j int) bool {
+			for c := 0; c < 3; c++ {
+				ci := channel(seg[i], (ch+c)%3)
+				cj := channel(seg[j], (ch+c)%3)
+				if ci != cj {
+					return ci < cj
+				}
+			}
+			return false
+		})
+		var total uint64
+		for _, e := range seg {
+			total += e.n
+		}
+		var cum uint64
+		split := b.lo + 1
+		for i := b.lo; i < b.hi-1; i++ {
+			cum += entries[i].n
+			split = i + 1
+			if cum*2 >= total {
+				break
+			}
+		}
+		boxes[bi] = box{b.lo, split}
+		boxes = append(boxes, box{split, b.hi})
+	}
+
+	pal := make([]color.RGBA, len(boxes))
+	for i, b := range boxes {
+		var n, rs, gs, bs uint64
+		for j := b.lo; j < b.hi; j++ {
+			e := entries[j]
+			n += e.n
+			rs += uint64(e.r) * e.n
+			gs += uint64(e.g) * e.n
+			bs += uint64(e.b) * e.n
+		}
+		pal[i] = color.RGBA{
+			R: uint8(rs / n), // #nosec G115 -- weighted average of uint8 samples is bounded by 255.
+			G: uint8(gs / n), // #nosec G115 -- same bound as above.
+			B: uint8(bs / n), // #nosec G115 -- same bound as above.
+			A: 255,
+		}
+	}
+	return pal
+}
+
+// nearestIn scans the palette for the closest color in squared distance.
+func nearestIn(pal []color.RGBA, r, g, b uint8) int {
+	best, bestDist := 0, 1<<30
+	for i, c := range pal {
+		dr := int(r) - int(c.R)
+		dg := int(g) - int(c.G)
+		db := int(b) - int(c.B)
 		d := dr*dr + dg*dg + db*db
 		if d < bestDist {
 			best, bestDist = i, d

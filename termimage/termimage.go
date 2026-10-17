@@ -8,8 +8,8 @@
 // Everything is written in-repo on the standard library alone: no cgo,
 // no new module dependencies, no copied protocol code. Decoding uses
 // image/png, image/jpeg, and image/gif; base64 and PNG encoding are
-// stdlib; scaling, sixel quantization, and dithering are ours and
-// deterministic, so protocol output is golden-testable.
+// stdlib; scaling, adaptive palette quantization, and optional dithering
+// are ours and deterministic, so protocol output is golden-testable.
 //
 // Backend selection is automatic by default: environment signals pick
 // kitty and iTerm2 terminals, a DA1 probe asks about sixel on real
@@ -21,6 +21,7 @@ package termimage
 import (
 	"errors"
 	"image"
+	"image/color"
 	"io"
 	"math"
 	"os"
@@ -76,6 +77,16 @@ type Options struct {
 	Width int
 	// Height caps the render in cells; zero keeps the image aspect.
 	Height int
+	// Dither enables Floyd-Steinberg error diffusion for sixel; the
+	// adaptive palette alone is cleaner for most images.
+	Dither bool
+	// Background backs transparency for protocols without alpha
+	// (sixel, half blocks, ascii); zero value is black.
+	Background color.RGBA
+	// CellWidth and CellHeight override the per-cell pixel estimate
+	// used for sizing; zero queries the terminal.
+	CellWidth  int
+	CellHeight int
 }
 
 // String renders img and returns the escape stream or text.
@@ -105,7 +116,16 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 	}
 
 	rgba := toRGBA(img)
+	if backend == Sixel || backend == HalfBlock || backend == ASCII {
+		rgba = flatten(rgba, opaque(opts.Background))
+	}
 	cw, ch := cellPixels()
+	if opts.CellWidth > 0 {
+		cw = opts.CellWidth
+	}
+	if opts.CellHeight > 0 {
+		ch = opts.CellHeight
+	}
 	cols, rows := targetSize(rgba, opts, cw, ch)
 
 	switch backend {
@@ -122,8 +142,15 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		_, err = w.Write(tmuxWrap(itermEscape(png, cols)))
 		return err
 	case Sixel:
-		scaled := resample(rgba, cols*cw, rows*ch)
-		_, err := w.Write(tmuxWrap(sixelEncode(scaled)))
+		uw, uh := sixelUnits(cw, ch)
+		if opts.CellWidth > 0 {
+			uw = opts.CellWidth
+		}
+		if opts.CellHeight > 0 {
+			uh = opts.CellHeight
+		}
+		scaled := resample(rgba, cols*uw, rows*uh)
+		_, err := w.Write(tmuxWrap(sixelEncode(scaled, opts.Dither)))
 		return err
 	case HalfBlock:
 		if !consoleReady(w) {

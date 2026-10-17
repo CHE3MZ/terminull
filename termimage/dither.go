@@ -2,19 +2,38 @@ package termimage
 
 import (
 	"image"
+	"image/color"
 	"math"
 )
 
-// ditherToPalette converts img to xterm palette indexes with
-// Floyd–Steinberg error diffusion, returning the index buffer and the
-// set of palette entries actually used. Working values are premultiplied
-// like the source, so transparent pixels darken toward black, which is
-// what sixel shows for them.
-func ditherToPalette(img *image.RGBA) ([]uint8, [256]bool) {
+// mapToPalette converts img to palette indexes, optionally with
+// Floyd-Steinberg error diffusion. It returns the index buffer and the
+// set of palette entries actually used. The plain path memoizes nearest
+// lookups per distinct color; rendered images downscale to few colors.
+func mapToPalette(img *image.RGBA, pal []color.RGBA, dither bool) ([]uint8, []bool) {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
 	idx := make([]uint8, w*h)
-	var used [256]bool
+	used := make([]bool, len(pal))
+
+	if !dither {
+		cache := make(map[int]int)
+		for y := 0; y < h; y++ {
+			row := y * img.Stride
+			for x := 0; x < w; x++ {
+				p := row + x*4
+				key := pack(img.Pix[p], img.Pix[p+1], img.Pix[p+2])
+				n, ok := cache[key]
+				if !ok {
+					n = nearestIn(pal, img.Pix[p], img.Pix[p+1], img.Pix[p+2])
+					cache[key] = n
+				}
+				used[n] = true
+				idx[y*w+x] = uint8(n) // #nosec G115 -- palette indexes stay under 256.
+			}
+		}
+		return idx, used
+	}
 
 	buf := make([][3]float64, w*h)
 	for y := 0; y < h; y++ {
@@ -45,14 +64,14 @@ func ditherToPalette(img *image.RGBA) ([]uint8, [256]bool) {
 			r := clampByte(buf[i][0])
 			g := clampByte(buf[i][1])
 			b := clampByte(buf[i][2])
-			n := paletteIndex(r, g, b)
+			n := nearestIn(pal, r, g, b)
 			used[n] = true
-			idx[i] = uint8(n) // #nosec G115 -- paletteIndex returns 0..255.
+			idx[i] = uint8(n) // #nosec G115 -- palette indexes stay under 256.
 
-			c := xtermPalette[n]
-			er := buf[i][0] - float64(c[0])
-			eg := buf[i][1] - float64(c[1])
-			eb := buf[i][2] - float64(c[2])
+			c := pal[n]
+			er := buf[i][0] - float64(c.R)
+			eg := buf[i][1] - float64(c.G)
+			eb := buf[i][2] - float64(c.B)
 			spread(x+1, y, er, eg, eb, 7.0/16)
 			spread(x-1, y+1, er, eg, eb, 3.0/16)
 			spread(x, y+1, er, eg, eb, 5.0/16)

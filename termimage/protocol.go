@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"image"
+	"image/draw"
 	"image/png"
 )
 
@@ -39,8 +40,15 @@ func kittyEscape(img *image.RGBA, cols, rows int) []byte {
 	return b.Bytes()
 }
 
-// encodePNG compresses an RGBA image to PNG bytes.
-func encodePNG(img *image.RGBA) ([]byte, error) {
+// encodePNG compresses an image to PNG bytes. RGBA pixels are
+// premultiplied, PNG stores straight alpha, so they convert first;
+// other image types pass through.
+func encodePNG(img image.Image) ([]byte, error) {
+	if src, ok := img.(*image.RGBA); ok {
+		straight := image.NewNRGBA(src.Bounds())
+		draw.Draw(straight, straight.Bounds(), src, src.Bounds().Min, draw.Src)
+		img = straight
+	}
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, img); err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package termimage
 
 import (
 	"image"
+	"image/color"
 	"image/draw"
 	"math"
 )
@@ -149,4 +150,37 @@ func bilinearResample(src, dst *image.RGBA) {
 // because every sample is a uint8.
 func avg8(sum, n uint64) uint8 {
 	return uint8(sum / n) // #nosec G115 -- average of uint8 samples is bounded by 255.
+}
+
+// opaque forces the background alpha; the zero color means black.
+func opaque(c color.RGBA) color.RGBA {
+	c.A = 255
+	return c
+}
+
+// flatten composites premultiplied pixels over an opaque background so
+// protocols without alpha show a solid image instead of black holes.
+// Fully opaque images are returned untouched.
+func flatten(src *image.RGBA, bg color.RGBA) *image.RGBA {
+	needs := false
+	for i := 3; i < len(src.Pix); i += 4 {
+		if src.Pix[i] != 255 {
+			needs = true
+			break
+		}
+	}
+	if !needs {
+		return src
+	}
+
+	dst := image.NewRGBA(src.Bounds())
+	br, bgc, bb := int(bg.R), int(bg.G), int(bg.B)
+	for i := 0; i < len(src.Pix); i += 4 {
+		inv := 255 - int(src.Pix[i+3])
+		dst.Pix[i] = uint8(int(src.Pix[i]) + br*inv/255)      // #nosec G115 -- premultiplied channel plus background share stays under 256.
+		dst.Pix[i+1] = uint8(int(src.Pix[i+1]) + bgc*inv/255) // #nosec G115 -- same bound as above.
+		dst.Pix[i+2] = uint8(int(src.Pix[i+2]) + bb*inv/255)  // #nosec G115 -- same bound as above.
+		dst.Pix[i+3] = 255
+	}
+	return dst
 }

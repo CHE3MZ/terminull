@@ -91,8 +91,8 @@ func TestPaletteIndexKnownColors(t *testing.T) {
 func TestSixelSolidRed(t *testing.T) {
 	t.Parallel()
 
-	got := string(sixelEncode(solid(3, 2, red)))
-	want := "\x1bPq\"1;1;3;2#9;2;100;0;0#9BBB\x1b\\"
+	got := string(sixelEncode(solid(3, 2, red), false))
+	want := "\x1bPq\"1;1;3;2#0;2;100;0;0#0BBB\x1b\\"
 	if got != want {
 		t.Fatalf("sixel = %q, want %q", got, want)
 	}
@@ -101,7 +101,7 @@ func TestSixelSolidRed(t *testing.T) {
 func TestSixelRunLength(t *testing.T) {
 	t.Parallel()
 
-	got := string(sixelEncode(solid(10, 1, red)))
+	got := string(sixelEncode(solid(10, 1, red), false))
 	if !strings.Contains(got, "!10@") {
 		t.Fatalf("sixel %q misses run-length compressed row", got)
 	}
@@ -110,16 +110,91 @@ func TestSixelRunLength(t *testing.T) {
 func TestSixelBands(t *testing.T) {
 	t.Parallel()
 
-	got := string(sixelEncode(solid(1, 7, red)))
-	if !strings.Contains(got, "~-#9@") {
+	got := string(sixelEncode(solid(1, 7, red), false))
+	if !strings.Contains(got, "#0~-#0@") {
 		t.Fatalf("sixel %q misses band separator and second band", got)
 	}
 	if !strings.HasPrefix(got, "\x1bPq\"1;1;1;7") || !strings.HasSuffix(got, "\x1b\\") {
 		t.Fatalf("sixel %q misses header or terminator", got)
 	}
 
-	if again := string(sixelEncode(solid(1, 7, red))); again != got {
+	if again := string(sixelEncode(solid(1, 7, red), false)); again != got {
 		t.Fatal("sixel encode is not deterministic")
+	}
+}
+
+func TestSixelAdaptivePalette(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 3, 1))
+	setPix(img, 0, 0, red)
+	setPix(img, 1, 0, green)
+	setPix(img, 2, 0, blue)
+
+	got := string(sixelEncode(img, false))
+	for _, want := range []string{";2;100;0;0", ";2;0;100;0", ";2;0;0;100"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("sixel %q misses exact palette definition %q", got, want)
+		}
+	}
+	if !strings.HasPrefix(got, "\x1bPq\"1;1;3;1") {
+		t.Fatalf("sixel raster wrong: %q", got)
+	}
+}
+
+func TestSixelDitherDeterministic(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 8, 8))
+	for y := 0; y < 8; y++ {
+		for x := 0; x < 8; x++ {
+			setPix(img, x, y, color.RGBA{R: uint8(x * 31), G: uint8(y * 31), B: uint8((x * y) % 256), A: 255})
+		}
+	}
+	opts := Options{Backend: Sixel, Width: 8, Height: 4, Dither: true}
+	first, err := String(img, opts, style.NewScheme(true))
+	if err != nil {
+		t.Fatalf("String() error = %v", err)
+	}
+	second, err := String(img, opts, style.NewScheme(true))
+	if err != nil {
+		t.Fatalf("String() error = %v", err)
+	}
+	if first != second {
+		t.Fatal("dithered render is not deterministic")
+	}
+	if !strings.HasPrefix(first, "\x1bPq") {
+		t.Fatalf("dithered render is not sixel: %q", first)
+	}
+}
+
+func TestFlattenOverBackground(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	setPix(img, 0, 0, color.RGBA{})
+	setPix(img, 1, 0, color.RGBA{R: 128, A: 128})
+
+	out := flatten(img, opaque(color.RGBA{R: 255, G: 255, B: 255, A: 255}))
+	if p := out.Pix; p[0] != 255 || p[1] != 255 || p[2] != 255 || p[3] != 255 {
+		t.Fatalf("transparent pixel = %v, want opaque white", p[:4])
+	}
+	if p := out.Pix[4:8]; p[0] != 255 || p[1] != 127 || p[2] != 127 || p[3] != 255 {
+		t.Fatalf("semi-transparent pixel = %v, want 255,127,127,255", p)
+	}
+}
+
+func TestRenderCellOverrideSizesSixel(t *testing.T) {
+	t.Parallel()
+
+	out, err := String(solid(2, 2, red), Options{
+		Backend: Sixel, Width: 2, Height: 1, CellWidth: 10, CellHeight: 20,
+	}, style.NewScheme(true))
+	if err != nil {
+		t.Fatalf("String() error = %v", err)
+	}
+	if !strings.Contains(out, "\"1;1;20;20") {
+		t.Fatalf("override raster missing: %q", out)
 	}
 }
 

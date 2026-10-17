@@ -6,30 +6,31 @@ import (
 	"image"
 )
 
-// sixelEncode renders img as one sixel DCS stream against the xterm 256
-// palette. Layout: raster attributes, palette definitions for the used
-// entries, then bands of six pixel rows where each color draws its
-// columns with run-length compression. The result is deterministic.
-func sixelEncode(img *image.RGBA) []byte {
+// sixelEncode renders img as one sixel DCS stream against a palette
+// adapted to the image. Layout: raster attributes, palette definitions
+// for the used entries, then bands of six pixel rows where each color
+// draws its columns with run-length compression. Deterministic.
+func sixelEncode(img *image.RGBA, dither bool) []byte {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
-	idx, used := ditherToPalette(img)
+	pal := adaptivePalette(img, 256)
+	idx, used := mapToPalette(img, pal, dither)
 
+	pct := func(v uint8) int { return (int(v)*100 + 127) / 255 }
 	var b bytes.Buffer
 	b.WriteString("\x1bPq")
 	fmt.Fprintf(&b, "\"1;1;%d;%d", w, h)
-	for i := 0; i < 256; i++ {
+	for i, c := range pal {
 		if !used[i] {
 			continue
 		}
-		c := xtermPalette[i]
-		fmt.Fprintf(&b, "#%d;2;%d;%d;%d", i, int(c[0])*100/255, int(c[1])*100/255, int(c[2])*100/255)
+		fmt.Fprintf(&b, "#%d;2;%d;%d;%d", i, pct(c.R), pct(c.G), pct(c.B))
 	}
 
 	cols := make([]byte, w)
 	for y0 := 0; y0 < h; y0 += 6 {
 		first := true
-		for ci := 0; ci < 256; ci++ {
+		for ci := range pal {
 			if !used[ci] {
 				continue
 			}
