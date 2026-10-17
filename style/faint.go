@@ -2,17 +2,12 @@ package style
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/fatih/color"
 )
 
-// Color depths for dimming decisions.
+// Dimming constants.
 const (
-	depth16       = 16
-	depth256      = 256
-	depthTrue     = 1 << 24
 	dimFactor     = 0.5
 	resetSequence = "\x1b[0m"
 )
@@ -41,19 +36,6 @@ var ansiRGB = map[Attribute][3]int{
 	color.FgHiWhite:   {255, 255, 255},
 }
 
-// colorDepth detects palette support: COLORTERM truecolor/24bit wins,
-// then TERM *256color*, else the 16-color base set.
-func colorDepth() int {
-	switch os.Getenv("COLORTERM") {
-	case "truecolor", "24bit":
-		return depthTrue
-	}
-	if strings.Contains(os.Getenv("TERM"), "256color") {
-		return depth256
-	}
-	return depth16
-}
-
 // dimCode returns the escape body for a half-luminance variant of attr,
 // or "" when attr is not a foreground color. The 16-color branch keeps
 // its legacy mapping (bright downshifts, normal stays); wider palettes
@@ -63,7 +45,7 @@ func dimCode(attr Attribute, depth int) string {
 	if !ok {
 		return ""
 	}
-	if depth == depth16 {
+	if depth == Depth16 {
 		if attr >= color.FgHiBlack && attr <= color.FgHiWhite {
 			return fmt.Sprintf("%d", int(attr)-60)
 		}
@@ -81,9 +63,9 @@ func dimRGB(r, g, b int, depth int) string {
 	b = int(float64(clampChannel(b)) * dimFactor)
 
 	switch depth {
-	case depthTrue:
+	case DepthTrue:
 		return fmt.Sprintf("38;2;%d;%d;%d", r, g, b)
-	case depth256:
+	case Depth256:
 		return fmt.Sprintf("38;5;%d", cubeIndex(r, g, b))
 	default:
 		return nearestBase(r, g, b)
@@ -154,7 +136,7 @@ func (s Scheme) Faint(attr Attribute, str string) string {
 	if !s.Enabled {
 		return str
 	}
-	code := dimCode(attr, colorDepth())
+	code := dimCode(attr, ColorDepth())
 	if code == "" {
 		return str
 	}
@@ -170,5 +152,5 @@ func (s Scheme) FaintRGB(r, g, b int, str string) string {
 	if !s.Enabled {
 		return str
 	}
-	return "\x1b[" + dimRGB(r, g, b, colorDepth()) + "m" + str + resetSequence
+	return "\x1b[" + dimRGB(r, g, b, ColorDepth()) + "m" + str + resetSequence
 }

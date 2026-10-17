@@ -21,3 +21,10 @@ func addConsoleMode(handle windows.Handle, flags uint32) error {
 	}
 	return windows.SetConsoleMode(handle, mode|flags)
 }
+
+// isWindowsConsole reports whether stdout is a real console, which
+// paints 24-bit color once VT is enabled.
+func isWindowsConsole() bool {
+	var mode uint32
+	return windows.GetConsoleMode(windows.Stdout, &mode) == nil
+}

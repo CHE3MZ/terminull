@@ -6,3 +6,6 @@ package style
 func EnsureConsole() error {
 	return nil
 }
+
+// isWindowsConsole is always false off Windows.
+func isWindowsConsole() bool { return false }
