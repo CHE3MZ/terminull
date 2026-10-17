@@ -4,7 +4,7 @@ app/ ( cobra wrapper , root and subcommands )
 config/ ( koanf + yaml , flags env file merge )
 render/ ( fork of echelon , single writer logs )
 style/ ( color + isatty + colorable + runewidth , windows safe )
-prompt/ ( line engine , selects and dialogs , ctx cancel )
+prompt/ ( line engine , selects and dialogs , ctx cancel , repl editor )
 progress/ ( owned spinner + bar , tty gated )
 output/ ( tables + json yaml + graph , humanize shlex )
 static/ ( appname banner , out only , no input )
@@ -56,7 +56,7 @@ app/ is the boss. it holds the root command and subcommands. it owns flags, help
 config/ loads yaml files and env vars and merges them with flags. it fails loudly on unknown keys so typos are caught early.
 render/ is our fork of echelon. it keeps a tree of jobs like task and subtask. it draws live on a normal terminal and plain lines on ci. it has an emoji mode and a plain ascii mode, picked by capability including windows terminal.
 style/ decides color or no color. it wraps all output so windows conhost shows the same as mac and linux. no app prints with fmt directly, all go through style and render.
-prompt/ prints a bullet question and reads one line, no cursor games. it works when interactive and errors clearly when not, telling the user which flag to pass instead.
+prompt/ prints a bullet question and reads one line, no cursor games. it works when interactive and errors clearly when not, telling the user which flag to pass instead. its Editor is the opt-in exception for repls: liner-backed editing with history, ctrl+r, and completion, lent to a single Line call and handed back after, plain reads on pipes.
 progress/ owns its spinner and bar. spinners animate only on terminals and stay quiet on pipes. bars print every step so ci logs stay complete.
 output/ prints tables, graphs, sizes, durations. graphs are plain ascii so they work everywhere. tables come in aqua bordered style by default and rodaine borderless for scripts.
 static/ prints out only things like app name banner. it never asks for input, never starts spinners or prompts, and stays plain unless the terminal earned color. it finishes fast and exits cleanly on ctrl+c.

@@ -26,7 +26,7 @@ app/ ( cobra wrapper , root and subcommands )
 config/ ( koanf + yaml , flags env file merge )
 render/ ( fork of echelon , single writer logs )
 style/ ( color + isatty + colorable + runewidth , windows safe )
-prompt/ ( line engine , selects and dialogs , ctx cancel )
+prompt/ ( line engine , selects and dialogs , ctx cancel , repl editor )
 progress/ ( owned spinner + bar , tty gated )
 output/ ( tables + json yaml + graph , humanize shlex )
 static/ ( appname banner , out only , no input )
@@ -135,6 +135,9 @@ selects are numbered lists, confirms are y/n, passwords use the os no-echo read.
 every call takes ctx, ctrl+c cancels the read and maps to exit code 130.
 presets return validated without prompting, so flags always win.
 prompt only runs when isatty true, else it returns a clear flag required error naming the flag.
+prompt/ Editor opts into liner editing for repl input: history, ctrl+r search, tab completion, multiline.
+editor lends the console only for the duration of a Line call and hands it back, pipes and dumb terminals degrade to plain reads.
+editor ctrl+c returns context canceled, ctrl+d and piped eof return io eof.
 prompt tests drive real reads over pipes, never real tty.
 
 # progress:

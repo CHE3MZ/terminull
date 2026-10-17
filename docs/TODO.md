@@ -98,6 +98,10 @@
 - [x] 9.1 `style/` ANSI-aware widths: VisibleWidth + EscapeLen (csi/osc) + RuneWidth, exact tests
 - [x] 9.2 `box/` framed rendering: rounded hard double ascii none, title, padding, fixed width wrap, frame color, goldens
 
+# phase 10 — repl line editor:
+
+- [x] 10.1 `prompt/` Editor on liner v1.2.3: per-call console lend, ctx cancel, eof, piped fallback, history read/write/append/clear, completer, tab styles, beep, multiline, tests
+
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)
