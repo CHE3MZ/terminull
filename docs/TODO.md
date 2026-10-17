@@ -93,6 +93,11 @@
 - [x] 8.2 StyleAqua default, StyleRodaine script-friendly, unknown styles error
 - [x] 8.3 output rerouted (Table/TableWith/TableStyle), old renderer removed
 
+# phase 9 — box rendering:
+
+- [x] 9.1 `style/` ANSI-aware widths: VisibleWidth + EscapeLen (csi/osc) + RuneWidth, exact tests
+- [x] 9.2 `box/` framed rendering: rounded hard double ascii none, title, padding, fixed width wrap, frame color, goldens
+
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)

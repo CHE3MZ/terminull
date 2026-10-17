@@ -12,6 +12,7 @@ core/ ( signals + exit codes + version , slog )
 retry/ ( backoff retries , attempts delay veto )
 pager/ ( less paging , tty gated , epipe safe )
 table/ ( aqua default + rodaine styles )
+box/ ( framed boxes , ansi aware widths )
 cmd/terminull ( dogfood generator cli )
 
 # layout:
@@ -28,6 +29,7 @@ core/ ( public , importable )
 retry/ ( public , importable )
 pager/ ( public , importable )
 table/ ( public , importable )
+box/ ( public , importable )
 cmd/ ( binaries , not importable )
 internal/ ( generator + terminull wiring , private )
 tests/ ( integration , windows mac linux )
@@ -62,6 +64,7 @@ core/ holds signals, exit codes, version, and slog logging. debug and verbose li
 retry/ reruns flaky ops like tidy with backoff until attempts run out.
 pager/ pages long output through less on terminals and passes pipes through untouched.
 table/ merges two table engines behind one style switch, aqua default, rodaine for scripts.
+box/ draws frames around text: rounded, hard, double, ascii corners, titles, padding, and wrapping. it measures visible widths so ansi colors and cjk stay aligned inside the frame.
 cmd/terminull/ is our own cli built from all of the above, it scaffolds new projects.
 
 rules to keep it stable:

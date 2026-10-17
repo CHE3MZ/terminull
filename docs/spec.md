@@ -34,6 +34,7 @@ core/ ( signals + exit codes + version , slog )
 retry/ ( backoff retries , attempts delay veto )
 pager/ ( less paging , tty gated , epipe safe )
 table/ ( aqua default + rodaine styles )
+box/ ( framed boxes , ansi aware widths )
 cmd/terminull ( dogfood generator cli )
 
 # layout:
@@ -50,6 +51,7 @@ core/ ( public , importable as CHE3MZ/terminull/core )
 retry/ ( public , importable as CHE3MZ/terminull/retry )
 pager/ ( public , importable as CHE3MZ/terminull/pager )
 table/ ( public , importable as CHE3MZ/terminull/table )
+box/ ( public , importable as CHE3MZ/terminull/box )
 cmd/terminull ( dogfood binary , not importable )
 internal/ ( generator + terminull cli wiring , never imported by apps )
 tests/ ( integration , runs on windows mac linux )
@@ -161,6 +163,16 @@ StyleAqua is bordered unicode, the default look, with header alignment and foote
 StyleRodaine is borderless padded columns for script-friendly output.
 new styles arrive as enum values, unknown styles error instead of guessing.
 empty tables render nothing, ragged rows normalize to header width.
+
+# box:
+
+box renders framed boxes around arbitrary text, no third party code.
+styles are rounded, hard, double, ascii, none, unknown styles render rounded.
+titles sit in the top border and truncate with an ellipsis when the box is narrow.
+padding is inner horizontal spaces, width sets the outer size and wraps content.
+content may carry ansi, borders measure visible glyphs so lines stay aligned.
+cjk counts double via runewidth, combining marks stay with their base rune.
+frame color goes through scheme, a disabled scheme prints plain bytes.
 
 # retry:
 
