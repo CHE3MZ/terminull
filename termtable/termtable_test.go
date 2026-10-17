@@ -1,6 +1,7 @@
 package termtable
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -163,6 +164,25 @@ func TestUnknownStyleErrors(t *testing.T) {
 	if err := tb.Render(); err == nil {
 		t.Fatal("Render(unknown) = nil, want error")
 	}
+}
+
+func TestRenderPropagatesWriteError(t *testing.T) {
+	t.Parallel()
+
+	for style := StyleBordered; style <= StyleBorderless; style++ {
+		tb := New(errorWriter{}, WithStyle(style))
+		tb.SetHeaders("NAME")
+		tb.AddRow("web")
+		if err := tb.Render(); err == nil {
+			t.Fatalf("Render(%s) = nil, want write error", style)
+		}
+	}
+}
+
+type errorWriter struct{}
+
+func (errorWriter) Write([]byte) (int, error) {
+	return 0, errors.New("boom")
 }
 
 func TestStyleString(t *testing.T) {

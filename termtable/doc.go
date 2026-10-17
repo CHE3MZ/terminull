@@ -3,7 +3,7 @@
 // borderless padded columns for scripts. Rows normalize to the header
 // width, empty tables render nothing, and unknown styles error.
 //
-// The rendering engines are vendored privately under termtable/internal
-// and do not surface in this API. Their MIT license texts and copyright
-// notices live with each engine.
+// The renderer is private under termtable/internal/table, written for
+// this module: no third-party table code and no attribution duties
+// surface in this API.
 package termtable

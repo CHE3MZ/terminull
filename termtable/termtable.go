@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/CHE3MZ/terminull/termtable/internal/bordered"
-	"github.com/CHE3MZ/terminull/termtable/internal/plain"
+	"github.com/CHE3MZ/terminull/termtable/internal/table"
 )
 
 // Style selects the table look. New styles arrive as new values; unknown
@@ -97,35 +96,18 @@ func (t *Table) Render() error {
 	}
 
 	rows := normalize(t.header, t.rows)
-	if t.style == StyleBorderless {
-		pt := plain.New(stringsToAny(t.header)...).WithWriter(t.w)
-		for _, row := range rows {
-			pt.AddRow(stringsToAny(row)...)
-		}
-		return pt.Print()
-	}
-
-	bt := bordered.New(t.w)
-	bt.SetHeaders(t.header...)
-	bt.AddRows(rows...)
 	switch t.style {
+	case StyleBorderless:
+		return table.Plain(t.w, t.header, rows)
 	case StyleRounded:
-		bt.SetDividers(bordered.UnicodeRoundedDividers)
+		return table.Grid(t.w, table.Rounded, t.header, rows)
 	case StyleASCII:
-		bt.SetDividers(bordered.ASCIIDividers)
+		return table.Grid(t.w, table.ASCII, t.header, rows)
 	case StyleMarkdown:
-		bt.SetDividers(bordered.MarkdownDividers)
-		bt.SetBorderTop(false)
-		bt.SetBorderBottom(false)
-		bt.SetRowLines(false)
-		left := make([]bordered.Alignment, len(t.header))
-		for i := range left {
-			left[i] = bordered.AlignLeft
-		}
-		bt.SetHeaderAlignment(left...)
+		return table.Grid(t.w, table.Markdown, t.header, rows)
+	default:
+		return table.Grid(t.w, table.Bordered, t.header, rows)
 	}
-	bt.Render()
-	return nil
 }
 
 // normalize pads short rows and truncates long ones to the header width.
@@ -135,14 +117,6 @@ func normalize(header []string, rows [][]string) [][]string {
 		fixed := make([]string, len(header))
 		copy(fixed, row)
 		out = append(out, fixed)
-	}
-	return out
-}
-
-func stringsToAny(values []string) []any {
-	out := make([]any, len(values))
-	for i, v := range values {
-		out[i] = v
 	}
 	return out
 }
