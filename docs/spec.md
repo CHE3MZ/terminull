@@ -128,6 +128,7 @@ Bold Italic Underline Strikethrough emit exact sgr with dedicated resets.
 style foreground and decoration constants mirror the engine, user code never imports fatih color.
 Muted dims the current color through sgr faint, Faint is the deterministic form.
 16 color terms downshift bright colors or snap rgb to the nearest base.
+one ColorDepth detector feeds dimming and image tiers: case-insensitive COLORTERM truecolor wins, a real windows console is 24-bit under VT, then 256color terms, else 16.
 TerminalWidth reports console columns or 80 fallback, used to fit bars.
 all widths use runewidth plus x/text EastAsianWide, cjk never breaks tables.
 piped out like app list piped to grep must be plain with no codes.
@@ -159,7 +160,7 @@ multiple bars and logs share one writer but never draw at once, callers sequence
 
 output prints app results as table, json, yaml based on --output flag, default table.
 tables come from termtable, bordered by default, borderless for script-friendly.
-styled headers apply only through the ansi-aware renderer, pipes stay verbatim.
+TableWith and TableStyleWith style headers on any termtable style, pipes stay verbatim.
 graphs are owned ascii point charts with labeled axis, no color codes inside.
 sizes use humanize bytes, command splitting uses shlex.
 output never reads input, it is out only, same static rules as static.
@@ -196,6 +197,7 @@ sixel builds an adaptive palette from the image, and dithering spreads quantizat
 windows consoles size sixel rasters in DEC 10x20 cell units so aspect holds on any font, posix terminals use real cell pixels.
 transparency survives by default: kitty and iterm2 send native alpha, sixel asks the terminal to keep its background and leaves those pixels unpainted, half-blocks fall back to lower-half or blank cells with default colors, and ascii leaves blanks; a background color with alpha flattens every backend instead.
 half-blocks need 256 colors, color off or 16 colors degrade to ascii, pipes never carry escapes.
+image tiers read style.ColorDepth, the same detector that drives text dimming, so backends and dimming always agree.
 tmux is detected: kitty and iterm2 streams route through a passthrough wrapper (allow-passthrough must be on), sixel stays raw so tmux 3.4+ renders it natively, and tmux plus iterm2 drop single sequences much over a megabyte, so oversized renders can vanish there.
 file decode is stdlib png jpeg gif, scale is box average for shrink and bilinear for grow.
 

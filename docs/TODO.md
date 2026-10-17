@@ -119,6 +119,12 @@
 - [x] 12.2 `progress/` WithScheme on spinner and bar: cyan frame and fill, zero scheme stays plain
 - [x] 12.3 `termtable/` borderless measures visible width, so styled cells align on all five styles
 
+# phase 13 — depth and table style polish:
+
+- [x] 13.1 `style.ColorDepth` single detector: case-insensitive COLORTERM, real windows consoles 24-bit under VT, 256color terms, else 16; Faint/FaintRGB consume it
+- [x] 13.2 `termimage` consumes style.ColorDepth; local depth detector, sentinel consts, and console probe removed; half-block tiers unchanged
+- [x] 13.3 `output.TableStyleWith` styles headers on any termtable style, TableWith delegates to it
+
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)
