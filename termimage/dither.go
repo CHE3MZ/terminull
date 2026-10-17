@@ -47,7 +47,7 @@ func ditherToPalette(img *image.RGBA) ([]uint8, [256]bool) {
 			b := clampByte(buf[i][2])
 			n := paletteIndex(r, g, b)
 			used[n] = true
-			idx[i] = uint8(n)
+			idx[i] = uint8(n) // #nosec G115 -- paletteIndex returns 0..255.
 
 			c := xtermPalette[n]
 			er := buf[i][0] - float64(c[0])

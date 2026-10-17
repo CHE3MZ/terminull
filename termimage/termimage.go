@@ -126,15 +126,21 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		_, err := w.Write(tmuxWrap(sixelEncode(scaled)))
 		return err
 	case HalfBlock:
-		style.EnsureConsole()
+		if err := style.EnsureConsole(); err != nil {
+			return writeASCII(w, rgba, cols, rows)
+		}
 		_, err := io.WriteString(w, halfBlockString(resample(rgba, cols, rows*2), colorDepth()))
 		return err
 	case ASCII:
-		_, err := io.WriteString(w, asciiString(resample(rgba, cols, rows)))
-		return err
+		return writeASCII(w, rgba, cols, rows)
 	default:
 		return errors.New("termimage: unknown backend")
 	}
+}
+
+func writeASCII(w io.Writer, img *image.RGBA, cols, rows int) error {
+	_, err := io.WriteString(w, asciiString(resample(img, cols, rows)))
+	return err
 }
 
 // targetSize resolves the cell footprint; the cell pixel estimate cw by

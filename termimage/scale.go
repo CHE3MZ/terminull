@@ -85,10 +85,10 @@ func boxResample(src, dst *image.RGBA) {
 				n = 1
 			}
 			o := dy*dst.Stride + dx*4
-			dst.Pix[o] = uint8(r / n)
-			dst.Pix[o+1] = uint8(g / n)
-			dst.Pix[o+2] = uint8(b / n)
-			dst.Pix[o+3] = uint8(a / n)
+			dst.Pix[o] = avg8(r, n)
+			dst.Pix[o+1] = avg8(g, n)
+			dst.Pix[o+2] = avg8(b, n)
+			dst.Pix[o+3] = avg8(a, n)
 		}
 	}
 }
@@ -143,4 +143,10 @@ func bilinearResample(src, dst *image.RGBA) {
 			}
 		}
 	}
+}
+
+// avg8 divides the sample sum by count; the quotient never exceeds 255
+// because every sample is a uint8.
+func avg8(sum, n uint64) uint8 {
+	return uint8(sum / n) // #nosec G115 -- average of uint8 samples is bounded by 255.
 }

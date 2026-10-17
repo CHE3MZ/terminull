@@ -63,7 +63,7 @@ func paletteIndex(r, g, b uint8) int {
 			ri := uint8((i >> 10) & 31)
 			gi := uint8((i >> 5) & 31)
 			bi := uint8(i & 31)
-			paletteLUT[i] = int16(bruteIndex(ri<<3|ri>>2, gi<<3|gi>>2, bi<<3|bi>>2))
+			paletteLUT[i] = int16(bruteIndex(ri<<3|ri>>2, gi<<3|gi>>2, bi<<3|bi>>2)) // #nosec G115 -- bruteIndex returns 0..255.
 		}
 	})
 	key := int(r>>3)<<10 | int(g>>3)<<5 | int(b>>3)
