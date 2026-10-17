@@ -228,29 +228,6 @@ func TestSixelBackgroundFlattensOverColor(t *testing.T) {
 	}
 }
 
-func TestColorDepthFrom(t *testing.T) {
-	t.Parallel()
-
-	for _, tc := range []struct {
-		name string
-		env  map[string]string
-		win  bool
-		want int
-	}{
-		{"truecolor", map[string]string{"COLORTERM": "truecolor"}, false, depthTrue},
-		{"24bit upcase", map[string]string{"COLORTERM": "24BIT"}, false, depthTrue},
-		{"windows console", nil, true, depthTrue},
-		{"256color term", map[string]string{"TERM": "xterm-256color"}, false, depth256},
-		{"base term", map[string]string{"TERM": "xterm"}, false, depth16},
-		{"empty", nil, false, depth16},
-	} {
-		getenv := func(k string) string { return tc.env[k] }
-		if got := colorDepthFrom(getenv, tc.win); got != tc.want {
-			t.Fatalf("%s: colorDepthFrom = %d, want %d", tc.name, got, tc.want)
-		}
-	}
-}
-
 func TestRenderCellOverrideSizesSixel(t *testing.T) {
 	t.Parallel()
 
@@ -400,7 +377,7 @@ func TestHalfBlockTruecolor(t *testing.T) {
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, blue)
 
-	got := halfBlockString(img, depthTrue, false)
+	got := halfBlockString(img, style.DepthTrue, false)
 	for _, want := range []string{"\x1b[38;2;255;0;0m", "\x1b[48;2;0;0;255m", "▀", "\x1b[0m"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("halfblock %q misses %q", got, want)
@@ -415,7 +392,7 @@ func TestHalfBlock256(t *testing.T) {
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, blue)
 
-	got := halfBlockString(img, depth256, false)
+	got := halfBlockString(img, style.Depth256, false)
 	if !strings.Contains(got, "\x1b[38;5;9m") || !strings.Contains(got, "\x1b[48;5;12m") {
 		t.Fatalf("halfblock 256 %q misses palette codes", got)
 	}
@@ -428,7 +405,7 @@ func TestHalfBlockTransparency(t *testing.T) {
 	setPix(img, 0, 0, color.RGBA{})
 	setPix(img, 0, 1, red)
 
-	got := halfBlockString(img, depthTrue, false)
+	got := halfBlockString(img, style.DepthTrue, false)
 	if !strings.Contains(got, "▄") || !strings.Contains(got, defaultBgSeq) {
 		t.Fatalf("transparent top cell = %q, want lower block with default background", got)
 	}
@@ -438,13 +415,13 @@ func TestHalfBlockTransparency(t *testing.T) {
 
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, color.RGBA{})
-	got = halfBlockString(img, depthTrue, false)
+	got = halfBlockString(img, style.DepthTrue, false)
 	if !strings.Contains(got, "▀") || !strings.Contains(got, defaultBgSeq) {
 		t.Fatalf("transparent bottom cell = %q, want upper block with default background", got)
 	}
 
 	setPix(img, 0, 0, color.RGBA{})
-	got = halfBlockString(img, depthTrue, false)
+	got = halfBlockString(img, style.DepthTrue, false)
 	if !strings.Contains(got, " ") || strings.Contains(got, "▀") || strings.Contains(got, "▄") {
 		t.Fatalf("blank cell = %q, want a space", got)
 	}
@@ -462,9 +439,9 @@ func TestHalfBlockDitherDeterministic(t *testing.T) {
 		setPix(img, x, 0, color.RGBA{R: v, G: 40, B: 200, A: 255})
 		setPix(img, x, 1, color.RGBA{R: 200, G: v, B: 40, A: 255})
 	}
-	plain := halfBlockString(img, depth256, false)
-	got := halfBlockString(img, depth256, true)
-	if got != halfBlockString(img, depth256, true) {
+	plain := halfBlockString(img, style.Depth256, false)
+	got := halfBlockString(img, style.Depth256, true)
+	if got != halfBlockString(img, style.Depth256, true) {
 		t.Fatal("dithered half-block is not deterministic")
 	}
 	if got == plain {

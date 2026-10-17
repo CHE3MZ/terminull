@@ -96,10 +96,3 @@ func queryCellPixels() (int, int) {
 // with that fixed assumption instead of the real font cell, so images
 // declare their raster in these units to keep aspect on any font.
 func sixelUnits(_, _ int) (int, int) { return 10, 20 }
-
-// isWindowsConsole reports whether stdout is a real console, which does
-// 24-bit color once VT is enabled.
-func isWindowsConsole() bool {
-	var mode uint32
-	return windows.GetConsoleMode(windows.Handle(os.Stdout.Fd()), &mode) == nil
-}

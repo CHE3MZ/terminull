@@ -120,14 +120,14 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		return errors.New("termimage: empty image")
 	}
 	backend := opts.Backend
-	depth := colorDepth()
+	depth := style.ColorDepth()
 	if backend == Auto {
 		backend = Detect()
 		if !scheme.Enabled && backend != ASCII {
 			backend = ASCII
 		}
 	}
-	if backend == HalfBlock && (!scheme.Enabled || depth == depth16) {
+	if backend == HalfBlock && (!scheme.Enabled || depth == style.Depth16) {
 		backend = ASCII
 	}
 
@@ -229,36 +229,6 @@ func terminalColumns() int {
 		}
 	}
 	return 80
-}
-
-// Color depths for ANSI tiers.
-const (
-	depthTrue = 24
-	depth256  = 256
-	depth16   = 16
-)
-
-// colorDepth reports what ANSI tiers the terminal can paint: COLORTERM
-// truecolor wins, then 256-color terms, then the 16-color base set.
-// Modern Windows consoles do 24-bit with VT enabled.
-func colorDepth() int {
-	return colorDepthFrom(os.Getenv, isWindowsConsole())
-}
-
-// colorDepthFrom is colorDepth with the environment and console probe
-// injected so tests can pin every tier.
-func colorDepthFrom(getenv func(string) string, winConsole bool) int {
-	switch strings.ToLower(getenv("COLORTERM")) {
-	case "truecolor", "24bit":
-		return depthTrue
-	}
-	if winConsole {
-		return depthTrue
-	}
-	if strings.Contains(getenv("TERM"), "256color") {
-		return depth256
-	}
-	return depth16
 }
 
 // tmuxWrap routes an escape stream through tmux passthrough when running

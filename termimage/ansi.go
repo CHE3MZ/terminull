@@ -5,6 +5,8 @@ import (
 	"image"
 	"image/color"
 	"strings"
+
+	"github.com/CHE3MZ/terminull/style"
 )
 
 // SGR codes that return colors to the terminal defaults, so unpainted
@@ -38,7 +40,7 @@ func halfBlockString(img *image.RGBA, depth int, dither bool) string {
 		p := y*img.Stride + x*4
 		return color.RGBA{R: img.Pix[p], G: img.Pix[p+1], B: img.Pix[p+2], A: img.Pix[p+3]}
 	}
-	if depth == depth256 && dither {
+	if depth == style.Depth256 && dither {
 		pal := xtermRGBA()
 		idx, _, none := mapToPalette(img, pal, true)
 		pix = func(x, y int) color.RGBA {
@@ -122,7 +124,7 @@ func colorSequence(depth int, fg bool, r, g, b uint8) string {
 	if !fg {
 		lead = "48"
 	}
-	if depth == depthTrue {
+	if depth == style.DepthTrue {
 		return fmt.Sprintf("\x1b[%s;2;%d;%d;%dm", lead, r, g, b)
 	}
 	return fmt.Sprintf("\x1b[%s;5;%dm", lead, paletteIndex(r, g, b))
