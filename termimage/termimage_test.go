@@ -140,6 +140,9 @@ func TestSixelAdaptivePalette(t *testing.T) {
 	if !strings.HasPrefix(got, "\x1bPq\"1;1;3;1") {
 		t.Fatalf("sixel raster wrong: %q", got)
 	}
+	if !strings.Contains(got, "#0??@$#1?@$#2@") {
+		t.Fatalf("sixel layer alignment wrong: %q", got)
+	}
 }
 
 func TestSixelDitherDeterministic(t *testing.T) {

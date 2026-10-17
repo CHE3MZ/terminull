@@ -67,17 +67,16 @@ func sixelEncode(img *image.RGBA, dither bool) []byte {
 	return b.Bytes()
 }
 
-// writeSixelRow emits one color's sixel row with run-length compression,
-// trimming leading and trailing empty columns.
+// writeSixelRow emits one color's sixel row with run-length compression.
+// Every column is emitted from zero because '?' still advances the
+// horizontal position; trimming leading columns would shift the layer
+// left over the layers beneath it. Only trailing empty columns drop.
 func writeSixelRow(b *bytes.Buffer, cols []byte) {
-	start, end := 0, len(cols)
-	for start < end && cols[start] == '?' {
-		start++
-	}
-	for end > start && cols[end-1] == '?' {
+	end := len(cols)
+	for end > 0 && cols[end-1] == '?' {
 		end--
 	}
-	for i := start; i < end; {
+	for i := 0; i < end; {
 		j := i
 		for j < end && cols[j] == cols[i] {
 			j++
