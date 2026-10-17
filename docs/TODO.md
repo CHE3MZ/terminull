@@ -102,9 +102,17 @@
 
 - [x] 10.1 `prompt/` Editor on liner v1.2.3: per-call console lend, ctx cancel, eof, piped fallback, history read/write/append/clear, completer, tab styles, beep, multiline, tests
 
+# phase 11 — image rendering:
+
+- [x] 11.1 `termimage/` facade: Auto/Kitty/ITerm2/Sixel/HalfBlock/ASCII backends, Options width/height in cells, String/Render with scheme, tmux passthrough
+- [x] 11.2 encoders: kitty chunked graphics, iterm2 inline png, sixel with xterm palette + run-length, half-block truecolor/256, ascii ramp, box+bilinear scaler, floyd-steinberg dither
+- [x] 11.3 detection: env hints, DA1 sixel probe, per-os cell pixel query, 8x16 default
+- [x] 11.4 tests: golden protocol bytes, chunk reassembly, palette, detection env, sizing; demo verified piped
+
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)
+- [ ] termimage live verification (wt sixel + half-block, kitty, ghostty, iterm2)
 - [ ] docs nav for mkdocs once index content lands (see 4.3)
 - [ ] man pages via cobra doc generation
 - [ ] update notifier with state file throttle

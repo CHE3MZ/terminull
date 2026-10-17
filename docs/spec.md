@@ -35,6 +35,7 @@ retry/ ( backoff retries , attempts delay veto )
 pager/ ( less paging , tty gated , epipe safe )
 table/ ( aqua default + rodaine styles )
 box/ ( framed boxes , ansi aware widths )
+termimage/ ( image rendering , kitty + iterm2 + sixel + ansi fallback )
 cmd/terminull ( dogfood generator cli )
 
 # layout:
@@ -52,6 +53,7 @@ retry/ ( public , importable as CHE3MZ/terminull/retry )
 pager/ ( public , importable as CHE3MZ/terminull/pager )
 table/ ( public , importable as CHE3MZ/terminull/table )
 box/ ( public , importable as CHE3MZ/terminull/box )
+termimage/ ( public , importable as CHE3MZ/terminull/termimage )
 cmd/terminull ( dogfood binary , not importable )
 internal/ ( generator + terminull cli wiring , never imported by apps )
 tests/ ( integration , runs on windows mac linux )
@@ -177,6 +179,18 @@ content may carry ansi, borders measure visible glyphs so lines stay aligned.
 open styles reset at each line end and resume on the next wrapped line, borders stay clean.
 cjk counts double via runewidth, combining marks stay with their base rune.
 frame color goes through scheme, a disabled scheme prints plain bytes.
+
+# termimage:
+
+termimage renders images for terminals with no new mods, stdlib only.
+backends are kitty graphics, iterm2 inline png, sixel, and ansi half-blocks or ascii.
+auto detection reads env hints first, then probes the terminal for sixel with a DA1 query.
+kitty graphics cover kitty, ghostty, and wezterm, iterm2 covers iterm, sixel covers windows terminal, mlterm, foot, and contour.
+width and height are cell counts, zero width uses the terminal width and keeps aspect.
+sixel quantizes through the xterm palette with floyd-steinberg dithering, kitty and iterm2 send exact pixels.
+half-blocks need 256 colors, color off or 16 colors degrade to ascii, pipes never carry escapes.
+tmux is detected and graphics sequences route through a passthrough wrapper.
+file decode is stdlib png jpeg gif, scale is box average for shrink and bilinear for grow.
 
 # retry:
 

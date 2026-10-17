@@ -13,6 +13,7 @@ retry/ ( backoff retries , attempts delay veto )
 pager/ ( less paging , tty gated , epipe safe )
 table/ ( aqua default + rodaine styles )
 box/ ( framed boxes , ansi aware widths )
+termimage/ ( image rendering , kitty + iterm2 + sixel + ansi fallback )
 cmd/terminull ( dogfood generator cli )
 
 # layout:
@@ -30,6 +31,7 @@ retry/ ( public , importable )
 pager/ ( public , importable )
 table/ ( public , importable )
 box/ ( public , importable )
+termimage/ ( public , importable )
 cmd/ ( binaries , not importable )
 internal/ ( generator + terminull wiring , private )
 tests/ ( integration , windows mac linux )
@@ -65,6 +67,7 @@ retry/ reruns flaky ops like tidy with backoff until attempts run out.
 pager/ pages long output through less on terminals and passes pipes through untouched.
 table/ merges two table engines behind one style switch, aqua default, rodaine for scripts.
 box/ draws frames around text: rounded, hard, double, ascii corners, titles, padding, and wrapping. it measures visible widths so ansi colors and cjk stay aligned inside the frame.
+termimage/ renders images with zero new mods: kitty graphics, iterm2 inline png, sixel, and half-block or ascii fallbacks, picked by env hints plus a DA1 probe, sized in cells, tmux-safe.
 cmd/terminull/ is our own cli built from all of the above, it scaffolds new projects.
 
 rules to keep it stable:
