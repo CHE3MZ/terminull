@@ -37,3 +37,4 @@ tasks:
     cmds:
       - cmd: opengrep scan
       - cmd: osv-scanner scan .
+      - cmd: gitleaks git .
