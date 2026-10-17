@@ -37,6 +37,7 @@
 - [x] 3.4 `style/` tests: forced color/no-color, dumb, piped
 - [x] 3.4b `style/` Faint/FaintRGB half-luminance dimmer, depth matrix tests, Muted stays sgr faint
 - [x] 3.4c `style/` owned Attribute aliases (FgRed..FgHiWhite) + engine parity test, signatures show style types
+- [x] 3.4d `style/` Italic/Underline/Strikethrough with exact-code tests, dedicated resets, no blink by design
 - [x] 3.5 `render/` fork of echelon as `CHE3MZ/terminull/render`: logger, Scoped, Simple/Interactive/Stub, Emoji vs SymbolsOnly, keep MIT header
 - [x] 3.6 `render/` tests: scope tree, finish types, stub silent, simple golden
 - [x] 3.7 `config/` koanf merge flag > env > file > default, strict yaml KnownFields, XDG + home lookup

@@ -32,6 +32,21 @@ func (s Scheme) Bold(str string) string {
 	return s.Paint(color.Bold, str)
 }
 
+// Italic italicizes text.
+func (s Scheme) Italic(str string) string {
+	return s.Paint(Italic, str)
+}
+
+// Underline underlines text.
+func (s Scheme) Underline(str string) string {
+	return s.Paint(Underline, str)
+}
+
+// Strikethrough strikes text.
+func (s Scheme) Strikethrough(str string) string {
+	return s.Paint(Strikethrough, str)
+}
+
 // Muted dims secondary text in the current color via SGR faint, which is
 // the only way to dim without knowing the terminal foreground. For a
 // deterministic dim of a named color use Faint, for any RGB use FaintRGB.

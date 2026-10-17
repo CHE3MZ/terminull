@@ -31,3 +31,13 @@ const (
 	FgHiCyan    Attribute = Attribute(color.FgHiCyan)
 	FgHiWhite   Attribute = Attribute(color.FgHiWhite)
 )
+
+// Text decorations for Paint and the Scheme helpers. Values match the
+// engine's (asserted in tests). Every probed modern terminal renders
+// all three; terminals without support show plain text, which is why
+// they stay behind the same Enabled gate as colors.
+const (
+	Italic        Attribute = Attribute(color.Italic)
+	Underline     Attribute = Attribute(color.Underline)
+	Strikethrough Attribute = Attribute(color.CrossedOut)
+)

@@ -5,8 +5,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/fatih/color"
 )
 
 func TestSchemeDisabledIsIdentity(t *testing.T) {
@@ -24,6 +22,9 @@ func TestSchemeDisabledIsIdentity(t *testing.T) {
 		got  string
 	}{
 		{"muted", s.Muted("x")},
+		{"italic", s.Italic("x")},
+		{"underline", s.Underline("x")},
+		{"strike", s.Strikethrough("x")},
 		{"red", s.Red("x")},
 		{"yellow", s.Yellow("x")},
 		{"green", s.Green("x")},
@@ -55,8 +56,28 @@ func TestSchemeEnabledPaints(t *testing.T) {
 	if got := s.TableHeader("name"); !strings.Contains(got, "NAME") {
 		t.Fatalf("TableHeader enabled = %q, want uppercased", got)
 	}
-	if s.Paint(color.FgRed, "x") == "x" {
+	if s.Paint(FgRed, "x") == "x" {
 		t.Fatal("Paint enabled returned input unchanged")
+	}
+}
+
+func TestDecorationsEmitExactCodes(t *testing.T) {
+	t.Parallel()
+
+	s := NewScheme(true)
+	for _, tc := range []struct {
+		name string
+		got  string
+		want string
+	}{
+		{"bold", s.Bold("x"), "\x1b[1mx\x1b[22m"},
+		{"italic", s.Italic("x"), "\x1b[3mx\x1b[23m"},
+		{"underline", s.Underline("x"), "\x1b[4mx\x1b[24m"},
+		{"strike", s.Strikethrough("x"), "\x1b[9mx\x1b[29m"},
+	} {
+		if tc.got != tc.want {
+			t.Fatalf("%s = %q, want %q", tc.name, tc.got, tc.want)
+		}
 	}
 }
 

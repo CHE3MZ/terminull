@@ -75,6 +75,8 @@ func TestAttributesMatchEngine(t *testing.T) {
 		FgHiGreen: color.FgHiGreen, FgHiYellow: color.FgHiYellow,
 		FgHiBlue: color.FgHiBlue, FgHiMagenta: color.FgHiMagenta,
 		FgHiCyan: color.FgHiCyan, FgHiWhite: color.FgHiWhite,
+		Italic: color.Italic, Underline: color.Underline,
+		Strikethrough: color.CrossedOut,
 	}
 	for ours, engine := range pairs {
 		if color.Attribute(ours) != engine {
