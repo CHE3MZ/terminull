@@ -33,10 +33,11 @@ static/ ( appname banner , out only , no input )
 core/ ( signals + exit codes + version , slog )
 retry/ ( backoff retries , attempts delay veto )
 pager/ ( less paging , tty gated , epipe safe )
-table/ ( aqua default + rodaine styles )
+termtable/ ( one table library , five styles )
 box/ ( framed boxes , ansi aware widths )
 termimage/ ( image rendering , kitty + iterm2 + sixel + ansi fallback )
 cmd/terminull ( dogfood generator cli )
+examples/ ( runnable termtable style demo )
 
 # layout:
 
@@ -51,12 +52,13 @@ static/ ( public , importable as CHE3MZ/terminull/static )
 core/ ( public , importable as CHE3MZ/terminull/core )
 retry/ ( public , importable as CHE3MZ/terminull/retry )
 pager/ ( public , importable as CHE3MZ/terminull/pager )
-table/ ( public , importable as CHE3MZ/terminull/table )
+termtable/ ( public , importable as CHE3MZ/terminull/termtable )
 box/ ( public , importable as CHE3MZ/terminull/box )
 termimage/ ( public , importable as CHE3MZ/terminull/termimage )
 cmd/terminull ( dogfood binary , not importable )
 internal/ ( generator + terminull cli wiring , never imported by apps )
 tests/ ( integration , runs on windows mac linux )
+examples/ ( runnable demos , not importable )
 scripts/ ( build test smoke + ops , all sh )
 docs/ ( index + dependencies + architecture + spec + TODO )
 
@@ -154,21 +156,20 @@ multiple bars and logs share one writer but never draw at once, callers sequence
 # output:
 
 output prints app results as table, json, yaml based on --output flag, default table.
-tables come from the merged table lib, aqua default, rodaine for script-friendly.
+tables come from termtable, bordered by default, borderless for script-friendly.
 styled headers apply only through the ansi-aware engine, pipes stay verbatim.
 graphs are owned ascii point charts with labeled axis, no color codes inside.
 sizes use humanize bytes, command splitting uses shlex.
 output never reads input, it is out only, same static rules as static.
 json and yaml must be stable key order for tests and pipes.
 
-# table:
+# termtable:
 
-table merges aquasecurity and rodaine engines behind one facade.
-StyleAqua is bordered unicode, the default look, with header alignment and footers.
-StyleRodaine is borderless padded columns for script-friendly output.
-new styles arrive as enum values, unknown styles error instead of guessing.
+termtable renders the same rows in five styles behind one small api.
+StyleBordered is a unicode box, the default look; StyleRounded, StyleASCII, and StyleMarkdown cover docs, logs, and pipes; StyleBorderless is padded columns for scripts.
+styles arrive as enum values, unknown styles error instead of guessing.
 empty tables render nothing, ragged rows normalize to header width.
-engines carry no style scheme and stay monochrome by default: output.TableWith applies header emphasis at the call site, aqua measures the ansi so styled headers align, and aqua line and header styles are opt-in for direct engine users only.
+termtable carries no style scheme and stays monochrome: output.TableWith applies header emphasis at the call site and the engine measures the ansi so styled headers align.
 
 # box:
 
@@ -258,6 +259,6 @@ no network in tests except dogfood CI which tidies for real.
 
 semver, public folder names and function names do not break without major bump.
 underlying mods like cobra, koanf, fatih can be upgraded without breaking apps because they are wrapped.
-owned code (render, prompt, progress, output, table) evolves in place with tests.
+owned code (render, prompt, progress, output, termtable) evolves in place with tests.
 render fork keeps echelon api names so cirrus pattern still ports.
 deprecations warn for one minor before removal.

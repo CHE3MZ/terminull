@@ -11,7 +11,7 @@ static/ ( appname banner , out only , no input )
 core/ ( signals + exit codes + version , slog )
 retry/ ( backoff retries , attempts delay veto )
 pager/ ( less paging , tty gated , epipe safe )
-table/ ( aqua default + rodaine styles )
+termtable/ ( one table library , five styles )
 box/ ( framed boxes , ansi aware widths )
 termimage/ ( image rendering , kitty + iterm2 + sixel + ansi fallback )
 cmd/terminull ( dogfood generator cli )
@@ -29,12 +29,13 @@ static/ ( public , importable )
 core/ ( public , importable )
 retry/ ( public , importable )
 pager/ ( public , importable )
-table/ ( public , importable )
+termtable/ ( public , importable )
 box/ ( public , importable )
 termimage/ ( public , importable )
 cmd/ ( binaries , not importable )
 internal/ ( generator + terminull wiring , private )
 tests/ ( integration , windows mac linux )
+examples/ ( runnable termtable demo )
 scripts/ ( build test smoke + ops , all sh )
 docs/ ( index + dependencies + architecture + spec + TODO )
 
@@ -60,12 +61,12 @@ render/ is our fork of echelon. it keeps a tree of jobs like task and subtask. i
 style/ decides color or no color. it wraps all output so windows conhost shows the same as mac and linux. no app prints with fmt directly, all go through style and render.
 prompt/ prints a bullet question and reads one line, no cursor games. it works when interactive and errors clearly when not, telling the user which flag to pass instead. its Editor is the opt-in exception for repls: liner-backed editing with history, ctrl+r, and completion, lent to a single Line call and handed back after, plain reads on pipes.
 progress/ owns its spinner and bar. spinners animate only on terminals and stay quiet on pipes. bars print every step so ci logs stay complete.
-output/ prints tables, graphs, sizes, durations. graphs are plain ascii so they work everywhere. tables come in aqua bordered style by default and rodaine borderless for scripts.
+output/ prints tables, graphs, sizes, durations. graphs are plain ascii so they work everywhere. tables come in bordered style by default and borderless for scripts.
 static/ prints out only things like app name banner. it never asks for input, never starts spinners or prompts, and stays plain unless the terminal earned color. it finishes fast and exits cleanly on ctrl+c.
 core/ holds signals, exit codes, version, and slog logging. debug and verbose live here.
 retry/ reruns flaky ops like tidy with backoff until attempts run out.
 pager/ pages long output through less on terminals and passes pipes through untouched.
-table/ merges two table engines behind one style switch, aqua default, rodaine for scripts.
+termtable/ renders the same rows in five styles: bordered default, rounded, ascii, markdown, borderless. the engines are private and never surface in the api.
 box/ draws frames around text: rounded, hard, double, ascii corners, titles, padding, and wrapping. it measures visible widths so ansi colors and cjk stay aligned inside the frame.
 termimage/ renders images with zero new mods: kitty graphics, iterm2 inline png, sixel, and half-block or ascii fallbacks, picked by env hints plus a DA1 probe, sized in cells, tmux-safe.
 cmd/terminull/ is our own cli built from all of the above, it scaffolds new projects.
@@ -80,6 +81,7 @@ every new part needs tests on windows, mac, and linux, plus piped and non tty pa
 wrapping matters more than features. underlying mods can change, our folder names and function names do not.
 
 fork policy:
-render and the table engines keep upstream api names and attribution, so the cirrus pattern and the aqua and rodaine docs still port.
-divergences are deliberate and documented next to the code or in spec: rodaine measures runewidth cells and returns print errors, rows pad or truncate to headers, table engines stay monochrome, sixel stays raw inside tmux.
+render keeps echelon api names and attribution, so the cirrus pattern still ports.
+termtable owns table rendering end to end: the two vendored mit engines sit in termtable/internal and only the style api is public.
+divergences are deliberate and documented next to the code or in spec: the plain engine measures runewidth cells and returns print errors, rows pad or truncate to headers, termtable stays monochrome, sixel stays raw inside tmux.
 upstream code is cherry-picked only for a bug we hit or a capability we document, never for cosmetic churn. the facade is ours and may evolve; engine surfaces stay stable.

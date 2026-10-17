@@ -87,13 +87,14 @@
 - [x] 7.3 table + graph owned by output (ANSI-aware layout, verbatim pipes)
 - [x] 7.4 go.mod slimmed to 19 direct + 8 indirect
 
-# phase 8 — merged table library:
+# phase 8 — termtable library:
 
-- [x] 8.1 fork aquasecurity/table + rodaine/table into table/ with facade
-- [x] 8.2 StyleAqua default, StyleRodaine script-friendly, unknown styles error
-- [x] 8.3 output rerouted (Table/TableWith/TableStyle), old renderer removed
-- [x] 8.4 engine goldens: aqua borders, align, wrap, cjk, merge, colspan, footers, fill width; rodaine padding, multiline, truncation, separator, print errors
-- [x] 8.5 fork policy documented: upstream api kept, divergences listed, engines stay monochrome with scheme styling at the call site
+- [x] 8.1 render rows in five styles: bordered, rounded, ascii, markdown, borderless
+- [x] 8.2 default bordered, unknown styles error, empty tables silent, ragged rows normalize
+- [x] 8.3 output rerouted (Table/TableWith/TableStyle), style plumbed to termtable
+- [x] 8.4 engine goldens: borders, align, wrap, cjk, merge, colspan, footers, fill width, padding, multiline, truncation, print errors
+- [x] 8.5 engines vendored privately under termtable/internal, licenses and attribution kept, no upstream names in the public api
+- [x] 8.6 examples/termtable renders one table in every style
 
 # phase 9 — box rendering:
 
