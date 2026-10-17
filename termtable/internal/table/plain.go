@@ -11,8 +11,8 @@ const plainPadding = 2 // spaces after each column
 
 // Plain writes header and rows as padded columns with no borders, the
 // shape scripts read best. Every cell widens its column to the longest
-// value plus padding, and multi-line cells split into extra physical
-// rows.
+// visible value plus padding, so ansi-styled cells stay aligned, and
+// multi-line cells split into extra physical rows.
 func Plain(w io.Writer, header []string, rows [][]string) error {
 	cols := len(header)
 	if cols == 0 {
@@ -22,13 +22,13 @@ func Plain(w io.Writer, header []string, rows [][]string) error {
 	expanded := expandRows(cols, rows)
 	widths := make([]int, cols)
 	for c, h := range header {
-		if size := style.Width(h) + plainPadding; size > widths[c] {
+		if size := style.VisibleWidth(h) + plainPadding; size > widths[c] {
 			widths[c] = size
 		}
 	}
 	for _, row := range expanded {
 		for c, cell := range row {
-			if size := style.Width(cell) + plainPadding; size > widths[c] {
+			if size := style.VisibleWidth(cell) + plainPadding; size > widths[c] {
 				widths[c] = size
 			}
 		}
@@ -39,7 +39,7 @@ func Plain(w io.Writer, header []string, rows [][]string) error {
 		for c := 0; c < cols; c++ {
 			cell := cellAt(row, c)
 			b.WriteString(cell)
-			if pad := widths[c] - style.Width(cell); pad > 0 {
+			if pad := widths[c] - style.VisibleWidth(cell); pad > 0 {
 				b.WriteString(strings.Repeat(" ", pad))
 			}
 		}

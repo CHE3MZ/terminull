@@ -264,6 +264,12 @@ func TestPlainGoldens(t *testing.T) {
 			rows:   [][]string{{"日本db"}},
 			want:   "名前    \n日本db  \n",
 		},
+		{
+			name:   "styled",
+			header: []string{"NAME"},
+			rows:   [][]string{{"\x1b[1mweb\x1b[0m"}},
+			want:   "NAME  \n\x1b[1mweb\x1b[0m   \n",
+		},
 	}
 
 	for _, tt := range tests {
