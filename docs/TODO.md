@@ -95,6 +95,7 @@
 - [x] 8.4 engine goldens: borders, align, wrap, cjk, merge, colspan, footers, fill width, padding, multiline, truncation, print errors
 - [x] 8.5 engines vendored privately under termtable/internal, licenses and attribution kept, no upstream names in the public api
 - [x] 8.6 examples/termtable renders one table in every style
+- [x] 8.7 renderer rewritten in-house (termtable/internal/table), third-party engines and their license files removed, demo output byte-identical
 
 # phase 9 — box rendering:
 

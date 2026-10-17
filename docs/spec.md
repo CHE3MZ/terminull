@@ -157,7 +157,7 @@ multiple bars and logs share one writer but never draw at once, callers sequence
 
 output prints app results as table, json, yaml based on --output flag, default table.
 tables come from termtable, bordered by default, borderless for script-friendly.
-styled headers apply only through the ansi-aware engine, pipes stay verbatim.
+styled headers apply only through the ansi-aware renderer, pipes stay verbatim.
 graphs are owned ascii point charts with labeled axis, no color codes inside.
 sizes use humanize bytes, command splitting uses shlex.
 output never reads input, it is out only, same static rules as static.
@@ -169,7 +169,7 @@ termtable renders the same rows in five styles behind one small api.
 StyleBordered is a unicode box, the default look; StyleRounded, StyleASCII, and StyleMarkdown cover docs, logs, and pipes; StyleBorderless is padded columns for scripts.
 styles arrive as enum values, unknown styles error instead of guessing.
 empty tables render nothing, ragged rows normalize to header width.
-termtable carries no style scheme and stays monochrome: output.TableWith applies header emphasis at the call site and the engine measures the ansi so styled headers align.
+termtable carries no style scheme and stays monochrome: output.TableWith applies header emphasis at the call site and the renderer measures the ansi so styled headers align.
 
 # box:
 

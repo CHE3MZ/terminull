@@ -66,7 +66,7 @@ static/ prints out only things like app name banner. it never asks for input, ne
 core/ holds signals, exit codes, version, and slog logging. debug and verbose live here.
 retry/ reruns flaky ops like tidy with backoff until attempts run out.
 pager/ pages long output through less on terminals and passes pipes through untouched.
-termtable/ renders the same rows in five styles: bordered default, rounded, ascii, markdown, borderless. the engines are private and never surface in the api.
+termtable/ renders the same rows in five styles: bordered default, rounded, ascii, markdown, borderless. the renderer is private and never surfaces in the api.
 box/ draws frames around text: rounded, hard, double, ascii corners, titles, padding, and wrapping. it measures visible widths so ansi colors and cjk stay aligned inside the frame.
 termimage/ renders images with zero new mods: kitty graphics, iterm2 inline png, sixel, and half-block or ascii fallbacks, picked by env hints plus a DA1 probe, sized in cells, tmux-safe.
 cmd/terminull/ is our own cli built from all of the above, it scaffolds new projects.
@@ -82,6 +82,6 @@ wrapping matters more than features. underlying mods can change, our folder name
 
 fork policy:
 render keeps echelon api names and attribution, so the cirrus pattern still ports.
-termtable owns table rendering end to end: the two vendored mit engines sit in termtable/internal and only the style api is public.
-divergences are deliberate and documented next to the code or in spec: the plain engine measures runewidth cells and returns print errors, rows pad or truncate to headers, termtable stays monochrome, sixel stays raw inside tmux.
+termtable owns table rendering end to end: the renderer in termtable/internal/table is written for this module, no third-party table code and no attribution duties, and only the style api is public.
+divergences are deliberate and documented next to the code or in spec: the borderless renderer measures runewidth cells, rows pad or truncate to headers, write errors propagate on every style, termtable stays monochrome, sixel stays raw inside tmux.
 upstream code is cherry-picked only for a bug we hit or a capability we document, never for cosmetic churn. the facade is ours and may evolve; engine surfaces stay stable.
