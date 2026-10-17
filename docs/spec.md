@@ -168,6 +168,7 @@ StyleAqua is bordered unicode, the default look, with header alignment and foote
 StyleRodaine is borderless padded columns for script-friendly output.
 new styles arrive as enum values, unknown styles error instead of guessing.
 empty tables render nothing, ragged rows normalize to header width.
+engines carry no style scheme and stay monochrome by default: output.TableWith applies header emphasis at the call site, aqua measures the ansi so styled headers align, and aqua line and header styles are opt-in for direct engine users only.
 
 # box:
 

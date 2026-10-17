@@ -78,3 +78,8 @@ apps import only top level folders like app and config. never import internal. i
 every prompt has a flag fallback. if there is no terminal, the app must still work with flags alone.
 every new part needs tests on windows, mac, and linux, plus piped and non tty paths.
 wrapping matters more than features. underlying mods can change, our folder names and function names do not.
+
+fork policy:
+render and the table engines keep upstream api names and attribution, so the cirrus pattern and the aqua and rodaine docs still port.
+divergences are deliberate and documented next to the code or in spec: rodaine measures runewidth cells and returns print errors, rows pad or truncate to headers, table engines stay monochrome, sixel stays raw inside tmux.
+upstream code is cherry-picked only for a bug we hit or a capability we document, never for cosmetic churn. the facade is ours and may evolve; engine surfaces stay stable.

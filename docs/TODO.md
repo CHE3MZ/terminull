@@ -92,6 +92,8 @@
 - [x] 8.1 fork aquasecurity/table + rodaine/table into table/ with facade
 - [x] 8.2 StyleAqua default, StyleRodaine script-friendly, unknown styles error
 - [x] 8.3 output rerouted (Table/TableWith/TableStyle), old renderer removed
+- [x] 8.4 engine goldens: aqua borders, align, wrap, cjk, merge, colspan, footers, fill width; rodaine padding, multiline, truncation, separator, print errors
+- [x] 8.5 fork policy documented: upstream api kept, divergences listed, engines stay monochrome with scheme styling at the call site
 
 # phase 9 — box rendering:
 
