@@ -171,6 +171,7 @@ styles are rounded, hard, double, ascii, none, unknown styles render rounded.
 titles sit in the top border and truncate with an ellipsis when the box is narrow.
 padding is inner horizontal spaces, width sets the outer size and wraps content.
 content may carry ansi, borders measure visible glyphs so lines stay aligned.
+open styles reset at each line end and resume on the next wrapped line, borders stay clean.
 cjk counts double via runewidth, combining marks stay with their base rune.
 frame color goes through scheme, a disabled scheme prints plain bytes.
 
