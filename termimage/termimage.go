@@ -126,7 +126,7 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		_, err := w.Write(tmuxWrap(sixelEncode(scaled)))
 		return err
 	case HalfBlock:
-		if err := style.EnsureConsole(); err != nil {
+		if !consoleReady(w) {
 			return writeASCII(w, rgba, cols, rows)
 		}
 		_, err := io.WriteString(w, halfBlockString(resample(rgba, cols, rows*2), colorDepth()))
@@ -141,6 +141,17 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 func writeASCII(w io.Writer, img *image.RGBA, cols, rows int) error {
 	_, err := io.WriteString(w, asciiString(resample(img, cols, rows)))
 	return err
+}
+
+// consoleReady prepares a real console for VT escapes and reports whether
+// escapes can be shown. Pipes, files, and buffers need no preparation and
+// keep their escapes; a console that refuses VT asks for the ASCII tier.
+func consoleReady(w io.Writer) bool {
+	f, ok := w.(*os.File)
+	if !ok || !style.IsTerminal(f) {
+		return true
+	}
+	return style.EnsureConsole() == nil
 }
 
 // targetSize resolves the cell footprint; the cell pixel estimate cw by

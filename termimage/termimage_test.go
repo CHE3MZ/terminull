@@ -264,6 +264,22 @@ func TestASCIIRamp(t *testing.T) {
 	}
 }
 
+func TestHalfBlockKeepsEscapesOnBuffer(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 1, 2))
+	setPix(img, 0, 0, red)
+	setPix(img, 0, 1, blue)
+
+	var buf bytes.Buffer
+	if err := Render(&buf, img, Options{Backend: HalfBlock, Width: 1, Height: 1}, style.NewScheme(true)); err != nil {
+		t.Fatalf("Render() error = %v", err)
+	}
+	if !strings.Contains(buf.String(), "▀") {
+		t.Fatalf("buffer render %q lost half-block escapes", buf.String())
+	}
+}
+
 func TestStringSchemeDisabledIsASCII(t *testing.T) {
 	t.Parallel()
 
