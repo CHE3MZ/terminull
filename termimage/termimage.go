@@ -77,13 +77,16 @@ type Options struct {
 	Width int
 	// Height caps the render in cells; zero keeps the image aspect.
 	Height int
-	// Dither enables Floyd-Steinberg error diffusion for sixel; the
-	// adaptive palette alone is cleaner for most images.
+	// Dither enables Floyd-Steinberg error diffusion wherever a backend
+	// quantizes: the sixel adaptive palette, 256-color half blocks, and
+	// the ascii ramp. Exact-pixel paths (kitty, iterm2, truecolor half
+	// blocks) send full color and are unaffected.
 	Dither bool
-	// Background flattens transparency when it has alpha: sixel,
-	// half blocks, and ascii blend the image over this color. The
-	// zero value keeps transparency instead — sixel leaves those
-	// pixels unpainted, half blocks and ascii flatten over black.
+	// Background flattens transparency when it has alpha: every backend
+	// blends the image over this color. The zero value keeps
+	// transparency instead — kitty and iterm2 send native alpha, sixel
+	// leaves those pixels unpainted, and half blocks and ascii render
+	// them as blanks, all letting the terminal background show through.
 	Background color.RGBA
 	// CellWidth and CellHeight override the per-cell pixel estimate
 	// used for sizing; zero queries the terminal.
@@ -119,10 +122,7 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 	}
 
 	rgba := toRGBA(img)
-	if backend == HalfBlock || backend == ASCII {
-		rgba = flatten(rgba, opaque(opts.Background))
-	}
-	if backend == Sixel && opts.Background.A != 0 {
+	if opts.Background.A != 0 && (backend == Sixel || backend == HalfBlock || backend == ASCII) {
 		rgba = flatten(rgba, opts.Background)
 	}
 	cw, ch := cellPixels()
@@ -160,19 +160,19 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		return err
 	case HalfBlock:
 		if !consoleReady(w) {
-			return writeASCII(w, rgba, cols, rows)
+			return writeASCII(w, rgba, cols, rows, opts.Dither)
 		}
-		_, err := io.WriteString(w, halfBlockString(resample(rgba, cols, rows*2), depth))
+		_, err := io.WriteString(w, halfBlockString(resample(rgba, cols, rows*2), depth, opts.Dither))
 		return err
 	case ASCII:
-		return writeASCII(w, rgba, cols, rows)
+		return writeASCII(w, rgba, cols, rows, opts.Dither)
 	default:
 		return errors.New("termimage: unknown backend")
 	}
 }
 
-func writeASCII(w io.Writer, img *image.RGBA, cols, rows int) error {
-	_, err := io.WriteString(w, asciiString(resample(img, cols, rows)))
+func writeASCII(w io.Writer, img *image.RGBA, cols, rows int, dither bool) error {
+	_, err := io.WriteString(w, asciiString(resample(img, cols, rows), dither))
 	return err
 }
 

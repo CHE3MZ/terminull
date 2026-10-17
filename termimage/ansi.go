@@ -3,17 +3,51 @@ package termimage
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"strings"
 )
 
-// halfBlockString renders img as upper-half blocks: each cell paints the
-// foreground over the background, so two image rows share one terminal
-// row. Odd heights duplicate the final row. Depth picks truecolor or
-// 256-color codes; SGR runs are emitted only when a color changes.
-func halfBlockString(img *image.RGBA, depth int) string {
+// SGR codes that return colors to the terminal defaults, so unpainted
+// halves show whatever the terminal already draws behind the image.
+const (
+	defaultFgSeq = "\x1b[39m"
+	defaultBgSeq = "\x1b[49m"
+)
+
+// Cell color state keys: -1 means unset, -2 means default colors, any
+// other value packs an RGB triple.
+const (
+	keyUnset   = -1
+	keyDefault = -2
+)
+
+// halfBlockString renders img as half blocks: each cell paints two image
+// rows, the upper behind the foreground and the lower behind the
+// background, so two image rows share one terminal row. Odd heights
+// duplicate the final row. Pixels under the alpha floor stay unpainted:
+// their half falls back to the terminal default, leaving the background
+// visible. Depth picks truecolor or 256-color codes; dither diffuses
+// error through the xterm palette at 256 colors, where snapping would
+// band. SGR runs are emitted only when a color changes.
+func halfBlockString(img *image.RGBA, depth int, dither bool) string {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
 	rows := (h + 1) / 2
+
+	pix := func(x, y int) color.RGBA {
+		p := y*img.Stride + x*4
+		return color.RGBA{R: img.Pix[p], G: img.Pix[p+1], B: img.Pix[p+2], A: img.Pix[p+3]}
+	}
+	if depth == depth256 && dither {
+		pal := xtermRGBA()
+		idx, _, none := mapToPalette(img, pal, true)
+		pix = func(x, y int) color.RGBA {
+			if none[y*w+x] {
+				return color.RGBA{}
+			}
+			return pal[idx[y*w+x]]
+		}
+	}
 
 	var b strings.Builder
 	for row := 0; row < rows; row++ {
@@ -22,21 +56,52 @@ func halfBlockString(img *image.RGBA, depth int) string {
 		if bot >= h {
 			bot = h - 1
 		}
-		prevFg, prevBg := -1, -1
+		prevFg, prevBg := keyUnset, keyUnset
 		for x := 0; x < w; x++ {
-			fr, fg, fb := pixel(img, x, top)
-			br, bg, bb := pixel(img, x, bot)
-			fgKey := pack(fr, fg, fb)
-			bgKey := pack(br, bg, bb)
+			t := pix(x, top)
+			u := pix(x, bot)
+			topNone := t.A < alphaFloor
+			botNone := u.A < alphaFloor
+
+			glyph := " "
+			fgKey, bgKey := keyDefault, keyDefault
+			var fgSeq, bgSeq string
+			switch {
+			case topNone && botNone:
+				// Blank cell: default colors only.
+			case botNone:
+				glyph = "▀"
+				fgKey = pack(t.R, t.G, t.B)
+				fgSeq = colorSequence(depth, true, t.R, t.G, t.B)
+			case topNone:
+				glyph = "▄"
+				fgKey = pack(u.R, u.G, u.B)
+				fgSeq = colorSequence(depth, true, u.R, u.G, u.B)
+			default:
+				glyph = "▀"
+				fgKey = pack(t.R, t.G, t.B)
+				fgSeq = colorSequence(depth, true, t.R, t.G, t.B)
+				bgKey = pack(u.R, u.G, u.B)
+				bgSeq = colorSequence(depth, false, u.R, u.G, u.B)
+			}
+
 			if fgKey != prevFg {
-				b.WriteString(colorSequence(depth, true, fr, fg, fb))
+				if fgKey == keyDefault {
+					b.WriteString(defaultFgSeq)
+				} else {
+					b.WriteString(fgSeq)
+				}
 				prevFg = fgKey
 			}
 			if bgKey != prevBg {
-				b.WriteString(colorSequence(depth, false, br, bg, bb))
+				if bgKey == keyDefault {
+					b.WriteString(defaultBgSeq)
+				} else {
+					b.WriteString(bgSeq)
+				}
 				prevBg = bgKey
 			}
-			b.WriteString("▀")
+			b.WriteString(glyph)
 		}
 		b.WriteString("\x1b[0m")
 		if row < rows-1 {
@@ -44,11 +109,6 @@ func halfBlockString(img *image.RGBA, depth int) string {
 		}
 	}
 	return b.String()
-}
-
-func pixel(img *image.RGBA, x, y int) (uint8, uint8, uint8) {
-	p := y*img.Stride + x*4
-	return img.Pix[p], img.Pix[p+1], img.Pix[p+2]
 }
 
 func pack(r, g, b uint8) int {
@@ -71,16 +131,73 @@ func colorSequence(depth int, fg bool, r, g, b uint8) string {
 // asciiRamp maps luminance to characters, lightest ink last.
 const asciiRamp = " .:-=+*#%@"
 
+// luminance is the integer Rec. 601 gray value of a pixel.
+func luminance(r, g, b uint8) int {
+	return (299*int(r) + 587*int(g) + 114*int(b)) / 1000
+}
+
 // asciiString renders img as a plain text ramp without any escapes.
-func asciiString(img *image.RGBA) string {
+// Pixels under the alpha floor stay blank, and dither diffuses
+// luminance error across the ramp so gradients stop banding at the
+// few steps the characters can show.
+func asciiString(img *image.RGBA, dither bool) string {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
+	steps := len(asciiRamp) - 1
 	var b strings.Builder
+
+	if !dither {
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				p := y*img.Stride + x*4
+				if img.Pix[p+3] < alphaFloor {
+					b.WriteByte(' ')
+					continue
+				}
+				lum := luminance(img.Pix[p], img.Pix[p+1], img.Pix[p+2])
+				b.WriteByte(asciiRamp[lum*steps/255])
+			}
+			if y < h-1 {
+				b.WriteByte('\n')
+			}
+		}
+		return b.String()
+	}
+
+	buf := make([]float64, w*h)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			p := y*img.Stride + x*4
-			lum := (299*int(img.Pix[p]) + 587*int(img.Pix[p+1]) + 114*int(img.Pix[p+2])) / 1000
-			b.WriteByte(asciiRamp[lum*(len(asciiRamp)-1)/255])
+			buf[y*w+x] = float64(luminance(img.Pix[p], img.Pix[p+1], img.Pix[p+2]))
+		}
+	}
+	spread := func(x, y int, err float64) {
+		if x < 0 || x >= w || y < 0 || y >= h {
+			return
+		}
+		buf[y*w+x] += err
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			p := y*img.Stride + x*4
+			if img.Pix[p+3] < alphaFloor {
+				b.WriteByte(' ')
+				continue
+			}
+			v := buf[y*w+x]
+			switch {
+			case v < 0:
+				v = 0
+			case v > 255:
+				v = 255
+			}
+			i := int(v*float64(steps)/255 + 0.5)
+			b.WriteByte(asciiRamp[i])
+			err := v - float64(i)*255/float64(steps)
+			spread(x+1, y, err*7.0/16)
+			spread(x-1, y+1, err*3.0/16)
+			spread(x, y+1, err*5.0/16)
+			spread(x+1, y+1, err*1.0/16)
 		}
 		if y < h-1 {
 			b.WriteByte('\n')

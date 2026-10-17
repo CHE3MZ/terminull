@@ -105,7 +105,7 @@
 # phase 11 — image rendering:
 
 - [x] 11.1 `termimage/` facade: Auto/Kitty/ITerm2/Sixel/HalfBlock/ASCII backends, Options width/height in cells, String/Render with scheme, tmux passthrough
-- [x] 11.2 encoders: kitty chunked graphics, iterm2 inline png (straight-alpha), sixel with adaptive median-cut palette + optional floyd-steinberg dither, DEC 10x20 windows sizing, native alpha + transparency passthrough, half-block truecolor/256, ascii ramp, box+bilinear scaler
+- [x] 11.2 encoders: kitty chunked graphics, iterm2 inline png (straight-alpha), sixel with adaptive median-cut palette, DEC 10x20 windows sizing, transparency as native alpha/unpainted cells on every tier, floyd-steinberg dither on sixel + 256-color half-blocks + ascii, half-block truecolor/256, ascii ramp, box+bilinear scaler
 - [x] 11.3 detection: env hints, DA1 sixel probe, per-os cell pixel query, 8x16 default
 - [x] 11.4 tests: golden protocol bytes, chunk reassembly, palette, detection env, sizing; demo verified piped
 

@@ -187,9 +187,9 @@ backends are kitty graphics, iterm2 inline png, sixel, and ansi half-blocks or a
 auto detection reads env hints first, then probes the terminal for sixel with a DA1 query.
 kitty graphics cover kitty, ghostty, and wezterm, iterm2 covers iterm, sixel covers windows terminal, mlterm, foot, and contour.
 width and height are cell counts, zero width uses the terminal width and keeps aspect.
-sixel builds an adaptive palette from the image and dithers only on request, kitty and iterm2 send exact pixels.
+sixel builds an adaptive palette from the image, and dithering spreads quantization error on request across every tier that quantizes: sixel, 256-color half-blocks, and the ascii ramp; kitty and iterm2 send exact pixels.
 windows consoles size sixel rasters in DEC 10x20 cell units so aspect holds on any font, posix terminals use real cell pixels.
-transparency survives by default: kitty and iterm2 send native alpha, sixel asks the terminal to keep its background and leaves those pixels unpainted, half-blocks and ascii flatten over the background color, and a background color with alpha flattens sixel too.
+transparency survives by default: kitty and iterm2 send native alpha, sixel asks the terminal to keep its background and leaves those pixels unpainted, half-blocks fall back to lower-half or blank cells with default colors, and ascii leaves blanks; a background color with alpha flattens every backend instead.
 half-blocks need 256 colors, color off or 16 colors degrade to ascii, pipes never carry escapes.
 tmux is detected and graphics sequences route through a passthrough wrapper.
 file decode is stdlib png jpeg gif, scale is box average for shrink and bilinear for grow.

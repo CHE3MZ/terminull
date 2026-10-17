@@ -47,6 +47,23 @@ var (
 	lutOnce      sync.Once
 )
 
+// xtermRGBA returns the xterm palette as color values for quantization
+// paths that need a palette slice instead of the fixed table.
+func xtermRGBA() []color.RGBA {
+	xtermRGBAOnce.Do(func() {
+		xtermRGBASlice = make([]color.RGBA, len(xtermPalette))
+		for i, c := range xtermPalette {
+			xtermRGBASlice[i] = color.RGBA{R: c[0], G: c[1], B: c[2], A: 255}
+		}
+	})
+	return xtermRGBASlice
+}
+
+var (
+	xtermRGBASlice []color.RGBA
+	xtermRGBAOnce  sync.Once
+)
+
 func buildExactIndex() map[[3]uint8]int16 {
 	m := make(map[[3]uint8]int16, 256)
 	for i, c := range xtermPalette {

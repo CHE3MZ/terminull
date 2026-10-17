@@ -372,7 +372,7 @@ func TestHalfBlockTruecolor(t *testing.T) {
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, blue)
 
-	got := halfBlockString(img, depthTrue)
+	got := halfBlockString(img, depthTrue, false)
 	for _, want := range []string{"\x1b[38;2;255;0;0m", "\x1b[48;2;0;0;255m", "▀", "\x1b[0m"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("halfblock %q misses %q", got, want)
@@ -387,9 +387,100 @@ func TestHalfBlock256(t *testing.T) {
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, blue)
 
-	got := halfBlockString(img, depth256)
+	got := halfBlockString(img, depth256, false)
 	if !strings.Contains(got, "\x1b[38;5;9m") || !strings.Contains(got, "\x1b[48;5;12m") {
 		t.Fatalf("halfblock 256 %q misses palette codes", got)
+	}
+}
+
+func TestHalfBlockTransparency(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 1, 2))
+	setPix(img, 0, 0, color.RGBA{})
+	setPix(img, 0, 1, red)
+
+	got := halfBlockString(img, depthTrue, false)
+	if !strings.Contains(got, "▄") || !strings.Contains(got, defaultBgSeq) {
+		t.Fatalf("transparent top cell = %q, want lower block with default background", got)
+	}
+	if !strings.Contains(got, "\x1b[38;2;255;0;0m") {
+		t.Fatalf("transparent top cell lost the opaque color: %q", got)
+	}
+
+	setPix(img, 0, 0, red)
+	setPix(img, 0, 1, color.RGBA{})
+	got = halfBlockString(img, depthTrue, false)
+	if !strings.Contains(got, "▀") || !strings.Contains(got, defaultBgSeq) {
+		t.Fatalf("transparent bottom cell = %q, want upper block with default background", got)
+	}
+
+	setPix(img, 0, 0, color.RGBA{})
+	got = halfBlockString(img, depthTrue, false)
+	if !strings.Contains(got, " ") || strings.Contains(got, "▀") || strings.Contains(got, "▄") {
+		t.Fatalf("blank cell = %q, want a space", got)
+	}
+	if !strings.Contains(got, defaultFgSeq) || !strings.Contains(got, defaultBgSeq) {
+		t.Fatalf("blank cell = %q, want default colors", got)
+	}
+}
+
+func TestHalfBlockDitherDeterministic(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 16, 2))
+	for x := 0; x < 16; x++ {
+		v := uint8(x * 255 / 15)
+		setPix(img, x, 0, color.RGBA{R: v, G: 40, B: 200, A: 255})
+		setPix(img, x, 1, color.RGBA{R: 200, G: v, B: 40, A: 255})
+	}
+	plain := halfBlockString(img, depth256, false)
+	got := halfBlockString(img, depth256, true)
+	if got != halfBlockString(img, depth256, true) {
+		t.Fatal("dithered half-block is not deterministic")
+	}
+	if got == plain {
+		t.Fatal("256-color dithering did not change the render")
+	}
+}
+
+func TestHalfBlockBackgroundFlattens(t *testing.T) {
+	t.Setenv("COLORTERM", "truecolor")
+
+	img := image.NewRGBA(image.Rect(0, 0, 1, 2))
+	out, err := String(img, Options{Backend: HalfBlock, Width: 1, Height: 1, Background: white}, style.NewScheme(true))
+	if err != nil {
+		t.Fatalf("String() error = %v", err)
+	}
+	if strings.Contains(out, defaultFgSeq) || strings.Contains(out, defaultBgSeq) {
+		t.Fatalf("flattened render kept default-color cells: %q", out)
+	}
+	if !strings.Contains(out, "\x1b[48;2;255;255;255m") {
+		t.Fatalf("flattened white background missing: %q", out)
+	}
+}
+
+func TestFullyTransparentImage(t *testing.T) {
+	t.Setenv("COLORTERM", "truecolor")
+
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	for name, backend := range map[string]Backend{
+		"kitty": Kitty, "iterm2": ITerm2, "sixel": Sixel, "half": HalfBlock, "ascii": ASCII,
+	} {
+		out, err := String(img, Options{Backend: backend, Width: 2, Height: 1}, style.NewScheme(true))
+		if err != nil {
+			t.Fatalf("%s: String() error = %v", name, err)
+		}
+		if out == "" {
+			t.Fatalf("%s: empty output for a transparent image", name)
+		}
+	}
+
+	if out, _ := String(img, Options{Backend: Sixel, Width: 2, Height: 1}, style.NewScheme(true)); !strings.Contains(out, "P0;1;0q") {
+		t.Fatalf("sixel transparent preamble missing: %q", out)
+	}
+	if out, _ := String(img, Options{Backend: ASCII, Width: 2, Height: 1}, style.NewScheme(true)); out != "  " {
+		t.Fatalf("ascii = %q, want blanks", out)
 	}
 }
 
@@ -401,8 +492,37 @@ func TestASCIIRamp(t *testing.T) {
 		setPix(img, x, 0, black)
 		setPix(img, x, 1, white)
 	}
-	if got := asciiString(img); got != "   \n@@@" {
+	if got := asciiString(img, false); got != "   \n@@@" {
 		t.Fatalf("ascii = %q, want dark row then bright row", got)
+	}
+}
+
+func TestASCIITransparentIsBlank(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	setPix(img, 0, 0, color.RGBA{})
+	setPix(img, 1, 0, white)
+	if got := asciiString(img, false); got != " @" {
+		t.Fatalf("ascii = %q, want transparent blank then bright", got)
+	}
+}
+
+func TestASCIIDitherDeterministic(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 16, 1))
+	for x := 0; x < 16; x++ {
+		v := uint8(x * 255 / 15)
+		setPix(img, x, 0, color.RGBA{R: v, G: v, B: v, A: 255})
+	}
+	plain := asciiString(img, false)
+	got := asciiString(img, true)
+	if got != asciiString(img, true) {
+		t.Fatal("dithered ascii is not deterministic")
+	}
+	if got == plain {
+		t.Fatal("ascii dithering did not change the render")
 	}
 }
 
