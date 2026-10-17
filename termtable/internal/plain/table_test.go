@@ -1,4 +1,4 @@
-package rodaine_test
+package plain_test
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	rodaine "github.com/CHE3MZ/terminull/table/rodaine"
+	plain "github.com/CHE3MZ/terminull/termtable/internal/plain"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -19,7 +19,7 @@ func TestPrintGolden(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("ID", "NAME", "COST ($)").WithWriter(&buf)
+	tb := plain.New("ID", "NAME", "COST ($)").WithWriter(&buf)
 	tb.AddRow("1", "Foobar", "1.23")
 	tb.AddRow("2", "Fizzbuzz", "4.56")
 	tb.AddRow("3", "Gizmo", "78.90")
@@ -43,7 +43,7 @@ func TestPrintNoHeaders(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("A", "B").WithWriter(&buf).WithPrintHeaders(false)
+	tb := plain.New("A", "B").WithWriter(&buf).WithPrintHeaders(false)
 	tb.AddRow("1", "2")
 
 	if err := tb.Print(); err != nil {
@@ -59,7 +59,7 @@ func TestPaddingZero(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("A", "B").WithWriter(&buf).WithPadding(0)
+	tb := plain.New("A", "B").WithWriter(&buf).WithPadding(0)
 	tb.AddRow("1", "2")
 
 	if err := tb.Print(); err != nil {
@@ -75,7 +75,7 @@ func TestNegativePaddingClamped(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("A", "B").WithWriter(&buf).WithPadding(-3)
+	tb := plain.New("A", "B").WithWriter(&buf).WithPadding(-3)
 	tb.AddRow("1", "2")
 
 	if err := tb.Print(); err != nil {
@@ -91,7 +91,7 @@ func TestCJKAlignment(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("NAME", "QTY").WithWriter(&buf)
+	tb := plain.New("NAME", "QTY").WithWriter(&buf)
 	tb.AddRow("日本", "3")
 
 	if err := tb.Print(); err != nil {
@@ -116,7 +116,7 @@ func TestMultilineRow(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("H1", "H2").WithWriter(&buf)
+	tb := plain.New("H1", "H2").WithWriter(&buf)
 	tb.AddRow("a\nb", "c")
 
 	if err := tb.Print(); err != nil {
@@ -137,7 +137,7 @@ func TestSetRowsTruncatesAndPads(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("A", "B").WithWriter(&buf)
+	tb := plain.New("A", "B").WithWriter(&buf)
 	tb.SetRows([][]string{{"1"}, {"1", "2", "3"}})
 
 	if err := tb.Print(); err != nil {
@@ -158,7 +158,7 @@ func TestHeaderSeparatorRow(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("ID", "NAME").WithWriter(&buf).WithHeaderSeparatorRow('-')
+	tb := plain.New("ID", "NAME").WithWriter(&buf).WithHeaderSeparatorRow('-')
 	tb.AddRow("1", "x")
 
 	if err := tb.Print(); err != nil {
@@ -178,7 +178,7 @@ func TestHeaderSeparatorRow(t *testing.T) {
 func TestPrintErrorPropagates(t *testing.T) {
 	t.Parallel()
 
-	tb := rodaine.New("A").WithWriter(errWriter{})
+	tb := plain.New("A").WithWriter(errWriter{})
 	tb.AddRow("x")
 
 	if err := tb.Print(); err == nil {
@@ -190,7 +190,7 @@ func TestAddRowTruncatesExtraCells(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("A").WithWriter(&buf)
+	tb := plain.New("A").WithWriter(&buf)
 	tb.AddRow("x", "y")
 
 	if err := tb.Print(); err != nil {
@@ -206,7 +206,7 @@ func TestHeaderFormatterWithSeparator(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("name").WithWriter(&buf).WithHeaderSeparatorRow('-')
+	tb := plain.New("name").WithWriter(&buf).WithHeaderSeparatorRow('-')
 	tb.WithHeaderFormatter(func(f string, v ...interface{}) string {
 		return strings.ToUpper(fmt.Sprintf(f, v...))
 	})
@@ -230,7 +230,7 @@ func TestFirstColumnFormatter(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := rodaine.New("id", "name").WithWriter(&buf)
+	tb := plain.New("id", "name").WithWriter(&buf)
 	tb.WithFirstColumnFormatter(func(f string, v ...interface{}) string {
 		return strings.ToUpper(fmt.Sprintf(f, v...))
 	})

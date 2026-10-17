@@ -1,18 +1,18 @@
-package aqua_test
+package bordered_test
 
 import (
 	"bytes"
 	"strings"
 	"testing"
 
-	aqua "github.com/CHE3MZ/terminull/table/aqua"
+	bordered "github.com/CHE3MZ/terminull/termtable/internal/bordered"
 )
 
-func draw(t *testing.T, build func(*aqua.Table)) string {
+func draw(t *testing.T, build func(*bordered.Table)) string {
 	t.Helper()
 
 	var buf bytes.Buffer
-	tb := aqua.New(&buf)
+	tb := bordered.New(&buf)
 	build(tb)
 	tb.Render()
 	return buf.String()
@@ -21,7 +21,7 @@ func draw(t *testing.T, build func(*aqua.Table)) string {
 func TestRenderBorderedGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME", "STATUS")
 		tb.AddRow("web", "ok")
 	})
@@ -41,7 +41,7 @@ func TestRenderBorderedGolden(t *testing.T) {
 func TestRenderHeadersOnlyGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME", "STATUS")
 	})
 
@@ -58,7 +58,7 @@ func TestRenderHeadersOnlyGolden(t *testing.T) {
 func TestRenderHeaderCenteredGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("N", "K")
 		tb.AddRow("abc", "1")
 	})
@@ -78,9 +78,9 @@ func TestRenderHeaderCenteredGolden(t *testing.T) {
 func TestRenderRightAlignedGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("KEY")
-		tb.SetAlignment(aqua.AlignRight)
+		tb.SetAlignment(bordered.AlignRight)
 		tb.AddRow("ab")
 	})
 
@@ -99,7 +99,7 @@ func TestRenderRightAlignedGolden(t *testing.T) {
 func TestRenderWrappedColumnGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("code")
 		tb.AddRow("abcdefgh")
 		tb.SetColumnMaxWidth(6)
@@ -123,7 +123,7 @@ func TestRenderWrappedColumnGolden(t *testing.T) {
 func TestRenderCJKGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("名", "数量")
 		tb.AddRow("日本", "3")
 	})
@@ -143,7 +143,7 @@ func TestRenderCJKGolden(t *testing.T) {
 func TestRenderRowLinesDisabled(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("K", "V")
 		tb.AddRow("a", "1")
 		tb.AddRow("b", "2")
@@ -166,7 +166,7 @@ func TestRenderRowLinesDisabled(t *testing.T) {
 func TestRenderAutoMerge(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME", "TAG")
 		tb.AddRow("a", "x")
 		tb.AddRow("a", "y")
@@ -190,10 +190,10 @@ func TestRenderAutoMerge(t *testing.T) {
 func TestRenderASCIIDividersGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME", "STATUS")
 		tb.AddRow("web", "ok")
-		tb.SetDividers(aqua.ASCIIDividers)
+		tb.SetDividers(bordered.ASCIIDividers)
 	})
 
 	want := "" +
@@ -211,7 +211,7 @@ func TestRenderASCIIDividersGolden(t *testing.T) {
 func TestRenderPreservesANSIContent(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("COLOR", "X")
 		tb.AddRow("\x1b[31mred\x1b[0m", "x")
 	})
@@ -234,7 +234,7 @@ func TestRenderPreservesANSIContent(t *testing.T) {
 func TestRenderDefaultHasNoANSI(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME", "STATUS")
 		tb.AddRow("web", "ok")
 	})
@@ -247,10 +247,10 @@ func TestRenderDefaultHasNoANSI(t *testing.T) {
 func TestRenderLineStyleOptIn(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME")
 		tb.AddRow("web")
-		tb.SetLineStyle(aqua.StyleYellow)
+		tb.SetLineStyle(bordered.StyleYellow)
 	})
 
 	if !strings.Contains(got, "\x1b[33m┌") {
@@ -264,7 +264,7 @@ func TestRenderLineStyleOptIn(t *testing.T) {
 func TestRenderHeaderColSpanGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("TITLE")
 		tb.SetHeaderColSpans(0, 2)
 		tb.AddRow("a", "b")
@@ -285,7 +285,7 @@ func TestRenderHeaderColSpanGolden(t *testing.T) {
 func TestRenderFooterGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME")
 		tb.AddRow("a")
 		tb.SetFooters("total")
@@ -308,7 +308,7 @@ func TestRenderFooterGolden(t *testing.T) {
 func TestRenderBordersDisabled(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME", "STATUS")
 		tb.AddRow("web", "ok")
 		tb.SetBorders(false)
@@ -327,7 +327,7 @@ func TestRenderBordersDisabled(t *testing.T) {
 func TestRenderFillWidthGolden(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("A", "B")
 		tb.AddRows([]string{"1", "2"})
 		tb.SetAvailableWidth(20)
@@ -349,10 +349,10 @@ func TestRenderFillWidthGolden(t *testing.T) {
 func TestRenderHeaderStyleOptIn(t *testing.T) {
 	t.Parallel()
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		tb.SetHeaders("NAME")
 		tb.AddRow("web")
-		tb.SetHeaderStyle(aqua.StyleBold)
+		tb.SetHeaderStyle(bordered.StyleBold)
 	})
 
 	if !strings.Contains(got, "\x1b[1mNAME\x1b[0m") {
@@ -364,7 +364,7 @@ func TestRenderEmptyDrawsNothing(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	aqua.New(&buf).Render()
+	bordered.New(&buf).Render()
 
 	if buf.String() != "" {
 		t.Fatalf("empty Render() = %q, want silence", buf.String())
@@ -376,7 +376,7 @@ func TestLoadCSVGolden(t *testing.T) {
 
 	csvData := "id,name\n1,alpha\n2,beta\n"
 
-	got := draw(t, func(tb *aqua.Table) {
+	got := draw(t, func(tb *bordered.Table) {
 		if err := tb.LoadCSV(strings.NewReader(csvData), true); err != nil {
 			t.Fatalf("LoadCSV() error = %v", err)
 		}
@@ -399,7 +399,7 @@ func TestLoadCSVGolden(t *testing.T) {
 func TestLoadCSVError(t *testing.T) {
 	t.Parallel()
 
-	tb := aqua.New(&bytes.Buffer{})
+	tb := bordered.New(&bytes.Buffer{})
 	err := tb.LoadCSV(strings.NewReader("a,\"b\n"), false)
 	if err == nil {
 		t.Fatal("LoadCSV() = nil, want parse error")
@@ -410,7 +410,7 @@ func TestClearResetsRows(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	tb := aqua.New(&buf)
+	tb := bordered.New(&buf)
 	tb.SetHeaders("A")
 	tb.AddRow("1")
 	if tb.IsEmpty() || tb.RowCount() != 1 {

@@ -1,29 +1,8 @@
-// Package rodaine provides a convenient way to generate tabular output
-// of any data, primarily useful for CLI tools.
-//
-// Columns are left-aligned and padded to accommodate the largest cell in that
-// column.
-//
-// Source: https://github.com/rodaine/table
-//
-//	table.DefaultHeaderFormatter = func(format string, vals ...interface{}) string {
-//	  return strings.ToUpper(fmt.Sprintf(format, vals...))
-//	}
-//
-//	tbl := table.New("ID", "Name", "Cost ($)")
-//
-//	for _, widget := range Widgets {
-//	  tbl.AddRow(widget.ID, widget.Name, widget.Cost)
-//	}
-//
-//	tbl.Print()
-//
-//	// Output:
-//	// ID  NAME      COST ($)
-//	// 1   Foobar    1.23
-//	// 2   Fizzbuzz  4.56
-//	// 3   Gizmo     78.90
-package rodaine
+// Adapted from github.com/rodaine/table (MIT, Copyright (c) 2015 Chris
+// Roche). See LICENSE in this directory; behavior and divergences are
+// described in the package doc.
+
+package plain
 
 import (
 	"fmt"

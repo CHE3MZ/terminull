@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/CHE3MZ/terminull/style"
-	"github.com/CHE3MZ/terminull/table"
+	"github.com/CHE3MZ/terminull/termtable"
 )
 
 func TestTableGolden(t *testing.T) {
@@ -26,7 +26,7 @@ func TestTableGolden(t *testing.T) {
 			t.Fatalf("table %q does not contain %q", got, want)
 		}
 	}
-	// Default style is aqua: unicode borders.
+	// Default style is bordered: unicode borders.
 	for _, want := range []string{"┌", "│", "─"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("table %q does not contain border %q", got, want)
@@ -94,24 +94,24 @@ func TestYAMLGolden(t *testing.T) {
 	}
 }
 
-func TestTableStyleRodaine(t *testing.T) {
+func TestTableStyleBorderless(t *testing.T) {
 	t.Parallel()
 
 	tv := TableValue{Header: []string{"NAME", "STATUS"}, Rows: [][]string{{"web", "ok"}}}
 
 	var b strings.Builder
-	if err := TableStyle(&b, tv, table.StyleRodaine); err != nil {
+	if err := TableStyle(&b, tv, termtable.StyleBorderless); err != nil {
 		t.Fatalf("TableStyle() error = %v", err)
 	}
 	got := b.String()
 	for _, want := range []string{"NAME", "STATUS", "web", "ok"} {
 		if !strings.Contains(got, want) {
-			t.Fatalf("rodaine table %q does not contain %q", got, want)
+			t.Fatalf("borderless table %q does not contain %q", got, want)
 		}
 	}
 	for _, box := range []string{"┌", "┐", "└", "┘", "├", "┤", "─", "│", "+"} {
 		if strings.Contains(got, box) {
-			t.Fatalf("rodaine table %q contains border %q, want borderless", got, box)
+			t.Fatalf("borderless table %q contains border %q, want borderless", got, box)
 		}
 	}
 }

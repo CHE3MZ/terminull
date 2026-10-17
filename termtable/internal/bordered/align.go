@@ -1,4 +1,4 @@
-package aqua
+package bordered
 
 type Alignment uint8
 

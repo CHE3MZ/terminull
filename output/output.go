@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/CHE3MZ/terminull/style"
-	"github.com/CHE3MZ/terminull/table"
+	"github.com/CHE3MZ/terminull/termtable"
 )
 
 // Formats for Render and the --output flag.
@@ -49,15 +49,15 @@ type TableValue struct {
 	Rows   [][]string
 }
 
-// Table writes a bordered table (StyleAqua default) with a header row.
+// Table writes a bordered table (StyleBordered default) with a header row.
 func Table(w io.Writer, header []string, rows [][]string) error {
-	return TableStyle(w, TableValue{Header: header, Rows: rows}, table.StyleAqua)
+	return TableStyle(w, TableValue{Header: header, Rows: rows}, termtable.StyleBordered)
 }
 
 // TableWith renders like Table but styles the header through scheme:
 // uppercased and underlined when enabled, verbatim otherwise so piped
-// output stays script-friendly. The aqua engine measures ANSI-aware,
-// so styled headers stay aligned.
+// output stays script-friendly. termtable measures ANSI-aware, so
+// styled headers stay aligned.
 func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
 	header := tv.Header
 	if scheme.Enabled {
@@ -66,7 +66,7 @@ func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
 			header[i] = scheme.TableHeader(h)
 		}
 	}
-	tb := table.New(w)
+	tb := termtable.New(w)
 	tb.SetHeaders(header...)
 	for _, row := range tv.Rows {
 		tb.AddRow(row...)
@@ -74,10 +74,11 @@ func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
 	return tb.Render()
 }
 
-// TableStyle renders with an explicit table style: StyleAqua (bordered,
-// the default look) or StyleRodaine (borderless, most script-friendly).
-func TableStyle(w io.Writer, tv TableValue, s table.Style) error {
-	tb := table.New(w, table.WithStyle(s))
+// TableStyle renders with an explicit termtable style: StyleBordered
+// (bordered, the default look) or StyleBorderless (borderless, most
+// script-friendly).
+func TableStyle(w io.Writer, tv TableValue, s termtable.Style) error {
+	tb := termtable.New(w, termtable.WithStyle(s))
 	tb.SetHeaders(tv.Header...)
 	for _, row := range tv.Rows {
 		tb.AddRow(row...)

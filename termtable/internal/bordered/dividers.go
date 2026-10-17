@@ -1,4 +1,4 @@
-package aqua
+package bordered
 
 type Dividers struct {
 	ALL string
