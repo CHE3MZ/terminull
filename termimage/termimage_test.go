@@ -293,9 +293,13 @@ func TestKittySingleChunk(t *testing.T) {
 	t.Parallel()
 
 	img := solid(2, 2, red)
-	seq := string(kittyEscape(img, 10, 5))
-	if !strings.HasPrefix(seq, "\x1b_Ga=T,f=32,s=2,v=2,i=1,q=2,c=10,r=5,m=0;") {
+	seq := string(kittyEscape(img, 10, 5, 0))
+	if !strings.HasPrefix(seq, "\x1b_Ga=T,f=32,s=2,v=2,q=2,c=10,r=5,m=0;") {
 		t.Fatalf("kitty params wrong: %q", seq)
+	}
+	withID := string(kittyEscape(img, 10, 5, 7))
+	if !strings.HasPrefix(withID, "\x1b_Ga=T,f=32,s=2,v=2,i=7,q=2,c=10,r=5,m=0;") {
+		t.Fatalf("kitty id param wrong: %q", withID)
 	}
 	chunks := kittyChunks(t, seq)
 	if len(chunks) != 1 {
@@ -314,7 +318,7 @@ func TestKittyChunking(t *testing.T) {
 	t.Parallel()
 
 	img := solid(40, 40, green)
-	seq := string(kittyEscape(img, 40, 20))
+	seq := string(kittyEscape(img, 40, 20, 0))
 	chunks := kittyChunks(t, seq)
 	if len(chunks) != 3 {
 		t.Fatalf("chunks = %d, want 3 for %d payload bytes", len(chunks), len(img.Pix))
@@ -344,7 +348,7 @@ func TestKittyStraightAlpha(t *testing.T) {
 		0, 64, 0, 64, // quarter-transparent green, premultiplied
 		9, 9, 9, 0, // fully transparent
 	})
-	chunks := kittyChunks(t, string(kittyEscape(img, 1, 1)))
+	chunks := kittyChunks(t, string(kittyEscape(img, 1, 1, 0)))
 	raw, err := base64.StdEncoding.DecodeString(chunks[0])
 	if err != nil {
 		t.Fatalf("payload decode error = %v", err)

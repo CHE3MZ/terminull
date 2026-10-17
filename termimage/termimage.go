@@ -92,6 +92,11 @@ type Options struct {
 	// used for sizing; zero queries the terminal.
 	CellWidth  int
 	CellHeight int
+	// ImageID is the kitty graphics image id. Zero sends every render
+	// as a fresh anonymous image, so sequential renders coexist; a
+	// non-zero id makes a retransmit replace earlier renders of that
+	// id in place, which suits redrawing a widget or an animation.
+	ImageID uint32
 }
 
 // String renders img and returns the escape stream or text.
@@ -137,7 +142,7 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 	switch backend {
 	case Kitty:
 		scaled := resample(rgba, cols*cw, rows*ch)
-		_, err := w.Write(tmuxWrap(kittyEscape(scaled, cols, rows)))
+		_, err := w.Write(tmuxWrap(kittyEscape(scaled, cols, rows, opts.ImageID)))
 		return err
 	case ITerm2:
 		scaled := resample(rgba, cols*cw, rows*ch)

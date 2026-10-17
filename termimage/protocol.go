@@ -14,12 +14,19 @@ const kittyChunk = 4096
 
 // kittyEscape builds the kitty graphics escape stream for img: the raw
 // straight-alpha RGBA pixels, base64'd and chunked, transmitted and
-// displayed at the given cell size under a stable image id so re-renders
-// replace. q=2 mutes the terminal's acknowledgement replies.
-func kittyEscape(img *image.RGBA, cols, rows int) []byte {
+// displayed at the given cell size. A zero id sends a fresh anonymous
+// image, so earlier images stay on screen; a non-zero id lets a
+// retransmit replace every earlier placement of that id in place,
+// which kitty does by spec. q=2 mutes the acknowledgement replies.
+func kittyEscape(img *image.RGBA, cols, rows int, id uint32) []byte {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
 	b64 := base64.StdEncoding.EncodeToString(straightRGBA(img))
+
+	idPart := ""
+	if id != 0 {
+		idPart = fmt.Sprintf("i=%d,", id)
+	}
 
 	var b bytes.Buffer
 	for off, part := 0, 0; off < len(b64); part++ {
@@ -32,7 +39,7 @@ func kittyEscape(img *image.RGBA, cols, rows int) []byte {
 			more = 1
 		}
 		if part == 0 {
-			fmt.Fprintf(&b, "\x1b_Ga=T,f=32,s=%d,v=%d,i=1,q=2,c=%d,r=%d,m=%d;%s\x1b\\", w, h, cols, rows, more, b64[off:end])
+			fmt.Fprintf(&b, "\x1b_Ga=T,f=32,s=%d,v=%d,%sq=2,c=%d,r=%d,m=%d;%s\x1b\\", w, h, idPart, cols, rows, more, b64[off:end])
 		} else {
 			fmt.Fprintf(&b, "\x1b_Gm=%d;%s\x1b\\", more, b64[off:end])
 		}
