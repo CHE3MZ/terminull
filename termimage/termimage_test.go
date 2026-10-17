@@ -294,7 +294,7 @@ func TestKittySingleChunk(t *testing.T) {
 
 	img := solid(2, 2, red)
 	seq := string(kittyEscape(img, 10, 5))
-	if !strings.HasPrefix(seq, "\x1b_Ga=T,f=32,s=2,v=2,i=1,c=10,r=5,m=0;") {
+	if !strings.HasPrefix(seq, "\x1b_Ga=T,f=32,s=2,v=2,i=1,q=2,c=10,r=5,m=0;") {
 		t.Fatalf("kitty params wrong: %q", seq)
 	}
 	chunks := kittyChunks(t, seq)
@@ -332,6 +332,30 @@ func TestKittyChunking(t *testing.T) {
 	}
 	if !bytes.Equal(joined, img.Pix) {
 		t.Fatal("reassembled kitty payload differs from pixels")
+	}
+}
+
+func TestKittyStraightAlpha(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 3, 1))
+	copy(img.Pix, []byte{
+		128, 0, 0, 128, // half-transparent red, premultiplied
+		0, 64, 0, 64, // quarter-transparent green, premultiplied
+		9, 9, 9, 0, // fully transparent
+	})
+	chunks := kittyChunks(t, string(kittyEscape(img, 1, 1)))
+	raw, err := base64.StdEncoding.DecodeString(chunks[0])
+	if err != nil {
+		t.Fatalf("payload decode error = %v", err)
+	}
+	want := []byte{
+		255, 0, 0, 128,
+		0, 255, 0, 64,
+		0, 0, 0, 0,
+	}
+	if !bytes.Equal(raw, want) {
+		t.Fatalf("straight alpha payload = %v, want %v", raw, want)
 	}
 }
 
@@ -593,6 +617,8 @@ func TestBackendFromEnv(t *testing.T) {
 		{"kitty id", map[string]string{"KITTY_WINDOW_ID": "1"}, Kitty},
 		{"ghostty term", map[string]string{"TERM": "xterm-ghostty"}, Kitty},
 		{"wezterm", map[string]string{"TERM_PROGRAM": "WezTerm"}, Kitty},
+		{"konsole 22.04", map[string]string{"KONSOLE_VERSION": "220400"}, Kitty},
+		{"konsole newer", map[string]string{"KONSOLE_VERSION": "240200"}, Kitty},
 		{"iterm2", map[string]string{"TERM_PROGRAM": "iTerm.app"}, ITerm2},
 		{"foot", map[string]string{"TERM": "foot"}, Sixel},
 		{"mlterm", map[string]string{"TERM": "mlterm"}, Sixel},
@@ -600,6 +626,17 @@ func TestBackendFromEnv(t *testing.T) {
 		getenv := func(k string) string { return tc.env[k] }
 		if got, ok := backendFromEnv(getenv); !ok || got != tc.want {
 			t.Fatalf("%s: backendFromEnv = %v, %v; want %v", tc.name, got, ok, tc.want)
+		}
+	}
+	for _, v := range []string{"211200", "220400x"} {
+		getenv := func(k string) string {
+			if k == "KONSOLE_VERSION" {
+				return v
+			}
+			return ""
+		}
+		if b, ok := backendFromEnv(getenv); ok {
+			t.Fatalf("KONSOLE_VERSION=%s detected %v, want fallback", v, b)
 		}
 	}
 	if b, ok := backendFromEnv(func(string) string { return "" }); ok {

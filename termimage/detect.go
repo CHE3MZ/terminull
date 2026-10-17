@@ -2,6 +2,7 @@ package termimage
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,10 +38,20 @@ func backendFromEnv(getenv func(string) string) (Backend, bool) {
 		return Kitty, true
 	case prog == "iTerm.app":
 		return ITerm2, true
+	case konsoleKitty(getenv("KONSOLE_VERSION")):
+		return Kitty, true
 	case strings.Contains(term, "mlterm"), strings.Contains(term, "foot"), strings.Contains(term, "contour"):
 		return Sixel, true
 	}
 	return Auto, false
+}
+
+// konsoleKitty reports whether KONSOLE_VERSION names a Konsole release
+// with working kitty graphics: the protocol landed in 22.04, and the
+// variable packs the version as YYMMPP (22.04.0 -> 220400).
+func konsoleKitty(v string) bool {
+	n, err := strconv.Atoi(v)
+	return err == nil && n >= 220400
 }
 
 // probeTimeout bounds how long detection waits for a DA1 reply.
