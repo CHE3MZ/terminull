@@ -202,6 +202,23 @@ func TestTabsAndTrailingNewlines(t *testing.T) {
 	}
 }
 
+func TestOpenStyleResetsAtLineEnds(t *testing.T) {
+	got := String("\x1b[31mhello world", Options{Width: 7}, style.Scheme{})
+	want := "╭─────╮\n│\x1b[31mhello\x1b[0m│\n│\x1b[31mworld\x1b[0m│\n╰─────╯\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestClosedStyleIsNotRewritten(t *testing.T) {
+	inner := style.NewScheme(true).Paint(style.FgRed, "hi")
+	got := String(inner, Options{}, style.Scheme{})
+	want := "╭──╮\n│" + inner + "│\n╰──╯\n"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
 func TestRenderMatchesString(t *testing.T) {
 	var b strings.Builder
 	if err := Render(&b, "x", Options{}, style.Scheme{}); err != nil {

@@ -85,7 +85,16 @@ func String(content string, opts Options, scheme style.Scheme) string {
 	span := cols + 2*padding
 	out := make([]string, 0, len(wrapped)+2)
 	out = append(out, paint(topLine(glyphs, opts.Title, span)))
-	for _, line := range wrapped {
+	carry := ""
+	for i, line := range wrapped {
+		line = carry + line
+		carry = ""
+		if pending := pendingSGR(line); pending != "" {
+			line += "\x1b[0m"
+			if i < len(wrapped)-1 {
+				carry = pending
+			}
+		}
 		out = append(out, left+gap+padLine(line, cols)+gap+right)
 	}
 	out = append(out, paint(glyphs.bottomLeft+strings.Repeat(glyphs.horizontal, span)+glyphs.bottomRight))

@@ -73,6 +73,45 @@ func wrapLine(s string, cols int) []string {
 	return append(out, s)
 }
 
+// pendingSGR returns the SGR sequences in s that are still in effect at
+// its end: every SGR escape since the last reset. Replaying the result
+// verbatim resumes the exact styling, so box borders never inherit
+// content color across wrapped lines.
+func pendingSGR(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); {
+		n := style.EscapeLen(s, i)
+		if n == 0 {
+			i++
+			continue
+		}
+		esc := s[i : i+n]
+		if isSGR(esc) {
+			parts := strings.Split(esc[2:len(esc)-1], ";")
+			last := -1
+			for j, p := range parts {
+				if p == "" || p == "0" {
+					last = j
+				}
+			}
+			if last >= 0 {
+				b.Reset()
+				if rest := parts[last+1:]; len(rest) > 0 {
+					b.WriteString("\x1b[" + strings.Join(rest, ";") + "m")
+				}
+			} else {
+				b.WriteString(esc)
+			}
+		}
+		i += n
+	}
+	return b.String()
+}
+
+func isSGR(esc string) bool {
+	return len(esc) >= 3 && esc[0] == 0x1b && esc[1] == '[' && esc[len(esc)-1] == 'm'
+}
+
 // breakAt returns the byte offset where s should split so the first
 // part holds at most cols columns: before the last fitting space when
 // one exists, else after the last fitting unit.
