@@ -112,7 +112,7 @@
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)
-- [ ] termimage live verification (wt sixel + half-block, kitty, ghostty, iterm2)
+- [x] termimage live verification: wt sixel default, ghostty kitty default, terminal.app + alacritty half-block default, wezterm now routes kitty to iterm2 (conpty mangles kitty escapes, imgcat needs explicit compensation)
 - [ ] docs nav for mkdocs once index content lands (see 4.3)
 - [ ] man pages via cobra doc generation
 - [ ] update notifier with state file throttle

@@ -1,7 +1,7 @@
 // Package termimage renders images to terminals.
 //
 // Backends cover the modern image protocols — kitty graphics (kitty,
-// Ghostty, WezTerm, Konsole), iTerm2 inline images (iTerm2, WezTerm),
+// Ghostty, Konsole), iTerm2 inline images (iTerm2, WezTerm),
 // and sixel (Windows Terminal, foot, mlterm, xterm) — plus ANSI tiers
 // that work everywhere: truecolor half blocks and a plain ASCII ramp.
 //

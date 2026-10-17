@@ -185,7 +185,7 @@ frame color goes through scheme, a disabled scheme prints plain bytes.
 termimage renders images for terminals with no new mods, stdlib only.
 backends are kitty graphics, iterm2 inline png, sixel, and ansi half-blocks or ascii.
 auto detection reads env hints first, then probes the terminal for sixel with a DA1 query.
-kitty graphics cover kitty, ghostty, wezterm, and konsole 22.04+, iterm2 covers iterm, sixel covers windows terminal, mlterm, foot, and contour.
+kitty graphics cover kitty, ghostty, and konsole 22.04+, iterm2 covers iterm and wezterm (kitty placements there bind to cells and windows conpty mangles the escapes), sixel covers windows terminal, mlterm, foot, and contour.
 width and height are cell counts, zero width uses the terminal width and keeps aspect.
 sixel builds an adaptive palette from the image, and dithering spreads quantization error on request across every tier that quantizes: sixel, 256-color half-blocks, and the ascii ramp; kitty and iterm2 send exact pixels.
 windows consoles size sixel rasters in DEC 10x20 cell units so aspect holds on any font, posix terminals use real cell pixels.

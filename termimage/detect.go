@@ -35,7 +35,12 @@ func backendFromEnv(getenv func(string) string) (Backend, bool) {
 	case strings.Contains(term, "kitty"), strings.Contains(term, "ghostty"):
 		return Kitty, true
 	case prog == "WezTerm":
-		return Kitty, true
+		// WezTerm implements kitty graphics, but its placements bind to
+		// cells at insert time, and on Windows the escapes cross ConPTY,
+		// which runs its own screen model and mangles them (wezterm's own
+		// imgcat compensates explicitly). The iterm2 protocol is linear
+		// and passes ConPTY intact, so WezTerm always takes that path.
+		return ITerm2, true
 	case prog == "iTerm.app":
 		return ITerm2, true
 	case konsoleKitty(getenv("KONSOLE_VERSION")):

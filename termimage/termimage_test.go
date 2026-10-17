@@ -616,7 +616,7 @@ func TestBackendFromEnv(t *testing.T) {
 	}{
 		{"kitty id", map[string]string{"KITTY_WINDOW_ID": "1"}, Kitty},
 		{"ghostty term", map[string]string{"TERM": "xterm-ghostty"}, Kitty},
-		{"wezterm", map[string]string{"TERM_PROGRAM": "WezTerm"}, Kitty},
+		{"wezterm", map[string]string{"TERM_PROGRAM": "WezTerm"}, ITerm2},
 		{"konsole 22.04", map[string]string{"KONSOLE_VERSION": "220400"}, Kitty},
 		{"konsole newer", map[string]string{"KONSOLE_VERSION": "240200"}, Kitty},
 		{"iterm2", map[string]string{"TERM_PROGRAM": "iTerm.app"}, ITerm2},
