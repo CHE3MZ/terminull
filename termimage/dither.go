@@ -7,14 +7,16 @@ import (
 )
 
 // mapToPalette converts img to palette indexes, optionally with
-// Floyd-Steinberg error diffusion. It returns the index buffer and the
-// set of palette entries actually used. The plain path memoizes nearest
+// Floyd-Steinberg error diffusion. It returns the index buffer, the set
+// of palette entries actually used, and a mask of pixels under the
+// alpha floor that must stay unpainted. The plain path memoizes nearest
 // lookups per distinct color; rendered images downscale to few colors.
-func mapToPalette(img *image.RGBA, pal []color.RGBA, dither bool) ([]uint8, []bool) {
+func mapToPalette(img *image.RGBA, pal []color.RGBA, dither bool) ([]uint8, []bool, []bool) {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
 	idx := make([]uint8, w*h)
 	used := make([]bool, len(pal))
+	none := make([]bool, w*h)
 
 	if !dither {
 		cache := make(map[int]int)
@@ -22,6 +24,10 @@ func mapToPalette(img *image.RGBA, pal []color.RGBA, dither bool) ([]uint8, []bo
 			row := y * img.Stride
 			for x := 0; x < w; x++ {
 				p := row + x*4
+				if img.Pix[p+3] < alphaFloor {
+					none[y*w+x] = true
+					continue
+				}
 				key := pack(img.Pix[p], img.Pix[p+1], img.Pix[p+2])
 				n, ok := cache[key]
 				if !ok {
@@ -32,7 +38,7 @@ func mapToPalette(img *image.RGBA, pal []color.RGBA, dither bool) ([]uint8, []bo
 				idx[y*w+x] = uint8(n) // #nosec G115 -- palette indexes stay under 256.
 			}
 		}
-		return idx, used
+		return idx, used, none
 	}
 
 	buf := make([][3]float64, w*h)
@@ -61,6 +67,12 @@ func mapToPalette(img *image.RGBA, pal []color.RGBA, dither bool) ([]uint8, []bo
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			i := y*w + x
+			if img.Pix[y*img.Stride+x*4+3] < alphaFloor {
+				// Skip mapping and diffusion: nothing paints here, and
+				// pushing error into an unpainted cell would lose it.
+				none[i] = true
+				continue
+			}
 			r := clampByte(buf[i][0])
 			g := clampByte(buf[i][1])
 			b := clampByte(buf[i][2])
@@ -78,7 +90,7 @@ func mapToPalette(img *image.RGBA, pal []color.RGBA, dither bool) ([]uint8, []bo
 			spread(x+1, y+1, er, eg, eb, 1.0/16)
 		}
 	}
-	return idx, used
+	return idx, used, none
 }
 
 func clampByte(v float64) uint8 {

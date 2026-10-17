@@ -38,7 +38,18 @@ func probeSixel() bool {
 	deadline := time.Now().Add(probeTimeout)
 	var resp []byte
 	for time.Now().Before(deadline) {
-		ev, err := windows.WaitForSingleObject(in, uint32(time.Until(deadline).Milliseconds()))
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			break
+		}
+		ms := remaining.Milliseconds()
+		if ms < 1 {
+			ms = 1
+		}
+		if max := int64(probeTimeout / time.Millisecond); ms > max {
+			ms = max
+		}
+		ev, err := windows.WaitForSingleObject(in, uint32(ms))
 		if err != nil || ev != 0 {
 			break
 		}
@@ -73,7 +84,7 @@ func queryCellPixels() (int, int) {
 	out := windows.Handle(os.Stdout.Fd())
 	var info consoleFontInfoEx
 	info.cbSize = uint32(unsafe.Sizeof(info))
-	r, _, _ := procGetCurrentConsoleFontEx.Call(uintptr(out), 0, uintptr(unsafe.Pointer(&info)))
+	r, _, _ := procGetCurrentConsoleFontEx.Call(uintptr(out), 0, uintptr(unsafe.Pointer(&info))) // #nosec G103 -- Win32 fills a caller-owned stack struct that outlives the syscall.
 	if r == 0 {
 		return 0, 0
 	}

@@ -96,6 +96,12 @@ type paletteEntry struct {
 	n       uint64
 }
 
+// alphaFloor is the alpha cutoff below which a pixel counts as
+// transparent: it is left unpainted by sixel instead of snapping to a
+// color, and it never votes in the adaptive palette. Terminals composite
+// alpha binarily, so a threshold beats pretending to blend.
+const alphaFloor = 128
+
 // adaptivePalette builds up to max colors from the image itself with a
 // weighted median cut over a 15-bit histogram, so gradients follow the
 // actual picture instead of the coarse fixed xterm cube.
@@ -107,6 +113,9 @@ func adaptivePalette(img *image.RGBA, max int) []color.RGBA {
 	hist := make([]bucket, 32768)
 	pix := img.Pix
 	for i := 0; i < len(pix); i += 4 {
+		if pix[i+3] < alphaFloor {
+			continue
+		}
 		key := int(pix[i]>>3)<<10 | int(pix[i+1]>>3)<<5 | int(pix[i+2]>>3)
 		h := &hist[key]
 		h.n++
@@ -126,6 +135,11 @@ func adaptivePalette(img *image.RGBA, max int) []color.RGBA {
 			b: uint8(h.bs / h.n), // #nosec G115 -- same bound as above.
 			n: h.n,
 		})
+	}
+	if len(entries) == 0 {
+		// Fully transparent image: no color is ever painted, but the
+		// nearest-color math needs one entry to stay in bounds.
+		return []color.RGBA{{A: 255}}
 	}
 	if len(entries) <= max {
 		pal := make([]color.RGBA, len(entries))

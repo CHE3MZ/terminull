@@ -9,16 +9,33 @@ import (
 // sixelEncode renders img as one sixel DCS stream against a palette
 // adapted to the image. Layout: raster attributes, palette definitions
 // for the used entries, then bands of six pixel rows where each color
-// draws its columns with run-length compression. Deterministic.
+// draws its columns with run-length compression. Pixels below the alpha
+// floor stay unpainted, and the DCS then asks the terminal to leave its
+// background untouched (P2=1), so transparency survives wherever the
+// terminal supports it. Deterministic.
 func sixelEncode(img *image.RGBA, dither bool) []byte {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
 	pal := adaptivePalette(img, 256)
-	idx, used := mapToPalette(img, pal, dither)
+	idx, used, none := mapToPalette(img, pal, dither)
+
+	transparent := false
+	for _, t := range none {
+		if t {
+			transparent = true
+			break
+		}
+	}
 
 	pct := func(v uint8) int { return (int(v)*100 + 127) / 255 }
 	var b bytes.Buffer
-	b.WriteString("\x1bPq")
+	if transparent {
+		// P2=1: leave the background untouched, so unpainted pixels
+		// composite over whatever the terminal already shows.
+		b.WriteString("\x1bP0;1;0q")
+	} else {
+		b.WriteString("\x1bPq")
+	}
 	fmt.Fprintf(&b, "\"1;1;%d;%d", w, h)
 	for i, c := range pal {
 		if !used[i] {
@@ -41,6 +58,9 @@ func sixelEncode(img *image.RGBA, dither bool) []byte {
 					y := y0 + dy
 					if y >= h {
 						break
+					}
+					if none[y*w+x] {
+						continue
 					}
 					if int(idx[y*w+x]) == ci {
 						v |= 1 << dy

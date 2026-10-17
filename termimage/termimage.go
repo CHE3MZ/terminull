@@ -80,8 +80,10 @@ type Options struct {
 	// Dither enables Floyd-Steinberg error diffusion for sixel; the
 	// adaptive palette alone is cleaner for most images.
 	Dither bool
-	// Background backs transparency for protocols without alpha
-	// (sixel, half blocks, ascii); zero value is black.
+	// Background flattens transparency when it has alpha: sixel,
+	// half blocks, and ascii blend the image over this color. The
+	// zero value keeps transparency instead — sixel leaves those
+	// pixels unpainted, half blocks and ascii flatten over black.
 	Background color.RGBA
 	// CellWidth and CellHeight override the per-cell pixel estimate
 	// used for sizing; zero queries the terminal.
@@ -105,19 +107,23 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		return errors.New("termimage: nil image")
 	}
 	backend := opts.Backend
+	depth := colorDepth()
 	if backend == Auto {
 		backend = Detect()
 		if !scheme.Enabled && backend != ASCII {
 			backend = ASCII
 		}
 	}
-	if backend == HalfBlock && !scheme.Enabled {
+	if backend == HalfBlock && (!scheme.Enabled || depth == depth16) {
 		backend = ASCII
 	}
 
 	rgba := toRGBA(img)
-	if backend == Sixel || backend == HalfBlock || backend == ASCII {
+	if backend == HalfBlock || backend == ASCII {
 		rgba = flatten(rgba, opaque(opts.Background))
+	}
+	if backend == Sixel && opts.Background.A != 0 {
+		rgba = flatten(rgba, opts.Background)
 	}
 	cw, ch := cellPixels()
 	if opts.CellWidth > 0 {
@@ -156,7 +162,7 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		if !consoleReady(w) {
 			return writeASCII(w, rgba, cols, rows)
 		}
-		_, err := io.WriteString(w, halfBlockString(resample(rgba, cols, rows*2), colorDepth()))
+		_, err := io.WriteString(w, halfBlockString(resample(rgba, cols, rows*2), depth))
 		return err
 	case ASCII:
 		return writeASCII(w, rgba, cols, rows)
@@ -223,14 +229,20 @@ const (
 // truecolor wins, then 256-color terms, then the 16-color base set.
 // Modern Windows consoles do 24-bit with VT enabled.
 func colorDepth() int {
-	switch strings.ToLower(os.Getenv("COLORTERM")) {
+	return colorDepthFrom(os.Getenv, isWindowsConsole())
+}
+
+// colorDepthFrom is colorDepth with the environment and console probe
+// injected so tests can pin every tier.
+func colorDepthFrom(getenv func(string) string, winConsole bool) int {
+	switch strings.ToLower(getenv("COLORTERM")) {
 	case "truecolor", "24bit":
 		return depthTrue
 	}
-	if isWindowsConsole() {
+	if winConsole {
 		return depthTrue
 	}
-	if strings.Contains(os.Getenv("TERM"), "256color") {
+	if strings.Contains(getenv("TERM"), "256color") {
 		return depth256
 	}
 	return depth16

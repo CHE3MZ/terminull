@@ -28,10 +28,8 @@ run_check() {
 run_check golangci-lint golangci-lint run ./...
 
 # Pass Go files safely, including paths containing spaces.
-mapfile -d '' go_files < <(find . -name '*.go' -type f -print0)
-
-if ((${#go_files[@]} > 0)); then
-    run_check gopls gopls check "${go_files[@]}"
+if [ -n "$(find . -name '*.go' -type f -print -quit)" ]; then
+    run_check gopls sh -c 'find . -name "*.go" -type f -print0 | xargs -0 -n 50 gopls check'
 else
     echo "No Go files found; skipping gopls check."
 fi

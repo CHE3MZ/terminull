@@ -2,7 +2,7 @@ version: '3'
 
 tasks:
   default:
-    desc: Run bugcheck + seccheck locally (needs bash-compatible sh, e.g. Git Bash).
+    desc: Run bugcheck + seccheck locally (any POSIX sh, e.g. Git Bash or scoop sh).
     cmds:
       - task: ops
         ignore_error: true

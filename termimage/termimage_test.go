@@ -187,6 +187,70 @@ func TestFlattenOverBackground(t *testing.T) {
 	}
 }
 
+func TestSixelTransparentPixelsStayUnpainted(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	setPix(img, 0, 0, color.RGBA{})
+	setPix(img, 1, 0, red)
+
+	for _, dither := range []bool{false, true} {
+		got := string(sixelEncode(img, dither))
+		if !strings.HasPrefix(got, "\x1bP0;1;0q\"1;1;2;1") {
+			t.Fatalf("dither=%v transparent preamble wrong: %q", dither, got)
+		}
+		if !strings.Contains(got, "#0?@") {
+			t.Fatalf("dither=%v transparent column not left unpainted: %q", dither, got)
+		}
+	}
+
+	if opaque := string(sixelEncode(solid(2, 1, red), false)); !strings.HasPrefix(opaque, "\x1bPq\"1;1;2;1") {
+		t.Fatalf("opaque sixel preamble changed: %q", opaque)
+	}
+}
+
+func TestSixelBackgroundFlattensOverColor(t *testing.T) {
+	t.Parallel()
+
+	img := image.NewRGBA(image.Rect(0, 0, 2, 1))
+	setPix(img, 0, 0, color.RGBA{})
+	setPix(img, 1, 0, red)
+
+	out, err := String(img, Options{Backend: Sixel, Width: 2, Height: 1, Background: white}, style.NewScheme(true))
+	if err != nil {
+		t.Fatalf("String() error = %v", err)
+	}
+	if strings.Contains(out, "P0;1;0q") {
+		t.Fatalf("flattened render kept transparent preamble: %q", out)
+	}
+	if !strings.Contains(out, ";2;100;100;100") {
+		t.Fatalf("flattened white background missing: %q", out)
+	}
+}
+
+func TestColorDepthFrom(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		env  map[string]string
+		win  bool
+		want int
+	}{
+		{"truecolor", map[string]string{"COLORTERM": "truecolor"}, false, depthTrue},
+		{"24bit upcase", map[string]string{"COLORTERM": "24BIT"}, false, depthTrue},
+		{"windows console", nil, true, depthTrue},
+		{"256color term", map[string]string{"TERM": "xterm-256color"}, false, depth256},
+		{"base term", map[string]string{"TERM": "xterm"}, false, depth16},
+		{"empty", nil, false, depth16},
+	} {
+		getenv := func(k string) string { return tc.env[k] }
+		if got := colorDepthFrom(getenv, tc.win); got != tc.want {
+			t.Fatalf("%s: colorDepthFrom = %d, want %d", tc.name, got, tc.want)
+		}
+	}
+}
+
 func TestRenderCellOverrideSizesSixel(t *testing.T) {
 	t.Parallel()
 
@@ -343,7 +407,7 @@ func TestASCIIRamp(t *testing.T) {
 }
 
 func TestHalfBlockKeepsEscapesOnBuffer(t *testing.T) {
-	t.Parallel()
+	t.Setenv("COLORTERM", "truecolor")
 
 	img := image.NewRGBA(image.Rect(0, 0, 1, 2))
 	setPix(img, 0, 0, red)
