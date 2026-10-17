@@ -13,12 +13,13 @@ import (
 const kittyChunk = 4096
 
 // kittyEscape builds the kitty graphics escape stream for img: the raw
-// RGBA pixels, base64'd and chunked, transmitted and displayed at the
-// given cell size under a stable image id so re-renders replace.
+// straight-alpha RGBA pixels, base64'd and chunked, transmitted and
+// displayed at the given cell size under a stable image id so re-renders
+// replace. q=2 mutes the terminal's acknowledgement replies.
 func kittyEscape(img *image.RGBA, cols, rows int) []byte {
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
-	b64 := base64.StdEncoding.EncodeToString(img.Pix)
+	b64 := base64.StdEncoding.EncodeToString(straightRGBA(img))
 
 	var b bytes.Buffer
 	for off, part := 0, 0; off < len(b64); part++ {
@@ -31,13 +32,34 @@ func kittyEscape(img *image.RGBA, cols, rows int) []byte {
 			more = 1
 		}
 		if part == 0 {
-			fmt.Fprintf(&b, "\x1b_Ga=T,f=32,s=%d,v=%d,i=1,c=%d,r=%d,m=%d;%s\x1b\\", w, h, cols, rows, more, b64[off:end])
+			fmt.Fprintf(&b, "\x1b_Ga=T,f=32,s=%d,v=%d,i=1,q=2,c=%d,r=%d,m=%d;%s\x1b\\", w, h, cols, rows, more, b64[off:end])
 		} else {
 			fmt.Fprintf(&b, "\x1b_Gm=%d;%s\x1b\\", more, b64[off:end])
 		}
 		off = end
 	}
 	return b.Bytes()
+}
+
+// straightRGBA un-premultiplies RGBA pixels: f=32 transmits straight
+// alpha while image.RGBA holds premultiplied, so semi-transparent
+// pixels would otherwise render too dark. Opaque images pass through.
+func straightRGBA(img *image.RGBA) []byte {
+	if allOpaque(img) {
+		return img.Pix
+	}
+	out := make([]byte, len(img.Pix))
+	for i := 0; i < len(out); i += 4 {
+		a := uint32(img.Pix[i+3])
+		if a == 0 {
+			continue // premultiplied transparent pixels are already zeroed
+		}
+		out[i] = uint8((uint32(img.Pix[i]) * 0xffff / a) >> 8)     // #nosec G115 -- premultiplied channel never exceeds alpha, so the quotient is at most 0xffff.
+		out[i+1] = uint8((uint32(img.Pix[i+1]) * 0xffff / a) >> 8) // #nosec G115 -- same bound as the red channel above.
+		out[i+2] = uint8((uint32(img.Pix[i+2]) * 0xffff / a) >> 8) // #nosec G115 -- same bound as the red channel above.
+		out[i+3] = img.Pix[i+3]
+	}
+	return out
 }
 
 // encodePNG compresses an image to PNG bytes. RGBA pixels are

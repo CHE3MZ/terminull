@@ -158,18 +158,21 @@ func opaque(c color.RGBA) color.RGBA {
 	return c
 }
 
+// allOpaque reports whether every pixel has a full alpha channel.
+func allOpaque(src *image.RGBA) bool {
+	for i := 3; i < len(src.Pix); i += 4 {
+		if src.Pix[i] != 255 {
+			return false
+		}
+	}
+	return true
+}
+
 // flatten composites premultiplied pixels over an opaque background so
 // protocols without alpha show a solid image instead of black holes.
 // Fully opaque images are returned untouched.
 func flatten(src *image.RGBA, bg color.RGBA) *image.RGBA {
-	needs := false
-	for i := 3; i < len(src.Pix); i += 4 {
-		if src.Pix[i] != 255 {
-			needs = true
-			break
-		}
-	}
-	if !needs {
+	if allOpaque(src) {
 		return src
 	}
 
