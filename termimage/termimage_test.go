@@ -598,6 +598,29 @@ func TestStringKittyAndTmuxWrap(t *testing.T) {
 	}
 }
 
+func TestStringSixelStaysRawInTmux(t *testing.T) {
+	t.Setenv("TMUX", "/tmp/tmux-1000/default,123,0")
+
+	got, err := String(solid(2, 2, red), Options{Backend: Sixel, Width: 1, Height: 1}, style.NewScheme(true))
+	if err != nil {
+		t.Fatalf("String() error = %v", err)
+	}
+	if strings.Contains(got, "\x1bPtmux;") {
+		t.Fatalf("sixel must bypass tmux passthrough: %q", got)
+	}
+	if !strings.HasPrefix(got, "\x1bP") {
+		t.Fatalf("sixel stream malformed: %q", got)
+	}
+}
+
+func TestRenderRejectsEmptyImage(t *testing.T) {
+	t.Parallel()
+
+	if _, err := String(image.NewRGBA(image.Rect(0, 0, 0, 0)), Options{}, style.NewScheme(true)); err == nil {
+		t.Fatal("String() accepted an empty image")
+	}
+}
+
 func TestTargetSize(t *testing.T) {
 	t.Parallel()
 

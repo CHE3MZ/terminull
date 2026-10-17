@@ -192,7 +192,7 @@ sixel builds an adaptive palette from the image, and dithering spreads quantizat
 windows consoles size sixel rasters in DEC 10x20 cell units so aspect holds on any font, posix terminals use real cell pixels.
 transparency survives by default: kitty and iterm2 send native alpha, sixel asks the terminal to keep its background and leaves those pixels unpainted, half-blocks fall back to lower-half or blank cells with default colors, and ascii leaves blanks; a background color with alpha flattens every backend instead.
 half-blocks need 256 colors, color off or 16 colors degrade to ascii, pipes never carry escapes.
-tmux is detected and graphics sequences route through a passthrough wrapper.
+tmux is detected: kitty and iterm2 streams route through a passthrough wrapper (allow-passthrough must be on), sixel stays raw so tmux 3.4+ renders it natively, and tmux plus iterm2 drop single sequences much over a megabyte, so oversized renders can vanish there.
 file decode is stdlib png jpeg gif, scale is box average for shrink and bilinear for grow.
 
 # retry:

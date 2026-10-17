@@ -104,7 +104,7 @@
 
 # phase 11 — image rendering:
 
-- [x] 11.1 `termimage/` facade: Auto/Kitty/ITerm2/Sixel/HalfBlock/ASCII backends, Options width/height in cells, String/Render with scheme, tmux passthrough
+- [x] 11.1 `termimage/` facade: Auto/Kitty/ITerm2/Sixel/HalfBlock/ASCII backends, Options width/height in cells, String/Render with scheme, tmux passthrough for kitty/iterm2 with sixel left raw for tmux 3.4+
 - [x] 11.2 encoders: kitty chunked graphics, iterm2 inline png (straight-alpha), sixel with adaptive median-cut palette, DEC 10x20 windows sizing, transparency as native alpha/unpainted cells on every tier, floyd-steinberg dither on sixel + 256-color half-blocks + ascii, half-block truecolor/256, ascii ramp, box+bilinear scaler
 - [x] 11.3 detection: env hints, DA1 sixel probe, per-os cell pixel query, 8x16 default
 - [x] 11.4 tests: golden protocol bytes, chunk reassembly, palette, detection env, sizing; demo verified piped
@@ -112,7 +112,8 @@
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)
-- [x] termimage live verification: wt sixel default, ghostty kitty default, terminal.app + alacritty half-block default, wezterm now routes kitty to iterm2 (conpty mangles kitty escapes, imgcat needs explicit compensation)
+- [x] termimage live verification: wt sixel default, ghostty kitty default, terminal.app + alacritty half-block default, wezterm now routes kitty to iterm2 (conpty mangles kitty escapes, imgcat needs explicit compensation), iterm2 and kitty full matrix on mac, kitty id=0 multi-image fix confirmed
+- [ ] termimage live verification inside tmux: kitty/iterm2 passthrough with allow-passthrough on, sixel raw on tmux 3.4+ (behavior set from tmux source and issues, not yet run live)
 - [ ] docs nav for mkdocs once index content lands (see 4.3)
 - [ ] man pages via cobra doc generation
 - [ ] update notifier with state file throttle

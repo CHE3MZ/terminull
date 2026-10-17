@@ -108,11 +108,16 @@ func String(img image.Image, opts Options, scheme style.Scheme) (string, error) 
 	return b.String(), nil
 }
 
-// Render writes img to w in the chosen backend. Protocol streams are
-// wrapped for tmux passthrough when running inside tmux.
+// Render writes img to w in the chosen backend. Inside tmux, kitty and
+// iTerm2 streams are wrapped for passthrough (the allow-passthrough
+// option must be on); sixel goes raw because tmux 3.4+ renders it
+// natively.
 func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) error {
 	if img == nil {
 		return errors.New("termimage: nil image")
+	}
+	if img.Bounds().Empty() {
+		return errors.New("termimage: empty image")
 	}
 	backend := opts.Backend
 	depth := colorDepth()
@@ -161,7 +166,10 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 			uh = opts.CellHeight
 		}
 		scaled := resample(rgba, cols*uw, rows*uh)
-		_, err := w.Write(tmuxWrap(sixelEncode(scaled, opts.Dither)))
+		// No passthrough wrap: tmux 3.4+ implements sixel itself, so the
+		// raw DCS renders (and redraws on resize) without the
+		// allow-passthrough option; older tmux discards it either way.
+		_, err := w.Write(sixelEncode(scaled, opts.Dither))
 		return err
 	case HalfBlock:
 		if !consoleReady(w) {
@@ -254,7 +262,10 @@ func colorDepthFrom(getenv func(string) string, winConsole bool) int {
 }
 
 // tmuxWrap routes an escape stream through tmux passthrough when running
-// inside tmux, doubling inner escapes per the DCS protocol.
+// inside tmux, doubling inner escapes per the DCS protocol. Only for
+// protocols tmux cannot host itself (kitty, iTerm2); sixel is never
+// wrapped. Requires the allow-passthrough option, which defaults off,
+// and tmux drops sequences much over a megabyte.
 func tmuxWrap(seq []byte) []byte {
 	if os.Getenv("TMUX") == "" {
 		return seq
