@@ -59,6 +59,13 @@ func Table(w io.Writer, header []string, rows [][]string) error {
 // output stays script-friendly. termtable measures ANSI-aware, so
 // styled headers stay aligned.
 func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
+	return TableStyleWith(w, tv, termtable.StyleBordered, scheme)
+}
+
+// TableStyleWith renders like TableStyle but styles the header through
+// scheme, on any termtable style. Borderless and grid styles both
+// measure visible width, so styled headers stay aligned either way.
+func TableStyleWith(w io.Writer, tv TableValue, s termtable.Style, scheme style.Scheme) error {
 	header := tv.Header
 	if scheme.Enabled {
 		header = make([]string, len(tv.Header))
@@ -66,7 +73,7 @@ func TableWith(w io.Writer, tv TableValue, scheme style.Scheme) error {
 			header[i] = scheme.TableHeader(h)
 		}
 	}
-	tb := termtable.New(w)
+	tb := termtable.New(w, termtable.WithStyle(s))
 	tb.SetHeaders(header...)
 	for _, row := range tv.Rows {
 		tb.AddRow(row...)

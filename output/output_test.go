@@ -76,6 +76,29 @@ func TestTableWithScheme(t *testing.T) {
 	}
 }
 
+func TestTableStyleWithScheme(t *testing.T) {
+	t.Parallel()
+
+	tv := TableValue{Header: []string{"name", "status"}, Rows: [][]string{{"web", "ok"}}}
+
+	var styled strings.Builder
+	if err := TableStyleWith(&styled, tv, termtable.StyleBorderless, style.NewScheme(true)); err != nil {
+		t.Fatalf("TableStyleWith() error = %v", err)
+	}
+	got := styled.String()
+	if !strings.Contains(got, "\x1b[4mNAME") || !strings.Contains(got, "web") {
+		t.Fatalf("TableStyleWith(enabled) = %q, want styled header", got)
+	}
+
+	var plain strings.Builder
+	if err := TableStyleWith(&plain, tv, termtable.StyleBorderless, style.NewScheme(false)); err != nil {
+		t.Fatalf("TableStyleWith() error = %v", err)
+	}
+	if got := plain.String(); !strings.Contains(got, "name") || strings.Contains(got, "\x1b[") {
+		t.Fatalf("TableStyleWith(disabled) = %q, want verbatim header, no escapes", got)
+	}
+}
+
 func TestYAMLGolden(t *testing.T) {
 	t.Parallel()
 
