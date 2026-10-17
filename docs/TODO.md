@@ -113,6 +113,12 @@
 - [x] 11.3 detection: env hints, DA1 sixel probe, per-os cell pixel query, 8x16 default
 - [x] 11.4 tests: golden protocol bytes, chunk reassembly, palette, detection env, sizing; demo verified piped
 
+# phase 12 — style consistency:
+
+- [x] 12.1 `prompt/` bullets paint via style.Scheme under the style.Color gate; direct fatih/color and go-isatty use removed
+- [x] 12.2 `progress/` WithScheme on spinner and bar: cyan frame and fill, zero scheme stays plain
+- [x] 12.3 `termtable/` borderless measures visible width, so styled cells align on all five styles
+
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)

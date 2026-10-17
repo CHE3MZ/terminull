@@ -83,5 +83,5 @@ wrapping matters more than features. underlying mods can change, our folder name
 fork policy:
 render keeps echelon api names and attribution, so the cirrus pattern still ports.
 termtable owns table rendering end to end: the renderer in termtable/internal/table is written for this module, no third-party table code and no attribution duties, and only the style api is public.
-divergences are deliberate and documented next to the code or in spec: the borderless renderer measures runewidth cells, rows pad or truncate to headers, write errors propagate on every style, termtable stays monochrome, sixel stays raw inside tmux.
+divergences are deliberate and documented next to the code or in spec: rows pad or truncate to headers, write errors propagate on every style, termtable stays monochrome, sixel stays raw inside tmux.
 upstream code is cherry-picked only for a bug we hit or a capability we document, never for cosmetic churn. the facade is ours and may evolve; engine surfaces stay stable.

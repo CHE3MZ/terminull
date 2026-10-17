@@ -135,6 +135,7 @@ piped out like app list piped to grep must be plain with no codes.
 # prompt:
 
 prompt prints a bullet question and reads one line, no cursor tracking, no re-renders.
+the bullet paints green through style.Scheme only on capable terminal destinations, plain everywhere else.
 selects are numbered lists, confirms are y/n, passwords use the os no-echo read.
 every call takes ctx, ctrl+c cancels the read and maps to exit code 130.
 presets return validated without prompting, so flags always win.
@@ -150,6 +151,7 @@ progress owns its spinner and bar, no widget mods remain.
 spinners animate only on terminal files, quiet no-op on pipes and files.
 spinner frames are ascii or braille dots by caller choice, ascii safe everywhere.
 bars render every step as plain lines, so ci logs keep full progress.
+spinner frames and bar fills paint through an optional style scheme; the zero scheme keeps them plain.
 bars shrink on narrow terminals instead of wrapping.
 multiple bars and logs share one writer but never draw at once, callers sequence them.
 
@@ -169,7 +171,7 @@ termtable renders the same rows in five styles behind one small api.
 StyleBordered is a unicode box, the default look; StyleRounded, StyleASCII, and StyleMarkdown cover docs, logs, and pipes; StyleBorderless is padded columns for scripts.
 styles arrive as enum values, unknown styles error instead of guessing.
 empty tables render nothing, ragged rows normalize to header width.
-termtable carries no style scheme and stays monochrome: output.TableWith applies header emphasis at the call site and the renderer measures the ansi so styled headers align.
+termtable carries no style scheme and stays monochrome: output.TableWith applies header emphasis at the call site and every renderer measures visible width, so styled cells align on all five styles.
 
 # box:
 
