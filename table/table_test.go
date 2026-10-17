@@ -63,6 +63,40 @@ func TestRodaineIsBorderless(t *testing.T) {
 	}
 }
 
+func TestRenderNormalizesRaggedRows(t *testing.T) {
+	t.Parallel()
+
+	t.Run("aqua", func(t *testing.T) {
+		got := render(t, StyleAqua, []string{"NAME", "STATUS"}, []string{"web"}, []string{"proxy", "down", "extra"})
+
+		want := "" +
+			"┌───────┬────────┐\n" +
+			"│ NAME  │ STATUS │\n" +
+			"├───────┼────────┤\n" +
+			"│ web   │        │\n" +
+			"├───────┼────────┤\n" +
+			"│ proxy │ down   │\n" +
+			"└───────┴────────┘\n"
+
+		if got != want {
+			t.Fatalf("Render() = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("rodaine", func(t *testing.T) {
+		got := render(t, StyleRodaine, []string{"NAME", "STATUS"}, []string{"web"}, []string{"proxy", "down", "extra"})
+
+		want := "" +
+			"NAME   STATUS  \n" +
+			"web            \n" +
+			"proxy  down    \n"
+
+		if got != want {
+			t.Fatalf("Render() = %q, want %q", got, want)
+		}
+	})
+}
+
 func TestUnknownStyleErrors(t *testing.T) {
 	t.Parallel()
 
