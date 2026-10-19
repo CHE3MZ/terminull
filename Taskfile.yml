@@ -2,7 +2,7 @@ version: '3'
 
 tasks:
   default:
-    desc: Run bugcheck + seccheck locally (any POSIX sh, e.g. Git Bash or scoop sh).
+    desc: Run default tasks.
     cmds:
       - task: ops
         ignore_error: true
@@ -28,13 +28,23 @@ tasks:
     desc: End-to-end smoke with the generator CLI.
     cmds:
       - sh scripts/smoke.sh
-  demo:
-    desc: Render one table in every termtable style.
+  build-site:
     cmds:
-      - go run ./examples/termtable
+      - cd docs && mkdocs build
+  check-links:
+    cmds:
+      - cmd: lychee .
+  cliff:
+    desc: Run git cliff
+    silent: true
+    env:
+      RUST_LOG: off
+    cmds:
+      - git-cliff --unreleased --strip all
   scan:
     desc: Run other ops tools on the repo.
     cmds:
       - cmd: opengrep scan
       - cmd: osv-scanner scan .
-      - cmd: gitleaks git .
+      - cmd: gitleaks git . --no-banner
+      - cmd: scorecard --local . --format json | gron
