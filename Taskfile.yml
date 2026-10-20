@@ -30,7 +30,7 @@ tasks:
       - sh scripts/smoke.sh
   build-site:
     cmds:
-      - cd docs && mkdocs build
+      - mkdocs build
   check-links:
     cmds:
       - cmd: lychee .
