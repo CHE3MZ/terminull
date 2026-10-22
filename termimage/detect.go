@@ -62,6 +62,12 @@ func konsoleKitty(v string) bool {
 // probeTimeout bounds how long detection waits for a DA1 reply.
 const probeTimeout = 200 * time.Millisecond
 
+// probeSixel asks the terminal directly with DA1; termcore owns the raw
+// mode, console mode, and timed read so image code stays protocol-only.
+func probeSixel() bool {
+	return hasSixelDA(termcore.TerminalQuery(os.Stdin, []byte("\x1b[c"), probeTimeout, 'c'))
+}
+
 // hasSixelDA scans a DA1 reply (ESC [ ? 62 ; ... c) for attribute 4,
 // which marks sixel support.
 func hasSixelDA(resp []byte) bool {
@@ -85,7 +91,7 @@ func hasSixelDA(resp []byte) bool {
 // cellPixels estimates the console cell size in device pixels, falling
 // back to 8x16 when the terminal will not say.
 func cellPixels() (int, int) {
-	w, h := queryCellPixels()
+	w, h := termcore.CellPixels(os.Stdout)
 	if w < 2 || h < 2 || w > 64 || h > 128 {
 		return 8, 16
 	}

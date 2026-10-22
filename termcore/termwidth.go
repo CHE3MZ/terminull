@@ -18,6 +18,15 @@ func TerminalWidth(f *os.File) int {
 	return DefaultTerminalWidth
 }
 
+// TerminalHeight returns console rows for f, or -1 when unknown (pipes,
+// files, and dumb terminals). Callers treat -1 as "draw unbounded".
+func TerminalHeight(f *os.File) int {
+	if rows, ok := terminalRows(f); ok {
+		return rows
+	}
+	return -1
+}
+
 // ColorFor reports whether ANSI may be written to w: false for
 // --no-color, non-file writers (buffers, pipes without files), dumb
 // terminals, and CI; true only for capable terminal files.

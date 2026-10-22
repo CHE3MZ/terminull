@@ -20,3 +20,16 @@ func terminalColumns(f *os.File) (int, bool) {
 	}
 	return int(ws.Col), true
 }
+
+// terminalRows queries the console height via ioctl, reporting false
+// when f is not a terminal.
+func terminalRows(f *os.File) (int, bool) {
+	if f == nil {
+		return 0, false
+	}
+	ws, err := unix.IoctlGetWinsize(int(f.Fd()), unix.TIOCGWINSZ)
+	if err != nil || ws.Row == 0 {
+		return 0, false
+	}
+	return int(ws.Row), true
+}

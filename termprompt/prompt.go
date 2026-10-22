@@ -12,7 +12,6 @@ import (
 
 	"github.com/CHE3MZ/terminull/termcore"
 	"github.com/CHE3MZ/terminull/termstyle"
-	"golang.org/x/term"
 )
 
 // FileReader is a readable file descriptor: consoles, pipes, files.
@@ -373,7 +372,7 @@ func readPassword(ctx context.Context, f *os.File) (string, error) {
 	}
 	ch := make(chan result, 1)
 	go func() {
-		s, err := term.ReadPassword(int(f.Fd()))
+		s, err := termcore.ReadPassword(int(f.Fd()))
 		ch <- result{s, err}
 	}()
 

@@ -5,15 +5,12 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/term"
-
 	"github.com/CHE3MZ/terminull/termcore"
 )
 
 const (
-	padding  = 1  // spaces around each cell
-	wrapAt   = 60 // column wrap width once tables outgrow the screen
-	fallback = 80 // assumed columns for non-tty writers
+	padding = 1  // spaces around each cell
+	wrapAt  = 60 // column wrap width once tables outgrow the screen
 )
 
 const (
@@ -82,11 +79,9 @@ func Grid(w io.Writer, cfg GridConfig, header []string, rows [][]string) error {
 
 func availableWidth(w io.Writer) int {
 	if w == os.Stdout {
-		if width, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && width > 0 {
-			return width
-		}
+		return termcore.TerminalWidth(os.Stdout)
 	}
-	return fallback
+	return termcore.DefaultTerminalWidth
 }
 
 func gridTo(w io.Writer, available, wrapWidth int, cfg GridConfig, header []string, rows [][]string) error {

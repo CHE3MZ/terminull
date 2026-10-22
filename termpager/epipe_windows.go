@@ -3,8 +3,12 @@ package termpager
 import (
 	"errors"
 	"syscall"
+)
 
-	"golang.org/x/sys/windows"
+// Windows pipe errors not exported by the syscall package.
+const (
+	errorNoData     syscall.Errno = 232 // ERROR_NO_DATA
+	errorBrokenPipe syscall.Errno = 109 // ERROR_BROKEN_PIPE
 )
 
 // Closed reports a broken downstream pipe: the pager (or piped reader)
@@ -18,5 +22,5 @@ func Closed(err error) bool {
 	if !errors.As(err, &errno) {
 		return false
 	}
-	return errno == windows.ERROR_NO_DATA || errno == windows.ERROR_BROKEN_PIPE
+	return errno == errorNoData || errno == errorBrokenPipe
 }

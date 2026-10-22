@@ -4,7 +4,10 @@
 //   - exit codes: ExitCodeError maps errors to process exit codes
 //   - version: binary version and commit, with `go install` fallback
 //   - log level: one shared slog.LevelVar behind --verbose/--debug
+//   - terminal facts: width, height, tty/color/console detection
+//   - terminal I/O: raw-mode capability queries, cell pixels, no-echo
+//     password reads
 //
-// Core has no third-party dependencies and behaves identically on
-// Linux, macOS, and Windows.
+// Core is the only library that imports x/sys and x/term, and it behaves
+// the same way across Linux, macOS, and Windows.
 package termcore

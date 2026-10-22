@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CHE3MZ/terminull/termcore"
 	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/renderers/internal/console"
 	"github.com/CHE3MZ/terminull/termrender/terminal"
 	"github.com/CHE3MZ/terminull/termrender/utils"
 )
@@ -28,7 +28,7 @@ func NewSimpleRenderer(out io.Writer, colors *terminal.ColorSchema) *SimpleRende
 	if colors == nil {
 		colors = terminal.DefaultColorSchema()
 	}
-	_ = console.PrepareTerminalEnvironment()
+	_ = termcore.EnsureConsole()
 	return &SimpleRenderer{
 		out:        out,
 		colors:     colors,

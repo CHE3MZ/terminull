@@ -7,9 +7,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/CHE3MZ/terminull/termcore"
 	"github.com/CHE3MZ/terminull/termrender"
 	"github.com/CHE3MZ/terminull/termrender/renderers/config"
-	"github.com/CHE3MZ/terminull/termrender/renderers/internal/console"
 	"github.com/CHE3MZ/terminull/termrender/renderers/internal/node"
 	"github.com/CHE3MZ/terminull/termrender/terminal"
 )
@@ -58,7 +58,7 @@ func NewInteractiveRenderer(out *os.File, rendererConfig *config.InteractiveRend
 		out:            bufio.NewWriterSize(out, defaultFrameBufSize),
 		rootNode:       node.NewEchelonNode("root", rendererConfig),
 		config:         rendererConfig,
-		terminalHeight: console.TerminalHeight(out),
+		terminalHeight: termcore.TerminalHeight(out),
 	}
 }
 
@@ -112,7 +112,7 @@ func (r *InteractiveRenderer) RenderMessage(entry *termrender.LogEntryMessage) {
 // owns the loop; calls after stopping started return silently, so a
 // delayed start can never write past finalized output.
 func (r *InteractiveRenderer) StartDrawing() {
-	_ = console.PrepareTerminalEnvironment()
+	_ = termcore.EnsureConsole()
 	r.drawLock.Lock()
 	if r.stopping.Load() || r.rootNode.HasCompleted() || !r.loopStarted.CompareAndSwap(false, true) {
 		r.drawLock.Unlock()
@@ -139,7 +139,7 @@ func (r *InteractiveRenderer) drawLoop() {
 // races interactive input. All writer access holds the draw lock, so
 // Setup is safe beside a running draw loop.
 func (r *InteractiveRenderer) Setup() {
-	_ = console.PrepareTerminalEnvironment()
+	_ = termcore.EnsureConsole()
 	r.drawLock.Lock()
 	defer r.drawLock.Unlock()
 	r.writeNoWrapLocked()
