@@ -68,9 +68,12 @@ func (logger *Logger) Renderer() LogRendered {
 
 // Scoped emits a scope-started event and returns a child logger for it.
 func (logger *Logger) Scoped(scope string) *Logger {
+	scopes := make([]string, len(logger.scopes)+1)
+	copy(scopes, logger.scopes)
+	scopes[len(scopes)-1] = scope
 	result := &Logger{
 		maxLogLevel:    logger.maxLogLevel,
-		scopes:         append(logger.scopes, scope),
+		scopes:         scopes,
 		entriesChannel: logger.entriesChannel,
 	}
 	result.entriesChannel <- &genericLogEntry{

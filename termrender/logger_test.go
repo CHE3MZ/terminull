@@ -140,6 +140,31 @@ func TestLoggerFinishSkipped(t *testing.T) {
 	}
 }
 
+func TestLoggerScopeSiblingsIndependent(t *testing.T) {
+	t.Parallel()
+
+	rec := &recorder{}
+	root := NewLogger(InfoLevel, rec)
+	a := root.Scoped("a")
+	b := a.Scoped("b")
+	x := b.Scoped("x")
+	y := b.Scoped("y")
+	x.Infof("from-x")
+	y.Infof("from-y")
+	root.Sync()
+
+	got := rec.snapshot()
+	if len(got) != 6 {
+		t.Fatalf("events = %+v, want four starts and two messages", got)
+	}
+	if !slices.Equal(got[4].scopes, []string{"a", "b", "x"}) {
+		t.Fatalf("x scopes = %q, want a.b.x", got[4].scopes)
+	}
+	if !slices.Equal(got[5].scopes, []string{"a", "b", "y"}) {
+		t.Fatalf("y scopes = %q, want a.b.y", got[5].scopes)
+	}
+}
+
 func TestLoggerSyncDrains(t *testing.T) {
 	t.Parallel()
 
