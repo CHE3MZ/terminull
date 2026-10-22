@@ -29,8 +29,8 @@ run_check golangci-lint golangci-lint run ./...
 
 # Pass Go files safely, including paths containing spaces. Vendored engine
 # forks under termcore/internal are upstream code and stay out of our lint gates.
-if [ -n "$(find . -name '*.go' -type f -not -path './termcore/internal/*' -print -quit)" ]; then
-    run_check gopls sh -c 'find . -name "*.go" -type f -not -path "./termcore/internal/*" -print0 | xargs -0 -n 50 gopls check'
+if [ -n "$(find . -name '*.go' -type f -not -path './termcore/internal/*' -not -path './dist/*' -print -quit)" ]; then
+    run_check gopls sh -c 'find . -name "*.go" -type f -not -path "./termcore/internal/*" -not -path "./dist/*" -print0 | xargs -0 -n 50 gopls check'
 else
     echo "No Go files found; skipping gopls check."
 fi

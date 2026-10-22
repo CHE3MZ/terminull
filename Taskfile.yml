@@ -5,7 +5,6 @@ tasks:
     desc: Run default tasks.
     cmds:
       - task: ops
-        ignore_error: true
       - task: build
   ops:
     desc: Run scripts in scripts/ops

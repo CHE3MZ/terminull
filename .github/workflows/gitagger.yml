@@ -18,16 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    # env:
-    #   GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Set git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - uses: CHE3MZ/gitagger@v1
+      - uses: CHE3MZ/gitagger@69aaaf9e2259498919b864a84b410a271c216283 # v1
         with:
           args: ${{ inputs.bump }}
