@@ -9,7 +9,7 @@ import (
 // Scheme paints named styles, returning text unchanged when disabled.
 // Build one per command from terminal detection:
 //
-//	scheme := style.NewScheme(style.ColorFor(out, noColor))
+//	scheme := termstyle.NewScheme(termstyle.ColorFor(out, noColor))
 //
 // Every method is safe on dumb terminals, pipes, and legacy consoles
 // when disabled, and degrades to plain text rather than raw escapes.

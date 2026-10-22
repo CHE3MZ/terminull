@@ -133,7 +133,8 @@ termstyle foreground and decoration constants are owned values from the internal
 Muted dims the current color through sgr faint, Faint is the deterministic form.
 16 color terms downshift bright colors or snap rgb to the nearest base.
 termcore ColorDepth feeds dimming and image tiers: case-insensitive COLORTERM truecolor wins, a real windows console is 24-bit under VT, then 256color terms, else 16.
-termcore TerminalWidth reports console columns or 80 fallback, used to fit bars.
+termcore TerminalWidth and TerminalHeight report console metrics with safe fallbacks, used to fit bars and bound frames.
+termcore also owns timed terminal capability queries, cell pixel size, and no-echo password reads, so no other package touches raw or console modes.
 all widths come from termcore, whose owned width engine carries its own unicode tables; cjk never breaks tables.
 piped out like app list piped to grep must be plain with no codes.
 
@@ -238,7 +239,7 @@ app specific lists like list users belong in output, not static, but follow the 
 
 # termcore:
 
-termcore holds signals, exit codes, version, slog logging, plus the shared terminal and text primitives: widths, ansi parse, tty, color depth, console setup, terminal width, shell split.
+termcore holds signals, exit codes, version, slog logging, plus the shared terminal and text primitives: widths, ansi parse, tty, color depth, console setup, terminal width and height, capability queries, password reads, shell split.
 signals: SIGINT SIGTERM cancel the app context, render stops, prompt aborts, exit code 130 on ctrl+c.
 exit codes: 0 ok, 1 error, 2 usage, 130 interrupted, custom via ExitCodeError like cirrus helpers.
 version: semver from build info plus git tag, --version uses static plain output.

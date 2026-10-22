@@ -20,5 +20,5 @@
 //
 // Render pausing is the caller's job: pause live drawing before
 // prompting and resume after, or the menu and the tree garble each
-// other. See app.Context PauseDrawing and ResumeDrawing.
+// other. See termapp.Context PauseDrawing and ResumeDrawing.
 package termprompt

@@ -14,9 +14,9 @@
 //
 // Frame rule: braille dots on capable terminals, plain ASCII spinners
 // (|/-\ differences) on legacy Windows consoles and anywhere else
-// core.Emoji() is false.
+// termcore.Emoji() is false.
 //
-// Scheme rule: widgets paint through an optional style.Scheme
+// Scheme rule: widgets paint through an optional termstyle.Scheme
 // (WithScheme); the zero scheme stays plain, so pipes and CI logs keep
 // raw text.
 package termprogress

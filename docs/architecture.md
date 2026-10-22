@@ -46,7 +46,7 @@ docs/ ( index + dependencies + architecture + spec + TODO + v2 plan )
 
 terminull is a workspace of libraries, not a monolith with helpers.
 every term* folder is a library you can import alone and get its full feature set.
-termcore is the shared base: it is the only place that owns terminal facts (width, tty, depth, console mode) and text primitives (ansi parse, shell split).
+termcore is the shared base: it is the only place that owns terminal facts (width, height, tty, depth, console mode), terminal I/O (raw-mode queries, no-echo password reads), and text primitives (ansi parse, shell split).
 component engines (color, cli, config merge, line editing, retry, humanize subset) are forked literally into that component's internal tree, licensed and attributed, and never surface in its public api.
 termapp is the combination layer: it wires the libraries into an app framework, convenience rather than requirement.
 cmd/terminull proves the combination end to end.
@@ -59,7 +59,7 @@ L2 termbox termtable termprogress termstatic termpager termprompt termrender ter
 L3 termoutput → termtable termstyle termcore yaml.v3 ; termconfig → yaml.v3 ; termretry → stdlib
 L4 termapp → every library below + its internal cli fork ; cmd and internal → termapp and friends
 
-imports point down only, no cycles. a library's public api may only reference its own and lower-layer types. a standalone build per library is a ci gate.
+imports point down only, no cycles. a library's public api may only reference its own and lower-layer types. the standalone-module build gate lands with 14.8.
 
 # explanation:
 
@@ -99,10 +99,10 @@ one writer owns the terminal per phase, never two at once.
 pause drawing around prompts and widgets, stop drawing before result tables.
 logger drains before finalize, stops join the draw loop.
 apps import only public term* libraries. never import internal, and never import a fork.
-no package outside termcore asks the os about terminal facts: width, tty, depth, console mode.
+no package outside termcore asks the os about terminal facts: width, height, tty, depth, console mode, raw queries, or password reads.
 only termstyle builds text sgr. termcore parses ansi. termimage builds image protocol escapes only.
 width facts come from termcore only; no component keeps its own width table.
-dependencies point down only; ci builds each library standalone to prove it.
+dependencies point down only; ci builds every package with go build ./... and dogfoods the generator.
 every prompt has a flag fallback. if there is no terminal, the app must still work with flags alone.
 every new part needs tests on windows, mac, and linux, plus piped and non tty paths.
 wrapping matters more than features. underlying engines are frozen forks now; our folder names and function names do not change without a major.

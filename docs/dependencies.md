@@ -2,7 +2,7 @@
 
 gopkg.in/yaml.v3 v3.0.1 ( file codec , config and output )
 golang.org/x/sys v0.49.0 ( windows console + platform syscalls )
-golang.org/x/term v0.44.0 ( terminal size + raw mode )
+golang.org/x/term v0.44.0 ( raw mode + no-echo password reads )
 log/slog , fmt , and the rest of the standard library ( comes with go )
 
 nothing else ships. after phase 14 the module graph holds these three plus stdlib.
@@ -14,6 +14,8 @@ mattn/go-colorable v0.1.16 → termcore/internal/colorable ( MIT )
 mattn/go-runewidth v0.0.31 → termcore/internal/width + unicode tables ( MIT )
 clipperhouse/uax29/v2 v2.7.0 → termcore/internal/uax29/graphemes , width's grapheme engine ( MIT )
 google/shlex e7afc7fbc510 → termcore/internal/shlex ( Apache-2.0 )
+cirruslabs/echelon v1.9.0 → termrender ( MIT )
+cirruslabs/cirrus-cli v1.0.0 → termrender/renderers/ci.go ( MIT )
 fatih/color v1.19.0 → termstyle/internal/color ( MIT )
 avast/retry-go/v4 v4.7.0 → termretry/internal/retry ( MIT )
 dustin/go-humanize v1.0.1 → termoutput/internal/humanize ( MIT )

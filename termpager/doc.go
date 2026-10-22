@@ -4,7 +4,7 @@
 //
 // Usage in a command with long output:
 //
-//	out, stop, err := pager.Start(ctx.Out)
+//	out, stop, err := termpager.Start(ctx.Out)
 //	if err != nil {
 //	    return err
 //	}
@@ -12,5 +12,5 @@
 //	// ... write everything to out ...
 //
 // Quitting the pager early breaks later writes with EPIPE; treat those
-// as success with pager.Closed(err) instead of failing the command.
+// as success with termpager.Closed(err) instead of failing the command.
 package termpager
