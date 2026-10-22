@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // Detect picks the richest backend the current terminal can host:

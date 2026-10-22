@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
 )
 
 // frameFile builds an interactive renderer on a temp file (a real

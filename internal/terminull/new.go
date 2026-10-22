@@ -8,15 +8,15 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/CHE3MZ/terminull/internal/generator"
-	"github.com/CHE3MZ/terminull/termapp"
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termoutput"
-	"github.com/CHE3MZ/terminull/termprogress"
-	"github.com/CHE3MZ/terminull/termprompt"
-	"github.com/CHE3MZ/terminull/termretry"
-	"github.com/CHE3MZ/terminull/termstatic"
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/internal/generator"
+	"github.com/CHE3MZ/terminull/v2/termapp"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termoutput"
+	"github.com/CHE3MZ/terminull/v2/termprogress"
+	"github.com/CHE3MZ/terminull/v2/termprompt"
+	"github.com/CHE3MZ/terminull/v2/termretry"
+	"github.com/CHE3MZ/terminull/v2/termstatic"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 // NewApp builds the terminull CLI in its house style: plain ASCII

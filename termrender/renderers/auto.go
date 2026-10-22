@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/renderers/config"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 // AutoRenderer picks the right renderer for out, mirroring cirrus-cli's

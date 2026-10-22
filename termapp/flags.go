@@ -1,7 +1,7 @@
 package termapp
 
 import (
-	"github.com/CHE3MZ/terminull/termapp/internal/cli/pflag"
+	"github.com/CHE3MZ/terminull/v2/termapp/internal/cli/pflag"
 )
 
 // FlagSet is the terminull flag surface. It embeds the internal flag

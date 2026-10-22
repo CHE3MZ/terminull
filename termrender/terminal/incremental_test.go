@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 func TestCalculateIncrementalUpdateSameTwoLines(t *testing.T) {

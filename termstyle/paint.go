@@ -1,7 +1,7 @@
 package termstyle
 
 import (
-	"github.com/CHE3MZ/terminull/termstyle/internal/color"
+	"github.com/CHE3MZ/terminull/v2/termstyle/internal/color"
 )
 
 // Paint wraps s in the given ANSI color when enabled is true,

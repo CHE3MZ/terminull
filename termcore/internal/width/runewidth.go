@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"unicode/utf8"
 
-	"github.com/CHE3MZ/terminull/termcore/internal/uax29/graphemes"
+	"github.com/CHE3MZ/terminull/v2/termcore/internal/uax29/graphemes"
 )
 
 //go:generate go run script/generate.go

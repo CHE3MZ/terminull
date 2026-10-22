@@ -4,7 +4,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 const plainPadding = 2 // spaces after each column

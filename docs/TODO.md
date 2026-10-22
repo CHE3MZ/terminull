@@ -138,6 +138,8 @@
 - [x] 14.8 final integration review: cross-fork parity snapshots, standalone-build CI per library, dependency-law + go.mod tests, windows/mac/linux test and dogfood matrix, ops and scan green
 - [x] 14.9 .github/THIRD_PARTY.md provenance complete; `task upstream` checks newer tags and OSV advisories, green locally and in CI
 - [x] 14.10 tagged v2.0.0 at `cd9320d`; goreleaser published six archives + checksums
+- [x] 14.11 moved the module path to `/v2` and pinned scaffolds to `v2.0.1`; v2.0.0 predates the required suffix
+- [ ] 14.12 tag v2.0.1 after CI is green (approval required)
 
 # next (backlog, not scheduled):
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/CHE3MZ/terminull/internal/terminull"
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/internal/terminull"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 func main() {

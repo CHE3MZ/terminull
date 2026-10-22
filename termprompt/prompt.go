@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 // FileReader is a readable file descriptor: consoles, pipes, files.

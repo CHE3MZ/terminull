@@ -3,7 +3,7 @@ package termstyle
 import (
 	"fmt"
 
-	"github.com/CHE3MZ/terminull/termstyle/internal/color"
+	"github.com/CHE3MZ/terminull/v2/termstyle/internal/color"
 )
 
 // Dimming constants.

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const modulePath = "github.com/CHE3MZ/terminull"
+const modulePath = "github.com/CHE3MZ/terminull/v2"
 
 var libraryDeps = map[string]map[string]bool{
 	"termcore":     {},

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender"
 )
 
 // Pipes are never terminals: AutoRenderer must pick simple output that

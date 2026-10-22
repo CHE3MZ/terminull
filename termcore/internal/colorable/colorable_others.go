@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	_ "github.com/CHE3MZ/terminull/termcore/internal/isatty"
+	_ "github.com/CHE3MZ/terminull/v2/termcore/internal/isatty"
 )
 
 // NewColorable returns new instance of Writer which handles escape sequence.

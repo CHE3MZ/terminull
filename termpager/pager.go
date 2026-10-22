@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 type options struct {

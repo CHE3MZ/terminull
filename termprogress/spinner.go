@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 // asciiFrames render on every console, including raster fonts.

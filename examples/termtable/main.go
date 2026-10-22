@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/CHE3MZ/terminull/termtable"
+	"github.com/CHE3MZ/terminull/v2/termtable"
 )
 
 func main() {

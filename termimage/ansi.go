@@ -6,7 +6,7 @@ import (
 	"image/color"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // SGR codes that return colors to the terminal defaults, so unpainted

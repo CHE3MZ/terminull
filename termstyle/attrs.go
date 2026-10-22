@@ -1,7 +1,7 @@
 package termstyle
 
 import (
-	"github.com/CHE3MZ/terminull/termstyle/internal/color"
+	"github.com/CHE3MZ/terminull/v2/termstyle/internal/color"
 )
 
 // Attribute is a foreground color value. It aliases the owned color

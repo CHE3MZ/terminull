@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termcore/internal/isatty"
+	"github.com/CHE3MZ/terminull/v2/termcore/internal/isatty"
 )
 
 // IsTerminal reports whether f is an interactive terminal.

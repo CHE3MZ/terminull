@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf"
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/confmap"
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/env"
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/file"
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/yaml"
-	"github.com/CHE3MZ/terminull/termconfig/internal/mapstructure"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/confmap"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/env"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/file"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/yaml"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/mapstructure"
 )
 
 // Options tunes a Load call. Zero value loads nothing but empty defaults.

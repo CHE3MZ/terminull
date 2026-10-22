@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // cell is one printable unit of a styled line: any ANSI prefix bytes

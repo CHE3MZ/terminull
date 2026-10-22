@@ -3,7 +3,7 @@ package termstyle
 import (
 	"os"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // IsTerminal reports whether f is an interactive terminal.

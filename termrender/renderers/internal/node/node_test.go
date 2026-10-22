@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/termrender/renderers/config"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 func testConfig() *config.InteractiveRendererConfig {

@@ -3,7 +3,7 @@ package termcore
 import (
 	"io"
 
-	"github.com/CHE3MZ/terminull/termcore/internal/colorable"
+	"github.com/CHE3MZ/terminull/v2/termcore/internal/colorable"
 )
 
 // Stdout returns a writer for standard output that translates ANSI codes

@@ -3,7 +3,7 @@ package termstyle
 import (
 	"io"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // Stdout returns a writer for standard output that translates ANSI codes

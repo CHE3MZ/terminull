@@ -187,7 +187,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termconfig/internal/mapstructure/internal/errors"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/mapstructure/internal/errors"
 )
 
 // DecodeHookFunc is the callback function that can be used for

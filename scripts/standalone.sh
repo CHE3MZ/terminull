@@ -30,9 +30,9 @@ module example.com/standalone/$lib
 
 go 1.26.0
 
-require github.com/CHE3MZ/terminull v0.0.0
+require github.com/CHE3MZ/terminull/v2 v2.0.1
 
-replace github.com/CHE3MZ/terminull => "$ROOT"
+replace github.com/CHE3MZ/terminull/v2 => "$ROOT"
 EOF
 
 	cat >"$dir/main.go" <<EOF
@@ -41,7 +41,7 @@ package main
 import (
 	"fmt"
 
-	_ "github.com/CHE3MZ/terminull/$lib"
+	_ "github.com/CHE3MZ/terminull/v2/$lib"
 )
 
 func main() {
@@ -54,7 +54,7 @@ EOF
 		cd "$dir"
 		go mod tidy
 		imports=$(go list -f '{{join .Imports "\n"}}' .)
-		count=$(printf '%s\n' "$imports" | grep -c "^github.com/CHE3MZ/terminull/" || true)
+		count=$(printf '%s\n' "$imports" | grep -c "^github.com/CHE3MZ/terminull/v2/" || true)
 		if [ "$count" -ne 1 ]; then
 			echo "$lib imports $count terminull packages, want exactly 1" >&2
 			exit 1

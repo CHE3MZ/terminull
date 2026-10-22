@@ -10,8 +10,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	liner "github.com/CHE3MZ/terminull/termprompt/internal/lineedit"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	liner "github.com/CHE3MZ/terminull/v2/termprompt/internal/lineedit"
 )
 
 // Completer returns completion candidates for the text left of the cursor.

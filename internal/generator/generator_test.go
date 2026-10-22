@@ -51,8 +51,8 @@ func TestGenerateHappyPath(t *testing.T) {
 	gomod := readGenerated(t, dir, "go.mod")
 	for _, want := range []string{
 		"module example.com/app",
-		"require github.com/CHE3MZ/terminull v9.9.9",
-		"replace github.com/CHE3MZ/terminull => \"C:/fake/path\"",
+		"require github.com/CHE3MZ/terminull/v2 v9.9.9",
+		"replace github.com/CHE3MZ/terminull/v2 => \"C:/fake/path\"",
 	} {
 		if !strings.Contains(gomod, want) {
 			t.Fatalf("go.mod %q does not contain %q", gomod, want)
@@ -64,6 +64,21 @@ func TestGenerateHappyPath(t *testing.T) {
 		if !strings.Contains(main, want) {
 			t.Fatalf("main.go does not contain %q", want)
 		}
+	}
+}
+
+func TestDefaultTerminullVersionMatchesModuleMajor(t *testing.T) {
+	t.Parallel()
+
+	// #nosec G304 -- test reads the repository go.mod.
+	gomod, err := os.ReadFile(filepath.Join("..", "..", "go.mod"))
+	if err != nil {
+		t.Fatalf("ReadFile(go.mod) error = %v", err)
+	}
+	module := strings.TrimPrefix(strings.SplitN(string(gomod), "\n", 2)[0], "module ")
+	major := module[strings.LastIndex(module, "/")+1:]
+	if !strings.HasPrefix(DefaultTerminullVersion, major+".") {
+		t.Fatalf("DefaultTerminullVersion = %q, want %s.x for module %s", DefaultTerminullVersion, major, module)
 	}
 }
 
@@ -79,7 +94,7 @@ func TestGenerateDefaults(t *testing.T) {
 	if !strings.Contains(gomod, "module hello") {
 		t.Fatalf("go.mod %q defaults module to name", gomod)
 	}
-	if !strings.Contains(gomod, "require github.com/CHE3MZ/terminull "+DefaultTerminullVersion) {
+	if !strings.Contains(gomod, "require github.com/CHE3MZ/terminull/v2 "+DefaultTerminullVersion) {
 		t.Fatalf("go.mod %q defaults framework version", gomod)
 	}
 }

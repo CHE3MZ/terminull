@@ -6,7 +6,7 @@ package confmap
 import (
 	"errors"
 
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/maps"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/maps"
 )
 
 // Confmap implements a raw map[string]any provider.

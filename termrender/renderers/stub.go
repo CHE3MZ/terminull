@@ -1,6 +1,6 @@
 package renderers
 
-import "github.com/CHE3MZ/terminull/termrender"
+import "github.com/CHE3MZ/terminull/v2/termrender"
 
 // StubRenderer drops every event. Use it for silent runs and tests
 // that exercise logic without asserting output.

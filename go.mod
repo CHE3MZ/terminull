@@ -1,4 +1,4 @@
-module github.com/CHE3MZ/terminull
+module github.com/CHE3MZ/terminull/v2
 
 go 1.26.0
 

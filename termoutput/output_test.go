@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/termstyle"
-	"github.com/CHE3MZ/terminull/termtable"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termtable"
 )
 
 func TestTableGolden(t *testing.T) {

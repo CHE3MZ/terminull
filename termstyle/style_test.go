@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/termstyle/internal/color"
+	"github.com/CHE3MZ/terminull/v2/termstyle/internal/color"
 )
 
 func TestIsTerminal(t *testing.T) {

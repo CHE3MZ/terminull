@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/CHE3MZ/terminull/termconfig/internal/reflectwalk"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/reflectwalk"
 )
 
 const tagKey = "copy"

@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termconfig/internal/copystructure"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/copystructure"
 )
 
 // Flatten takes a map[string]interface{} and traverses it and flattens

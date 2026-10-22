@@ -5,7 +5,7 @@
 
 # decisions:
 
-- module path stays github.com/CHE3MZ/terminull; public packages use term* names (renamed right after 14.1, ahead of the planned 14.7).
+- module path moves to github.com/CHE3MZ/terminull/v2; public packages use term* names (renamed right after 14.1, ahead of the planned 14.7).
 - every non-exempt dependency is forked literally into the component that uses it, owned by this repo.
 - shared text and terminal primitives are forked once into termcore, never copied per component.
 - every library must work standalone: importing it without terminull must give the full functionality of that component.
@@ -154,7 +154,7 @@ cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, hu
 
 ## 14.10 release
 
-- tag v2.0.0 after all gates; approval required before the tag push.
+- tag v2.0.1 after the /v2 module path migration and all gates; approval required before the tag push.
 
 # risks and mitigations:
 
@@ -165,6 +165,6 @@ cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, hu
 
 # non-goals:
 
-- no new features, no api redesign, no module path change, no multi-repo split.
+- no new features, no api redesign, no module path change after the /v2 suffix, no multi-repo split.
 - no forking yaml or golang.org/x/*; no forking test-only modules.
 - no public api surface for any forked engine.

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/renderers"
-	rendercfg "github.com/CHE3MZ/terminull/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers"
+	rendercfg "github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
 )
 
 // testDeployRun records what the handler saw.

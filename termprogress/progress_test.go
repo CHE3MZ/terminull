@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/renderers"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 // guarded serializes concurrent widget writes with test reads.

@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/CHE3MZ/terminull/termconfig/internal/copystructure"
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/maps"
-	"github.com/CHE3MZ/terminull/termconfig/internal/mapstructure"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/copystructure"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/maps"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/mapstructure"
 )
 
 // Koanf is the configuration apparatus.

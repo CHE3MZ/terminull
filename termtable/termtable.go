@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/CHE3MZ/terminull/termtable/internal/table"
+	"github.com/CHE3MZ/terminull/v2/termtable/internal/table"
 )
 
 // Style selects the table look. New styles arrive as new values; unknown

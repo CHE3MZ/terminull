@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // DefaultTerminalWidth is used when detection fails.

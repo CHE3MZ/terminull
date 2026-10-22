@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	flag "github.com/CHE3MZ/terminull/termapp/internal/cli/pflag"
+	flag "github.com/CHE3MZ/terminull/v2/termapp/internal/cli/pflag"
 )
 
 const (

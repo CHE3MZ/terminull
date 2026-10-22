@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 var (

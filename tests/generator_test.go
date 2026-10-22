@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/internal/terminull"
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/internal/terminull"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // readGenerated reads back a file the test itself generated under dir.

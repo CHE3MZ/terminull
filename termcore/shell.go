@@ -1,7 +1,7 @@
 package termcore
 
 import (
-	"github.com/CHE3MZ/terminull/termcore/internal/shlex"
+	"github.com/CHE3MZ/terminull/v2/termcore/internal/shlex"
 )
 
 // ShellSplit splits a command line into arguments using POSIX shell

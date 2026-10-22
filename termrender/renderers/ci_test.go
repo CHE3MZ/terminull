@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 func foldOutput(t *testing.T, makeRenderer func(*SimpleRenderer) termrender.LogRendered, scope string) string {

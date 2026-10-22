@@ -27,8 +27,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 // Backend selects an image protocol or ANSI tier.

@@ -12,7 +12,7 @@ import (
 
 // DefaultTerminullVersion pins new projects to the latest released
 // framework. Override per project with Options.TerminullVersion.
-const DefaultTerminullVersion = "v1.0.0"
+const DefaultTerminullVersion = "v2.0.1"
 
 // Options tunes a Generate call. Name is required; Module defaults to
 // Name (a relative module path builds fine locally); Dir defaults to
@@ -24,7 +24,7 @@ type Options struct {
 	Module string
 	// Dir is the target directory, created when missing.
 	Dir string
-	// TerminullVersion is the framework require version, e.g. "v1.0.0".
+	// TerminullVersion is the framework require version, e.g. "v2.0.1".
 	TerminullVersion string
 	// Replace adds a replace directive (local dogfood), slashes normalized.
 	Replace string

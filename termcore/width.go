@@ -1,7 +1,7 @@
 package termcore
 
 import (
-	width "github.com/CHE3MZ/terminull/termcore/internal/width"
+	width "github.com/CHE3MZ/terminull/v2/termcore/internal/width"
 )
 
 // Width returns the terminal column width of s.

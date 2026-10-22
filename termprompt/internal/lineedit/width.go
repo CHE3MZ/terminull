@@ -3,7 +3,7 @@ package liner
 import (
 	"unicode"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // These character classes are mostly zero width (when combined).

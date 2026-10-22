@@ -8,12 +8,12 @@ import (
 	"math"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termoutput/internal/humanize"
+	"github.com/CHE3MZ/terminull/v2/termoutput/internal/humanize"
 	"gopkg.in/yaml.v3"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termstyle"
-	"github.com/CHE3MZ/terminull/termtable"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termtable"
 )
 
 // Formats for Render and the --output flag.

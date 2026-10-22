@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/maps"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/maps"
 )
 
 // Env implements an environment variables provider.

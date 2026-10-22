@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 // Banner writes the app banner line: the name painted green when color

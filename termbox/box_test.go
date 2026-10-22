@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 func TestStyleString(t *testing.T) {

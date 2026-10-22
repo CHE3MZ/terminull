@@ -3,7 +3,7 @@ package renderers
 import (
 	"strings"
 
-	"github.com/CHE3MZ/terminull/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender"
 )
 
 // FoldableLogsRenderer decorates a SimpleRenderer with CI fold markers:

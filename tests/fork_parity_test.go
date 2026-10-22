@@ -12,13 +12,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termapp"
-	"github.com/CHE3MZ/terminull/termconfig"
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termoutput"
-	"github.com/CHE3MZ/terminull/termprompt"
-	"github.com/CHE3MZ/terminull/termretry"
-	"github.com/CHE3MZ/terminull/termstyle"
+	"github.com/CHE3MZ/terminull/v2/termapp"
+	"github.com/CHE3MZ/terminull/v2/termconfig"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termoutput"
+	"github.com/CHE3MZ/terminull/v2/termprompt"
+	"github.com/CHE3MZ/terminull/v2/termretry"
+	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
 // TestForkParity pins one public-boundary snapshot for every forked engine:

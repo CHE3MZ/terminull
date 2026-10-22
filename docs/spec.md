@@ -266,7 +266,7 @@ no network in tests except dogfood CI which tidies for real.
 
 # versioning:
 
-semver, public folder names and function names do not break without a major bump. the term* renames ship as v2.0.0.
+semver, public folder names and function names do not break without a major bump. the term* renames ship with the /v2 module at v2.0.1.
 engines are frozen literal forks pinned in .github/THIRD_PARTY.md; upstream fixes are cherry-picked only for a bug we hit or a capability we document.
 owned code (termrender, termprompt, termprogress, termoutput, termtable, termcore) evolves in place with tests.
 termrender keeps echelon api names so the cirrus pattern still ports.

@@ -15,7 +15,7 @@
 package cli
 
 import (
-	"github.com/CHE3MZ/terminull/termapp/internal/cli/pflag"
+	"github.com/CHE3MZ/terminull/v2/termapp/internal/cli/pflag"
 )
 
 // MarkFlagRequired instructs the various shell completion implementations to

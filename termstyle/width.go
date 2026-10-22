@@ -1,7 +1,7 @@
 package termstyle
 
 import (
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // Width returns the terminal column width of s.

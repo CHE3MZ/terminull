@@ -7,11 +7,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/renderers/config"
-	"github.com/CHE3MZ/terminull/termrender/renderers/internal/node"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers/internal/node"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 const disableAutoWrap = "\u001B[?7l"

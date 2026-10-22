@@ -7,15 +7,15 @@ import (
 	"io"
 	"os"
 
-	"github.com/CHE3MZ/terminull/termapp/internal/cli"
-	"github.com/CHE3MZ/terminull/termapp/internal/cli/pflag"
-	"github.com/CHE3MZ/terminull/termconfig"
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termoutput"
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/renderers"
-	renderconfig "github.com/CHE3MZ/terminull/termrender/renderers/config"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termapp/internal/cli"
+	"github.com/CHE3MZ/terminull/v2/termapp/internal/cli/pflag"
+	"github.com/CHE3MZ/terminull/v2/termconfig"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termoutput"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers"
+	renderconfig "github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 // App owns the root CLI command. Build one per process with New,

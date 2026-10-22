@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/CHE3MZ/terminull/termapp/internal/cli"
-	"github.com/CHE3MZ/terminull/termconfig"
-	"github.com/CHE3MZ/terminull/termrender"
+	"github.com/CHE3MZ/terminull/v2/termapp/internal/cli"
+	"github.com/CHE3MZ/terminull/v2/termconfig"
+	"github.com/CHE3MZ/terminull/v2/termrender"
 )
 
 // Compile-time proof that handlers can pass *Context anywhere a

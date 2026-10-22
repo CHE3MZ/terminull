@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CHE3MZ/terminull/termrender"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termrender"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 func TestStubRendererSilent(t *testing.T) {

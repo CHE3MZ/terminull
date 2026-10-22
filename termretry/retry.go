@@ -3,7 +3,7 @@ package termretry
 import (
 	"time"
 
-	retrygo "github.com/CHE3MZ/terminull/termretry/internal/retry"
+	retrygo "github.com/CHE3MZ/terminull/v2/termretry/internal/retry"
 )
 
 // Options tunes Do. Zero value retries 3 times with 1s backoff.

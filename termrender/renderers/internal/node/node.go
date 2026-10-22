@@ -7,10 +7,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/CHE3MZ/terminull/termcore"
-	"github.com/CHE3MZ/terminull/termrender/renderers/config"
-	"github.com/CHE3MZ/terminull/termrender/terminal"
-	"github.com/CHE3MZ/terminull/termrender/utils"
+	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
+	"github.com/CHE3MZ/terminull/v2/termrender/utils"
 )
 
 // EchelonNode is one tree node: title, spinner/status, duration,

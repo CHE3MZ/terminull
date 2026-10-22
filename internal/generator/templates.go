@@ -4,9 +4,9 @@ const goModTemplate = `module [[.Module]]
 
 go 1.26.0
 
-require github.com/CHE3MZ/terminull [[.TerminullVersion]]
+require github.com/CHE3MZ/terminull/v2 [[.TerminullVersion]]
 [[if .Replace]]
-replace github.com/CHE3MZ/terminull => "[[.Replace]]"
+replace github.com/CHE3MZ/terminull/v2 => "[[.Replace]]"
 [[end]]`
 
 const mainTemplate = `// Command [[.Name]] is a terminull CLI app.
@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/v2/termcore"
 	"[[.Module]]/internal/commands"
 )
 
@@ -38,8 +38,8 @@ const commandsTemplate = `// Package commands wires the [[.Name]] commands.
 package commands
 
 import (
-	"github.com/CHE3MZ/terminull/termapp"
-	"github.com/CHE3MZ/terminull/termoutput"
+	"github.com/CHE3MZ/terminull/v2/termapp"
+	"github.com/CHE3MZ/terminull/v2/termoutput"
 )
 
 // NewApp builds the CLI with its commands and global flags.

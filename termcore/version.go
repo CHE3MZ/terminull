@@ -7,7 +7,7 @@ import (
 
 // Version and Commit are set at link time via -ldflags for releases:
 //
-//	go build -ldflags "-X github.com/CHE3MZ/terminull/termcore.Version=1.2.3 -X github.com/CHE3MZ/terminull/termcore.Commit=abc123"
+//	go build -ldflags "-X github.com/CHE3MZ/terminull/v2/termcore.Version=1.2.3 -X github.com/CHE3MZ/terminull/v2/termcore.Commit=abc123"
 //
 // When left as "unknown" (plain `go build` / `go install`), Version falls
 // back to the module version from the build info, else stays "unknown".
