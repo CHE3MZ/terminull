@@ -40,7 +40,7 @@ termimage/ ( image rendering , kitty + iterm2 + sixel + ansi fallback )
 cmd/terminull ( dogfood generator cli )
 examples/ ( runnable termtable style demo )
 
-note: the tree keeps v1 names (core, style, box, output, progress, prompt, render, pager, static, retry, app, config) until the rename phase 14.7; the mapping is one to one.
+note: the tree uses the term* names; the v1 folders were renamed right after phase 14.1, ahead of 14.7.
 
 # layout:
 

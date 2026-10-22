@@ -5,7 +5,7 @@
 
 # decisions:
 
-- module path stays github.com/CHE3MZ/terminull; public packages get term* names in the rename phase (14.7).
+- module path stays github.com/CHE3MZ/terminull; public packages use term* names (renamed right after 14.1, ahead of the planned 14.7).
 - every non-exempt dependency is forked literally into the component that uses it, owned by this repo.
 - shared text and terminal primitives are forked once into termcore, never copied per component.
 - every library must work standalone: importing it without terminull must give the full functionality of that component.
@@ -95,41 +95,41 @@ cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, hu
 
 # phases:
 
-## 14.1 termcore extraction (no renames yet)
+## 14.1 termcore extraction
 
-- move ansi parse and visible width from style to core; keep style aliases for v1 callers.
-- fork isatty, colorable, runewidth (+unicode tables and the uax29 grapheme engine it uses), shlex into core/internal.
-- move capability detection to core: Color, ColorFor, ColorDepth, IsTerminal, EnsureConsole, TerminalWidth; style aliases remain.
-- switch render/renderers/internal/node from x/text/width to core width; x/text leaves go.mod.
-- switch termtable/internal/table and termimage to core width and depth.
+- move ansi parse and visible width from termstyle to termcore; keep termstyle aliases for v1 callers.
+- fork isatty, colorable, runewidth (+unicode tables and the uax29 grapheme engine it uses), shlex into termcore/internal.
+- move capability detection to termcore: Color, ColorFor, ColorDepth, IsTerminal, EnsureConsole, TerminalWidth; termstyle aliases remain.
+- switch termrender/renderers/internal/node from x/text/width to termcore width; x/text leaves go.mod.
+- switch termtable/internal/table and termimage to termcore width and depth.
 - gate: full suite green on windows, demo byte-identical, go.mod drops shlex and x/text; isatty/colorable leave in 14.2 and runewidth/uax29 in 14.4 with their last consumers.
 
 ## 14.2 termstyle fork
 
-- fork fatih/color as style/internal/color; Scheme, Faint, FaintRGB, attributes stay on top.
+- fork fatih/color as termstyle/internal/color; Scheme, Faint, FaintRGB, attributes stay on top.
 - gate: exact sgr goldens unchanged, no fatih import remains, go.mod drops color, isatty, colorable.
 
 ## 14.3 small forks
 
-- fork retry-go as retry/internal/retry; fork the humanize subset as output/internal/humanize.
+- fork retry-go as termretry/internal/retry; fork the humanize subset as termoutput/internal/humanize.
 - gate: retry timing tests and output format goldens unchanged, go.mod drops two modules.
 
 ## 14.4 termprompt lineedit fork
 
-- fork liner as prompt/internal/lineedit; Editor keeps history, ctrl+r, completion, multiline, raw-mode behavior.
+- fork liner as termprompt/internal/lineedit; Editor keeps history, ctrl+r, completion, multiline, raw-mode behavior.
 - gate: editor tests on all three oss, piped and non-tty paths, go.mod drops liner, runewidth, uax29.
 
 ## 14.5 termconfig fork
 
-- fork koanf core, yaml parser, confmap/env/file providers, mapstructure into config/internal; use yaml.v3 directly.
+- fork koanf core, yaml parser, confmap/env/file providers, mapstructure into termconfig/internal; use yaml.v3 directly.
 - gate: precedence and strict-key tests unchanged, go.yaml.in leaves go.mod.
 
 ## 14.6 termapp cli fork
 
-- fork cobra and pflag as app/internal/cli; trim to the surface termapp exposes; keep Raw/Unwrap escape hatches.
+- fork cobra and pflag as termapp/internal/cli; trim to the surface termapp exposes; keep Raw/Unwrap escape hatches.
 - gate: help, version, completion directive parity, unknown-flag exit 2 unchanged, go.mod drops two modules.
 
-## 14.7 renames
+## 14.7 renames (landed right after 14.1)
 
 - rename every public package to its term* name; update imports, examples, docs.
 - gate: build and full suite green, goldens unchanged, no v1 import path remains.

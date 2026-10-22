@@ -16,7 +16,7 @@ termconfig/ ( owned merge engine fork + yaml )
 termapp/ ( owned cli engine fork , root and subcommands )
 cmd/terminull ( dogfood generator cli )
 
-note: until phase 14.7 the tree keeps the v1 names (core, style, box, output, progress, prompt, render, pager, static, retry, app, config). the mapping is one to one.
+note: the tree uses the term* names; the v1 folders were renamed right after phase 14.1, ahead of 14.7.
 
 # layout:
 

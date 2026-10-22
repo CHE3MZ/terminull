@@ -5,6 +5,7 @@
 > then check `gh run list` green before next piece.
 > Local first: run `scripts/ops/*` before pushing, do not leave it all to CI.
 > `scripts/ops/` is reserved for ops scripts only. New build scripts go in `scripts/` as `.sh`, build into `dist/`.
+> Phases 1–13 record the v1 folder names; the tree was renamed to term* right after 14.1.
 
 # phase 0 — foundation:
 
@@ -127,13 +128,13 @@
 
 # phase 14 — v2 owned library workspace (plan: docs/v2-plan.md):
 
-- [x] 14.1 `core/` becomes the base: width/ansi/capability primitives move in; isatty, colorable, runewidth (+tables), uax29 graphemes, shlex forked into internal; render/node drops x/text; termtable + termimage consume core width/depth
-- [ ] 14.2 `style/` forks fatih/color into internal, exact sgr parity, no color mod left
-- [ ] 14.3 small forks: retry-go → `retry/internal`, humanize subset → `output/internal`
-- [ ] 14.4 `prompt/` forks liner into internal lineedit, editor parity incl. windows raw mode
-- [ ] 14.5 `config/` forks koanf + yaml parser + providers + mapstructure, yaml.v3 direct, go.yaml.in dropped
-- [ ] 14.6 `app/` forks cobra + pflag into internal cli, facade + completion directive parity
-- [ ] 14.7 rename packages to term* (termcore, termstyle, termbox, termtable, termimage, termoutput, termprogress, termprompt, termrender, termpager, termstatic, termretry, termconfig, termapp)
+- [x] 14.1 `termcore/` becomes the base: width/ansi/capability primitives move in; isatty, colorable, runewidth (+tables), uax29 graphemes, shlex forked into internal; termrender/node drops x/text; termtable + termimage consume termcore width/depth
+- [ ] 14.2 `termstyle/` forks fatih/color into internal, exact sgr parity, no color mod left
+- [ ] 14.3 small forks: retry-go → `termretry/internal`, humanize subset → `termoutput/internal`
+- [ ] 14.4 `termprompt/` forks liner into internal lineedit, editor parity incl. windows raw mode
+- [ ] 14.5 `termconfig/` forks koanf + yaml parser + providers + mapstructure, yaml.v3 direct, go.yaml.in dropped
+- [ ] 14.6 `termapp/` forks cobra + pflag into internal cli, facade + completion directive parity
+- [x] 14.7 rename packages to term* (termcore, termstyle, termbox, termtable, termimage, termoutput, termprogress, termprompt, termrender, termpager, termstatic, termretry, termconfig, termapp); pulled forward right after 14.1
 - [ ] 14.8 final integration review: parity harness per fork, standalone-build CI per library, dependency-law test, windows/mac/linux matrix, tidy to yaml.v3 + x/sys + x/term
 - [ ] 14.9 THIRD_PARTY.md provenance + `task upstream` advisory sweep
 - [ ] 14.10 tag v2.0.0 after all gates (approval required)
