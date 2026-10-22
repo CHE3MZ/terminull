@@ -4,7 +4,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/core"
+	"github.com/CHE3MZ/terminull/termcore"
 )
 
 const plainPadding = 2 // spaces after each column
@@ -22,13 +22,13 @@ func Plain(w io.Writer, header []string, rows [][]string) error {
 	expanded := expandRows(cols, rows)
 	widths := make([]int, cols)
 	for c, h := range header {
-		if size := core.VisibleWidth(h) + plainPadding; size > widths[c] {
+		if size := termcore.VisibleWidth(h) + plainPadding; size > widths[c] {
 			widths[c] = size
 		}
 	}
 	for _, row := range expanded {
 		for c, cell := range row {
-			if size := core.VisibleWidth(cell) + plainPadding; size > widths[c] {
+			if size := termcore.VisibleWidth(cell) + plainPadding; size > widths[c] {
 				widths[c] = size
 			}
 		}
@@ -39,7 +39,7 @@ func Plain(w io.Writer, header []string, rows [][]string) error {
 		for c := 0; c < cols; c++ {
 			cell := cellAt(row, c)
 			b.WriteString(cell)
-			if pad := widths[c] - core.VisibleWidth(cell); pad > 0 {
+			if pad := widths[c] - termcore.VisibleWidth(cell); pad > 0 {
 				b.WriteString(strings.Repeat(" ", pad))
 			}
 		}

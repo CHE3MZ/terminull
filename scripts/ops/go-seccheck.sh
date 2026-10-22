@@ -40,6 +40,6 @@ run_check() {
     echo
 }
 
-run_check gosec gosec -exclude-dir=core/internal ./...
+run_check gosec gosec -exclude-dir=termcore/internal ./...
 
 exit "$failed"

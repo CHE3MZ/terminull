@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/internal/terminull"
+	"github.com/CHE3MZ/terminull/termcore"
 )
 
 func main() {
-	ctx, cancel := core.SignalContext(context.Background())
+	ctx, cancel := termcore.SignalContext(context.Background())
 	defer cancel()
 
 	if err := terminull.NewApp().Execute(ctx, os.Args[1:]); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "terminull:", err)
 		// Cancelled prompts surface as context.Canceled, mapped to 130.
-		os.Exit(core.ExitCodeOf(err))
+		os.Exit(termcore.ExitCodeOf(err))
 	}
 }

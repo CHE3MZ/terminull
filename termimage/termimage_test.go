@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/core"
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/termstyle"
 )
 
 func solid(w, h int, c color.RGBA) *image.RGBA {
@@ -156,11 +156,11 @@ func TestSixelDitherDeterministic(t *testing.T) {
 		}
 	}
 	opts := Options{Backend: Sixel, Width: 8, Height: 4, Dither: true}
-	first, err := String(img, opts, style.NewScheme(true))
+	first, err := String(img, opts, termstyle.NewScheme(true))
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
 	}
-	second, err := String(img, opts, style.NewScheme(true))
+	second, err := String(img, opts, termstyle.NewScheme(true))
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
 	}
@@ -217,7 +217,7 @@ func TestSixelBackgroundFlattensOverColor(t *testing.T) {
 	setPix(img, 0, 0, color.RGBA{})
 	setPix(img, 1, 0, red)
 
-	out, err := String(img, Options{Backend: Sixel, Width: 2, Height: 1, Background: white}, style.NewScheme(true))
+	out, err := String(img, Options{Backend: Sixel, Width: 2, Height: 1, Background: white}, termstyle.NewScheme(true))
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
 	}
@@ -234,7 +234,7 @@ func TestRenderCellOverrideSizesSixel(t *testing.T) {
 
 	out, err := String(solid(2, 2, red), Options{
 		Backend: Sixel, Width: 2, Height: 1, CellWidth: 10, CellHeight: 20,
-	}, style.NewScheme(true))
+	}, termstyle.NewScheme(true))
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
 	}
@@ -378,7 +378,7 @@ func TestHalfBlockTruecolor(t *testing.T) {
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, blue)
 
-	got := halfBlockString(img, core.DepthTrue, false)
+	got := halfBlockString(img, termcore.DepthTrue, false)
 	for _, want := range []string{"\x1b[38;2;255;0;0m", "\x1b[48;2;0;0;255m", "▀", "\x1b[0m"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("halfblock %q misses %q", got, want)
@@ -393,7 +393,7 @@ func TestHalfBlock256(t *testing.T) {
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, blue)
 
-	got := halfBlockString(img, core.Depth256, false)
+	got := halfBlockString(img, termcore.Depth256, false)
 	if !strings.Contains(got, "\x1b[38;5;9m") || !strings.Contains(got, "\x1b[48;5;12m") {
 		t.Fatalf("halfblock 256 %q misses palette codes", got)
 	}
@@ -406,7 +406,7 @@ func TestHalfBlockTransparency(t *testing.T) {
 	setPix(img, 0, 0, color.RGBA{})
 	setPix(img, 0, 1, red)
 
-	got := halfBlockString(img, core.DepthTrue, false)
+	got := halfBlockString(img, termcore.DepthTrue, false)
 	if !strings.Contains(got, "▄") || !strings.Contains(got, defaultBgSeq) {
 		t.Fatalf("transparent top cell = %q, want lower block with default background", got)
 	}
@@ -416,13 +416,13 @@ func TestHalfBlockTransparency(t *testing.T) {
 
 	setPix(img, 0, 0, red)
 	setPix(img, 0, 1, color.RGBA{})
-	got = halfBlockString(img, core.DepthTrue, false)
+	got = halfBlockString(img, termcore.DepthTrue, false)
 	if !strings.Contains(got, "▀") || !strings.Contains(got, defaultBgSeq) {
 		t.Fatalf("transparent bottom cell = %q, want upper block with default background", got)
 	}
 
 	setPix(img, 0, 0, color.RGBA{})
-	got = halfBlockString(img, core.DepthTrue, false)
+	got = halfBlockString(img, termcore.DepthTrue, false)
 	if !strings.Contains(got, " ") || strings.Contains(got, "▀") || strings.Contains(got, "▄") {
 		t.Fatalf("blank cell = %q, want a space", got)
 	}
@@ -440,9 +440,9 @@ func TestHalfBlockDitherDeterministic(t *testing.T) {
 		setPix(img, x, 0, color.RGBA{R: v, G: 40, B: 200, A: 255})
 		setPix(img, x, 1, color.RGBA{R: 200, G: v, B: 40, A: 255})
 	}
-	plain := halfBlockString(img, core.Depth256, false)
-	got := halfBlockString(img, core.Depth256, true)
-	if got != halfBlockString(img, core.Depth256, true) {
+	plain := halfBlockString(img, termcore.Depth256, false)
+	got := halfBlockString(img, termcore.Depth256, true)
+	if got != halfBlockString(img, termcore.Depth256, true) {
 		t.Fatal("dithered half-block is not deterministic")
 	}
 	if got == plain {
@@ -454,7 +454,7 @@ func TestHalfBlockBackgroundFlattens(t *testing.T) {
 	t.Setenv("COLORTERM", "truecolor")
 
 	img := image.NewRGBA(image.Rect(0, 0, 1, 2))
-	out, err := String(img, Options{Backend: HalfBlock, Width: 1, Height: 1, Background: white}, style.NewScheme(true))
+	out, err := String(img, Options{Backend: HalfBlock, Width: 1, Height: 1, Background: white}, termstyle.NewScheme(true))
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
 	}
@@ -473,7 +473,7 @@ func TestFullyTransparentImage(t *testing.T) {
 	for name, backend := range map[string]Backend{
 		"kitty": Kitty, "iterm2": ITerm2, "sixel": Sixel, "half": HalfBlock, "ascii": ASCII,
 	} {
-		out, err := String(img, Options{Backend: backend, Width: 2, Height: 1}, style.NewScheme(true))
+		out, err := String(img, Options{Backend: backend, Width: 2, Height: 1}, termstyle.NewScheme(true))
 		if err != nil {
 			t.Fatalf("%s: String() error = %v", name, err)
 		}
@@ -482,10 +482,10 @@ func TestFullyTransparentImage(t *testing.T) {
 		}
 	}
 
-	if out, _ := String(img, Options{Backend: Sixel, Width: 2, Height: 1}, style.NewScheme(true)); !strings.Contains(out, "P0;1;0q") {
+	if out, _ := String(img, Options{Backend: Sixel, Width: 2, Height: 1}, termstyle.NewScheme(true)); !strings.Contains(out, "P0;1;0q") {
 		t.Fatalf("sixel transparent preamble missing: %q", out)
 	}
-	if out, _ := String(img, Options{Backend: ASCII, Width: 2, Height: 1}, style.NewScheme(true)); out != "  " {
+	if out, _ := String(img, Options{Backend: ASCII, Width: 2, Height: 1}, termstyle.NewScheme(true)); out != "  " {
 		t.Fatalf("ascii = %q, want blanks", out)
 	}
 }
@@ -540,7 +540,7 @@ func TestHalfBlockKeepsEscapesOnBuffer(t *testing.T) {
 	setPix(img, 0, 1, blue)
 
 	var buf bytes.Buffer
-	if err := Render(&buf, img, Options{Backend: HalfBlock, Width: 1, Height: 1}, style.NewScheme(true)); err != nil {
+	if err := Render(&buf, img, Options{Backend: HalfBlock, Width: 1, Height: 1}, termstyle.NewScheme(true)); err != nil {
 		t.Fatalf("Render() error = %v", err)
 	}
 	if !strings.Contains(buf.String(), "▀") {
@@ -551,7 +551,7 @@ func TestHalfBlockKeepsEscapesOnBuffer(t *testing.T) {
 func TestStringSchemeDisabledIsASCII(t *testing.T) {
 	t.Parallel()
 
-	got, err := String(solid(4, 4, white), Options{Backend: HalfBlock, Width: 4, Height: 2}, style.Scheme{})
+	got, err := String(solid(4, 4, white), Options{Backend: HalfBlock, Width: 4, Height: 2}, termstyle.Scheme{})
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
 	}
@@ -563,7 +563,7 @@ func TestStringSchemeDisabledIsASCII(t *testing.T) {
 func TestStringKittyAndTmuxWrap(t *testing.T) {
 	t.Setenv("TMUX", "/tmp/tmux-1000/default,123,0")
 
-	scheme := style.NewScheme(true)
+	scheme := termstyle.NewScheme(true)
 	got, err := String(solid(2, 2, red), Options{Backend: Kitty, Width: 2, Height: 1}, scheme)
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
@@ -579,7 +579,7 @@ func TestStringKittyAndTmuxWrap(t *testing.T) {
 func TestStringSixelStaysRawInTmux(t *testing.T) {
 	t.Setenv("TMUX", "/tmp/tmux-1000/default,123,0")
 
-	got, err := String(solid(2, 2, red), Options{Backend: Sixel, Width: 1, Height: 1}, style.NewScheme(true))
+	got, err := String(solid(2, 2, red), Options{Backend: Sixel, Width: 1, Height: 1}, termstyle.NewScheme(true))
 	if err != nil {
 		t.Fatalf("String() error = %v", err)
 	}
@@ -594,7 +594,7 @@ func TestStringSixelStaysRawInTmux(t *testing.T) {
 func TestRenderRejectsEmptyImage(t *testing.T) {
 	t.Parallel()
 
-	if _, err := String(image.NewRGBA(image.Rect(0, 0, 0, 0)), Options{}, style.NewScheme(true)); err == nil {
+	if _, err := String(image.NewRGBA(image.Rect(0, 0, 0, 0)), Options{}, termstyle.NewScheme(true)); err == nil {
 		t.Fatal("String() accepted an empty image")
 	}
 }

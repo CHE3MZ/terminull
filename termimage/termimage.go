@@ -27,8 +27,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/CHE3MZ/terminull/core"
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/termstyle"
 )
 
 // Backend selects an image protocol or ANSI tier.
@@ -101,7 +101,7 @@ type Options struct {
 }
 
 // String renders img and returns the escape stream or text.
-func String(img image.Image, opts Options, scheme style.Scheme) (string, error) {
+func String(img image.Image, opts Options, scheme termstyle.Scheme) (string, error) {
 	var b strings.Builder
 	if err := Render(&b, img, opts, scheme); err != nil {
 		return "", err
@@ -113,7 +113,7 @@ func String(img image.Image, opts Options, scheme style.Scheme) (string, error) 
 // iTerm2 streams are wrapped for passthrough (the allow-passthrough
 // option must be on); sixel goes raw because tmux 3.4+ renders it
 // natively.
-func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) error {
+func Render(w io.Writer, img image.Image, opts Options, scheme termstyle.Scheme) error {
 	if img == nil {
 		return errors.New("termimage: nil image")
 	}
@@ -121,14 +121,14 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		return errors.New("termimage: empty image")
 	}
 	backend := opts.Backend
-	depth := core.ColorDepth()
+	depth := termcore.ColorDepth()
 	if backend == Auto {
 		backend = Detect()
 		if !scheme.Enabled && backend != ASCII {
 			backend = ASCII
 		}
 	}
-	if backend == HalfBlock && (!scheme.Enabled || depth == core.Depth16) {
+	if backend == HalfBlock && (!scheme.Enabled || depth == termcore.Depth16) {
 		backend = ASCII
 	}
 
@@ -195,10 +195,10 @@ func writeASCII(w io.Writer, img *image.RGBA, cols, rows int, dither bool) error
 // keep their escapes; a console that refuses VT asks for the ASCII tier.
 func consoleReady(w io.Writer) bool {
 	f, ok := w.(*os.File)
-	if !ok || !core.IsTerminal(f) {
+	if !ok || !termcore.IsTerminal(f) {
 		return true
 	}
-	return core.EnsureConsole() == nil
+	return termcore.EnsureConsole() == nil
 }
 
 // targetSize resolves the cell footprint; the cell pixel estimate cw by
@@ -224,8 +224,8 @@ func targetSize(img *image.RGBA, opts Options, cw, ch int) (cols, rows int) {
 }
 
 func terminalColumns() int {
-	if core.IsTerminal(os.Stdout) {
-		if n := core.TerminalWidth(os.Stdout); n > 0 {
+	if termcore.IsTerminal(os.Stdout) {
+		if n := termcore.TerminalWidth(os.Stdout); n > 0 {
 			return n
 		}
 	}

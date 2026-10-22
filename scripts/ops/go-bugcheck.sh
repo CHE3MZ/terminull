@@ -28,16 +28,16 @@ run_check() {
 run_check golangci-lint golangci-lint run ./...
 
 # Pass Go files safely, including paths containing spaces. Vendored engine
-# forks under core/internal are upstream code and stay out of our lint gates.
-if [ -n "$(find . -name '*.go' -type f -not -path './core/internal/*' -print -quit)" ]; then
-    run_check gopls sh -c 'find . -name "*.go" -type f -not -path "./core/internal/*" -print0 | xargs -0 -n 50 gopls check'
+# forks under termcore/internal are upstream code and stay out of our lint gates.
+if [ -n "$(find . -name '*.go' -type f -not -path './termcore/internal/*' -print -quit)" ]; then
+    run_check gopls sh -c 'find . -name "*.go" -type f -not -path "./termcore/internal/*" -print0 | xargs -0 -n 50 gopls check'
 else
     echo "No Go files found; skipping gopls check."
 fi
 
 run_check govulncheck govulncheck ./...
-run_check staticcheck sh -c 'go list ./... | grep -v /core/internal/ | xargs staticcheck'
-run_check errcheck sh -c 'go list ./... | grep -v /core/internal/ | xargs errcheck'
+run_check staticcheck sh -c 'go list ./... | grep -v /termcore/internal/ | xargs staticcheck'
+run_check errcheck sh -c 'go list ./... | grep -v /termcore/internal/ | xargs errcheck'
 run_check vet go vet ./...
 run_check test go test ./...
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/internal/terminull"
+	"github.com/CHE3MZ/terminull/termcore"
 )
 
 // readGenerated reads back a file the test itself generated under dir.
@@ -132,7 +132,7 @@ func TestNewNoArgsNonInteractive(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "NAME") {
 		t.Fatalf("Execute(new) error = %v, want usage naming NAME", err)
 	}
-	if got := core.ExitCodeOf(err); got != 2 {
+	if got := termcore.ExitCodeOf(err); got != 2 {
 		t.Fatalf("ExitCodeOf = %d, want 2 for usage errors", got)
 	}
 }

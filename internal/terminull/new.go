@@ -8,39 +8,39 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/CHE3MZ/terminull/app"
-	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/internal/generator"
-	"github.com/CHE3MZ/terminull/output"
-	"github.com/CHE3MZ/terminull/progress"
-	"github.com/CHE3MZ/terminull/prompt"
-	"github.com/CHE3MZ/terminull/retry"
-	"github.com/CHE3MZ/terminull/static"
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/termapp"
+	"github.com/CHE3MZ/terminull/termcore"
+	"github.com/CHE3MZ/terminull/termoutput"
+	"github.com/CHE3MZ/terminull/termprogress"
+	"github.com/CHE3MZ/terminull/termprompt"
+	"github.com/CHE3MZ/terminull/termretry"
+	"github.com/CHE3MZ/terminull/termstatic"
+	"github.com/CHE3MZ/terminull/termstyle"
 )
 
 // NewApp builds the terminull CLI in its house style: plain ASCII
 // spinners and tree glyphs on every terminal. Framework default stays
 // capability-based (emoji where supported).
-func NewApp() *app.App {
-	a := app.New("terminull",
-		app.WithShort("Scaffold batteries-included Go CLI apps."),
-		app.WithLong("Scaffold batteries-included Go CLI apps with prompting, logging, and multi-format output built in."),
-		app.WithSymbolsOnly(),
+func NewApp() *termapp.App {
+	a := termapp.New("terminull",
+		termapp.WithShort("Scaffold batteries-included Go CLI apps."),
+		termapp.WithLong("Scaffold batteries-included Go CLI apps with prompting, logging, and multi-format output built in."),
+		termapp.WithSymbolsOnly(),
 	)
 	a.Add(newCommand())
 	return a
 }
 
-func newCommand() app.Command {
-	return app.Command{
+func newCommand() termapp.Command {
+	return termapp.Command{
 		Use:   "new NAME",
 		Short: "scaffold a new terminull project",
 		Long:  "Scaffold a new terminull project: go.mod, a main package, sample commands, and a README.",
-		Args:  app.MaximumNArgs(1),
+		Args:  termapp.MaximumNArgs(1),
 		Example: `terminull new myapp --module example.com/myapp
   terminull new myapp --dir ./myapp --skip-tidy`,
-		Flags: func(fs *app.FlagSet) {
+		Flags: func(fs *termapp.FlagSet) {
 			fs.String("module", "", "go module path (default: NAME)")
 			fs.String("dir", "", "target directory (default: ./NAME)")
 			fs.String("replace", "", "replace framework with local path (dogfood)")
@@ -51,7 +51,7 @@ func newCommand() app.Command {
 	}
 }
 
-func runNew(ctx *app.Context) error {
+func runNew(ctx *termapp.Context) error {
 	module, err := ctx.String("module")
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func runNew(ctx *app.Context) error {
 		return err
 	}
 
-	if err := static.Banner(ctx.Out, "terminull", version, core.ColorFor(ctx.Out, ctx.NoColor)); err != nil {
+	if err := termstatic.Banner(ctx.Out, "terminull", version, termcore.ColorFor(ctx.Out, ctx.NoColor)); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func runNew(ctx *app.Context) error {
 		return err
 	}
 	if err := generator.ValidateName(name); err != nil {
-		return core.NewExitCodeError(2, err)
+		return termcore.NewExitCodeError(2, err)
 	}
 
 	if module == "" {
@@ -128,28 +128,28 @@ func runNew(ctx *app.Context) error {
 	for _, file := range files {
 		rows = append(rows, []string{file})
 	}
-	scheme := style.NewScheme(core.ColorFor(ctx.Out, ctx.NoColor))
-	if err := output.TableWith(ctx.Out, output.TableValue{
+	scheme := termstyle.NewScheme(termcore.ColorFor(ctx.Out, ctx.NoColor))
+	if err := termoutput.TableWith(ctx.Out, termoutput.TableValue{
 		Header: []string{"created"},
 		Rows:   rows,
 	}, scheme); err != nil {
 		return err
 	}
-	_, err = fmt.Fprintln(ctx.Out, scheme.Faint(style.FgWhite, "next: cd "+dir+" && go run ./cmd/"+name+" --help"))
+	_, err = fmt.Fprintln(ctx.Out, scheme.Faint(termstyle.FgWhite, "next: cd "+dir+" && go run ./cmd/"+name+" --help"))
 	return err
 }
 
 // appName returns the NAME arg, asks for it on interactive terminals,
 // or fails with usage when there is nowhere to ask.
-func appName(ctx *app.Context) (string, error) {
+func appName(ctx *termapp.Context) (string, error) {
 	if args := ctx.Args(); len(args) > 0 {
 		return args[0], nil
 	}
 	if !stdinTerminal(ctx) {
-		return "", core.NewExitCodeError(2, errors.New("missing app NAME\n\nUsage: terminull new NAME [flags]"))
+		return "", termcore.NewExitCodeError(2, errors.New("missing app NAME\n\nUsage: terminull new NAME [flags]"))
 	}
-	name, err := solo(ctx, func(c context.Context, io prompt.IO) (string, error) {
-		return prompt.Input(c, io, prompt.InputOptions{
+	name, err := solo(ctx, func(c context.Context, io termprompt.IO) (string, error) {
+		return termprompt.Input(c, io, termprompt.InputOptions{
 			Message: "App name?",
 			Flag:    "NAME",
 		})
@@ -158,16 +158,16 @@ func appName(ctx *app.Context) (string, error) {
 		return "", err
 	}
 	if name == "" {
-		return "", core.NewExitCodeError(2, errors.New("missing app NAME\n\nUsage: terminull new NAME [flags]"))
+		return "", termcore.NewExitCodeError(2, errors.New("missing app NAME\n\nUsage: terminull new NAME [flags]"))
 	}
 	return name, nil
 }
 
 // solo pauses live drawing while fn produces foreign terminal output
 // (prompts, spinners, bars), then resumes. Tree state is untouched.
-// Note: app.Context embeds context.Context but shadows Err with an
+// Note: termapp.Context embeds context.Context but shadows Err with an
 // io.Writer field, so the inner context is passed explicitly.
-func solo[T any](ctx *app.Context, fn func(context.Context, prompt.IO) (T, error)) (T, error) {
+func solo[T any](ctx *termapp.Context, fn func(context.Context, termprompt.IO) (T, error)) (T, error) {
 	ctx.PauseDrawing()
 	defer ctx.ResumeDrawing()
 	return fn(ctx.Context, promptIO(ctx))
@@ -175,12 +175,12 @@ func solo[T any](ctx *app.Context, fn func(context.Context, prompt.IO) (T, error
 
 // defaultModule returns the --module flag, asks interactively when a
 // terminal is present, or falls back to the app name non-interactively.
-func defaultModule(ctx *app.Context, name string) (string, error) {
+func defaultModule(ctx *termapp.Context, name string) (string, error) {
 	if !stdinTerminal(ctx) {
 		return name, nil
 	}
-	return solo(ctx, func(c context.Context, io prompt.IO) (string, error) {
-		return prompt.Input(c, io, prompt.InputOptions{
+	return solo(ctx, func(c context.Context, io termprompt.IO) (string, error) {
+		return termprompt.Input(c, io, termprompt.InputOptions{
 			Message: "Go module path?",
 			Default: name,
 			Flag:    "--module",
@@ -188,9 +188,9 @@ func defaultModule(ctx *app.Context, name string) (string, error) {
 	})
 }
 
-func stdinTerminal(ctx *app.Context) bool {
+func stdinTerminal(ctx *termapp.Context) bool {
 	if f, ok := ctx.In.(*os.File); ok {
-		return core.IsTerminal(f)
+		return termcore.IsTerminal(f)
 	}
 	return false
 }
@@ -199,14 +199,14 @@ func stdinTerminal(ctx *app.Context) bool {
 // narrowing to file streams. Nil streams become flag-required errors
 // instead of hangs. Icon colors follow the same terminal detection as
 // every other output.
-func promptIO(ctx *app.Context) prompt.IO {
-	io := prompt.StdIO()
+func promptIO(ctx *termapp.Context) termprompt.IO {
+	io := termprompt.StdIO()
 	io.Err = ctx.ErrOut
-	io.NoColor = !core.ColorFor(ctx.Out, ctx.NoColor)
-	if f, ok := ctx.In.(prompt.FileReader); ok {
+	io.NoColor = !termcore.ColorFor(ctx.Out, ctx.NoColor)
+	if f, ok := ctx.In.(termprompt.FileReader); ok {
 		io.In = f
 	}
-	if f, ok := ctx.Out.(prompt.FileWriter); ok {
+	if f, ok := ctx.Out.(termprompt.FileWriter); ok {
 		io.Out = f
 	}
 	return io
@@ -215,18 +215,18 @@ func promptIO(ctx *app.Context) prompt.IO {
 // tidyWithSpinner runs go mod tidy in dir with a spinner. Drawing stays
 // paused throughout: the spinner owns the terminal until it stops. The
 // constant "go" binary keeps gosec happy; a missing toolchain is clear.
-func tidyWithSpinner(ctx *app.Context, dir string) error {
+func tidyWithSpinner(ctx *termapp.Context, dir string) error {
 	ctx.PauseDrawing()
 	defer ctx.ResumeDrawing()
 
-	spin := progress.NewSpinner(ctx.Out, "resolving modules", false)
+	spin := termprogress.NewSpinner(ctx.Out, "resolving modules", false)
 	spin.Start()
 	var out string
-	err := retry.Do(func() error {
+	err := termretry.Do(func() error {
 		var err error
 		out, err = runGoModTidy(dir)
 		return err
-	}, retry.Options{Attempts: 3, Delay: 2 * time.Second})
+	}, termretry.Options{Attempts: 3, Delay: 2 * time.Second})
 	spin.Stop()
 	if err != nil {
 		return fmt.Errorf("go mod tidy: %w: %s", err, out)

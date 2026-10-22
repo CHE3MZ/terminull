@@ -9,7 +9,7 @@ require github.com/CHE3MZ/terminull [[.TerminullVersion]]
 replace github.com/CHE3MZ/terminull => "[[.Replace]]"
 [[end]]`
 
-const mainTemplate = `// Command [[.Name]] is a terminull app.
+const mainTemplate = `// Command [[.Name]] is a terminull CLI app.
 package main
 
 import (
@@ -17,19 +17,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/CHE3MZ/terminull/core"
+	"github.com/CHE3MZ/terminull/termcore"
 	"[[.Module]]/internal/commands"
 )
 
 func main() {
-	ctx, cancel := core.SignalContext(context.Background())
+	ctx, cancel := termcore.SignalContext(context.Background())
 	defer cancel()
 
 	a := commands.NewApp()
 	if err := a.Execute(ctx, os.Args[1:]); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "[[.Name]]:", err)
 		// Cancelled prompts surface as context.Canceled, mapped to 130.
-		os.Exit(core.ExitCodeOf(err))
+		os.Exit(termcore.ExitCodeOf(err))
 	}
 }
 `
@@ -38,26 +38,26 @@ const commandsTemplate = `// Package commands wires the [[.Name]] commands.
 package commands
 
 import (
-	"github.com/CHE3MZ/terminull/app"
-	"github.com/CHE3MZ/terminull/output"
+	"github.com/CHE3MZ/terminull/termapp"
+	"github.com/CHE3MZ/terminull/termoutput"
 )
 
 // NewApp builds the CLI with its commands and global flags.
-func NewApp() *app.App {
-	a := app.New("[[.Name]]")
+func NewApp() *termapp.App {
+	a := termapp.New("[[.Name]]")
 	a.Add(helloCommand())
 	a.Add(statusCommand())
 	return a
 }
 
-func helloCommand() app.Command {
-	return app.Command{
+func helloCommand() termapp.Command {
+	return termapp.Command{
 		Use:   "hello",
 		Short: "greet someone",
-		Flags: func(fs *app.FlagSet) {
+		Flags: func(fs *termapp.FlagSet) {
 			fs.String("name", "world", "who to greet")
 		},
-		Run: func(ctx *app.Context) error {
+		Run: func(ctx *termapp.Context) error {
 			name, err := ctx.String("name")
 			if err != nil {
 				return err
@@ -66,33 +66,33 @@ func helloCommand() app.Command {
 			log.Infof("greeting %s", name)
 			log.Finish(true)
 
-			if ctx.Output == output.FormatTable {
-				return output.Render(ctx.Out, ctx.Output, output.TableValue{
+			if ctx.Output == termoutput.FormatTable {
+				return termoutput.Render(ctx.Out, ctx.Output, termoutput.TableValue{
 					Header: []string{"GREETING"},
 					Rows:   [][]string{{"hello " + name}},
 				})
 			}
-			return output.Render(ctx.Out, ctx.Output, map[string]string{
+			return termoutput.Render(ctx.Out, ctx.Output, map[string]string{
 				"greeting": "hello " + name,
 			})
 		},
 	}
 }
 
-func statusCommand() app.Command {
-	return app.Command{
+func statusCommand() termapp.Command {
+	return termapp.Command{
 		Use:   "status",
 		Short: "show service status",
-		Run: func(ctx *app.Context) error {
+		Run: func(ctx *termapp.Context) error {
 			names := []string{"api", "worker"}
 			statuses := []string{"up", "up"}
 
-			if ctx.Output == output.FormatTable {
+			if ctx.Output == termoutput.FormatTable {
 				rows := make([][]string, 0, len(names))
 				for i := range names {
 					rows = append(rows, []string{names[i], statuses[i]})
 				}
-				return output.Render(ctx.Out, ctx.Output, output.TableValue{
+				return termoutput.Render(ctx.Out, ctx.Output, termoutput.TableValue{
 					Header: []string{"NAME", "STATUS"},
 					Rows:   rows,
 				})
@@ -104,7 +104,7 @@ func statusCommand() app.Command {
 					"status": statuses[i],
 				})
 			}
-			return output.Render(ctx.Out, ctx.Output, services)
+			return termoutput.Render(ctx.Out, ctx.Output, services)
 		},
 	}
 }

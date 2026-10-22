@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/CHE3MZ/terminull/core"
+	"github.com/CHE3MZ/terminull/termcore"
 )
 
 const (
@@ -103,7 +103,7 @@ func gridTo(w io.Writer, available, wrapWidth int, cfg GridConfig, header []stri
 	for _, row := range source {
 		width := 1
 		for c := 0; c < cols; c++ {
-			width += core.Width(cellAt(row, c)) + 2*padding + 1
+			width += termcore.Width(cellAt(row, c)) + 2*padding + 1
 		}
 		if width > natural {
 			natural = width
@@ -116,7 +116,7 @@ func gridTo(w io.Writer, available, wrapWidth int, cfg GridConfig, header []stri
 		cells := make([][]string, cols)
 		for c := 0; c < cols; c++ {
 			text := cellAt(row, c)
-			limit := core.Width(text)
+			limit := termcore.Width(text)
 			if wrap {
 				limit = wrapWidth
 			}
@@ -131,7 +131,7 @@ func gridTo(w io.Writer, available, wrapWidth int, cfg GridConfig, header []stri
 		height := 0
 		for c, lines := range cells {
 			for _, line := range lines {
-				if size := core.VisibleWidth(line); size > widths[c] {
+				if size := termcore.VisibleWidth(line); size > widths[c] {
 					widths[c] = size
 				}
 			}
@@ -202,7 +202,7 @@ func lineAt(lines []string, y int) string {
 // padLine widens line to width cells; centered lines bias the odd
 // spare cell to the right, matching long-standing table output.
 func padLine(line string, width, align int) string {
-	pad := width - core.VisibleWidth(line)
+	pad := width - termcore.VisibleWidth(line)
 	if pad <= 0 {
 		return line
 	}

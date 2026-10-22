@@ -21,8 +21,8 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/CHE3MZ/terminull/core.Version={{.Version}}
-      - -X github.com/CHE3MZ/terminull/core.Commit={{.Commit}}
+      - -X github.com/CHE3MZ/terminull/termcore.Version={{.Version}}
+      - -X github.com/CHE3MZ/terminull/termcore.Commit={{.Commit}}
 
 archives:
   - id: terminull

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/CHE3MZ/terminull/core"
+	"github.com/CHE3MZ/terminull/termcore"
 )
 
 // wrapCell lays a cell's text into display lines of at most width
@@ -50,7 +50,7 @@ func wrapLine(line string, width int) []string {
 			lines = append(lines, head+"-")
 			w.prefix = ""
 			w.text = rest
-			w.width = core.VisibleWidth(rest)
+			w.width = termcore.VisibleWidth(rest)
 		}
 		token := w.prefix + w.text
 		switch {
@@ -95,14 +95,14 @@ func splitWords(line string) []word {
 		if !open {
 			return
 		}
-		current.width = core.VisibleWidth(current.text)
+		current.width = termcore.VisibleWidth(current.text)
 		out = append(out, current)
 		current = word{}
 		open = false
 	}
 
 	for i := 0; i < len(line); {
-		if n := core.EscapeLen(line, i); n > 0 {
+		if n := termcore.EscapeLen(line, i); n > 0 {
 			seq := line[i : i+n]
 			i += n
 			switch {
@@ -153,7 +153,7 @@ func cutCells(s string, cells int) (head, tail string) {
 	width := 0
 	i := 0
 	for i < len(s) {
-		if n := core.EscapeLen(s, i); n > 0 {
+		if n := termcore.EscapeLen(s, i); n > 0 {
 			seq := s[i : i+n]
 			b.WriteString(seq)
 			active = nextActive(active, seq)
@@ -161,11 +161,11 @@ func cutCells(s string, cells int) (head, tail string) {
 			continue
 		}
 		r, size := utf8.DecodeRuneInString(s[i:])
-		if width+core.RuneWidth(r) > cells {
+		if width+termcore.RuneWidth(r) > cells {
 			break
 		}
 		b.WriteRune(r)
-		width += core.RuneWidth(r)
+		width += termcore.RuneWidth(r)
 		i += size
 	}
 	if i >= len(s) {
