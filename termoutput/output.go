@@ -8,7 +8,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/dustin/go-humanize"
+	"github.com/CHE3MZ/terminull/termoutput/internal/humanize"
 	"gopkg.in/yaml.v3"
 
 	"github.com/CHE3MZ/terminull/termcore"

@@ -3,7 +3,7 @@ package termretry
 import (
 	"time"
 
-	retrygo "github.com/avast/retry-go/v4"
+	retrygo "github.com/CHE3MZ/terminull/termretry/internal/retry"
 )
 
 // Options tunes Do. Zero value retries 3 times with 1s backoff.
