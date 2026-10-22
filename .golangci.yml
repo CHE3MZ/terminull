@@ -27,6 +27,10 @@ linters:
     gosec:
       excludes:
         - G115
+  exclusions:
+    # Literal upstream forks: kept close to source and gated upstream instead.
+    paths:
+      - core/internal/
 
 formatters:
   enable:
