@@ -31,4 +31,4 @@ Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICE
 
 Forked trees are excluded from repo lint, staticcheck, errcheck, and gosec; upstream CI and the advisory watch are their quality signal.
 
-Maintenance: upstream fixes are cherry-picked only for a bug we hit or a capability we document. Because the forks are renamed, osv and govulncheck cannot see them; `task upstream` is the advisory sweep. Update this table whenever a fork version changes.
+Maintenance: upstream fixes are cherry-picked only for a bug we hit or a capability we document. Because the forks are renamed, osv and govulncheck cannot see them; `task upstream` is the advisory sweep. It reports newer tags without blocking and fails on advisories that affect the pinned version. Update this table whenever a fork version changes.
