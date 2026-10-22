@@ -144,14 +144,14 @@ func transformFunc(prefix string) func(string, string) (string, any) {
 // typedValue converts numeric-looking and boolean env values, leaving
 // everything else a string. Leading-zero numbers stay strings ("007").
 func typedValue(v string) any {
-	if b, err := strconv.ParseBool(v); err == nil {
-		return b
-	}
 	if i, err := strconv.ParseInt(v, 10, 64); err == nil {
 		if len(v) > 1 && strings.HasPrefix(v, "0") && !strings.HasPrefix(v, "-0") {
 			return v
 		}
 		return i
+	}
+	if b, err := strconv.ParseBool(v); err == nil {
+		return b
 	}
 	if f, err := strconv.ParseFloat(v, 64); err == nil {
 		return f

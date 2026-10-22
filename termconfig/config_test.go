@@ -127,6 +127,7 @@ func TestTypedEnvValues(t *testing.T) {
 		Environ: []string{
 			"PP6_FLAG=true",
 			"PP6_COUNT=42",
+			"PP6_ONE=1",
 			"PP6_RATIO=1.5",
 			"PP6_NAME=hi",
 			"PP6_ZIP=007",
@@ -141,6 +142,9 @@ func TestTypedEnvValues(t *testing.T) {
 	}
 	if got := cfg.Int("count"); got != 42 {
 		t.Fatalf("Int(count) = %d, want 42", got)
+	}
+	if got := cfg.Int("one"); got != 1 {
+		t.Fatalf("Int(one) = %d, want 1", got)
 	}
 	if got := cfg.Float64("ratio"); got != 1.5 {
 		t.Fatalf("Float64(ratio) = %v, want 1.5", got)
