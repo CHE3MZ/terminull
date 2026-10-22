@@ -12,6 +12,7 @@ nothing else ships. after phase 14 the module graph holds these three plus stdli
 mattn/go-isatty v0.0.24 → termcore/internal/isatty ( MIT )
 mattn/go-colorable v0.1.16 → termcore/internal/colorable ( MIT )
 mattn/go-runewidth v0.0.31 → termcore/internal/width + unicode tables ( MIT )
+clipperhouse/uax29/v2 v2.7.0 → termcore/internal/uax29/graphemes , width's grapheme engine ( MIT )
 google/shlex e7afc7fbc510 → termcore/internal/shlex ( Apache-2.0 )
 fatih/color v1.19.0 → termstyle/internal/color ( MIT )
 avast/retry-go/v4 v4.7.0 → termretry/internal/retry ( MIT )
@@ -26,9 +27,9 @@ spf13/pflag v1.0.9 → termapp/internal/cli/pflag ( BSD-3-Clause )
 
 # removed by v2:
 
-cobra , pflag , koanf ( all ) , mapstructure , go.yaml.in/yaml/v3 , liner , retry-go , humanize , shlex , fatih/color , isatty , colorable , runewidth , x/text.
+cobra , pflag , koanf ( all ) , mapstructure , go.yaml.in/yaml/v3 , liner , retry-go , humanize , shlex , fatih/color , isatty , colorable , runewidth , uax29 , x/text.
 
-stale indirects cleared by tidy: fsnotify , clipperhouse/uax29 , mousetrap , testify.
+stale indirects cleared by tidy: fsnotify , mousetrap , testify.
 
 # policy:
 

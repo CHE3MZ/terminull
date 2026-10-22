@@ -127,7 +127,7 @@
 
 # phase 14 — v2 owned library workspace (plan: docs/v2-plan.md):
 
-- [ ] 14.1 `core/` becomes the base: width/ansi/capability primitives move in; isatty, colorable, runewidth (+tables), shlex forked into internal; render/node drops x/text; termtable + termimage consume core width/depth
+- [x] 14.1 `core/` becomes the base: width/ansi/capability primitives move in; isatty, colorable, runewidth (+tables), uax29 graphemes, shlex forked into internal; render/node drops x/text; termtable + termimage consume core width/depth
 - [ ] 14.2 `style/` forks fatih/color into internal, exact sgr parity, no color mod left
 - [ ] 14.3 small forks: retry-go → `retry/internal`, humanize subset → `output/internal`
 - [ ] 14.4 `prompt/` forks liner into internal lineedit, editor parity incl. windows raw mode

@@ -74,6 +74,7 @@ rules:
 | mattn/go-isatty | v0.0.24 | termcore/internal/isatty | MIT |
 | mattn/go-colorable | v0.1.16 | termcore/internal/colorable | MIT |
 | mattn/go-runewidth | v0.0.31 | termcore/internal/width (+ tables and regen script) | MIT |
+| clipperhouse/uax29/v2 | v2.7.0 | termcore/internal/uax29/graphemes (width's grapheme engine) | MIT |
 | google/shlex | e7afc7fbc510 | termcore/internal/shlex | Apache-2.0 |
 | fatih/color | v1.19.0 | termstyle/internal/color | MIT |
 | avast/retry-go/v4 | v4.7.0 | termretry/internal/retry | MIT |
@@ -90,23 +91,23 @@ rules:
 
 # what leaves go.mod:
 
-cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, humanize, shlex, fatih/color, isatty, colorable, runewidth, x/text, plus stale indirects fsnotify, uax29, mousetrap, testify.
+cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, humanize, shlex, fatih/color, isatty, colorable, runewidth, uax29, x/text, plus stale indirects fsnotify, mousetrap, testify.
 
 # phases:
 
 ## 14.1 termcore extraction (no renames yet)
 
 - move ansi parse and visible width from style to core; keep style aliases for v1 callers.
-- fork isatty, colorable, runewidth (+unicode tables), shlex into core/internal.
+- fork isatty, colorable, runewidth (+unicode tables and the uax29 grapheme engine it uses), shlex into core/internal.
 - move capability detection to core: Color, ColorFor, ColorDepth, IsTerminal, EnsureConsole, TerminalWidth; style aliases remain.
 - switch render/renderers/internal/node from x/text/width to core width; x/text leaves go.mod.
 - switch termtable/internal/table and termimage to core width and depth.
-- gate: full suite green on windows, demo byte-identical, go.mod drops five modules.
+- gate: full suite green on windows, demo byte-identical, go.mod drops shlex and x/text; isatty/colorable leave in 14.2 and runewidth/uax29 in 14.4 with their last consumers.
 
 ## 14.2 termstyle fork
 
 - fork fatih/color as style/internal/color; Scheme, Faint, FaintRGB, attributes stay on top.
-- gate: exact sgr goldens unchanged, no fatih import remains, go.mod drops color.
+- gate: exact sgr goldens unchanged, no fatih import remains, go.mod drops color, isatty, colorable.
 
 ## 14.3 small forks
 
@@ -116,7 +117,7 @@ cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, hu
 ## 14.4 termprompt lineedit fork
 
 - fork liner as prompt/internal/lineedit; Editor keeps history, ctrl+r, completion, multiline, raw-mode behavior.
-- gate: editor tests on all three oss, piped and non-tty paths, go.mod drops liner.
+- gate: editor tests on all three oss, piped and non-tty paths, go.mod drops liner, runewidth, uax29.
 
 ## 14.5 termconfig fork
 
