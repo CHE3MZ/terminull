@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fatih/color"
+	"github.com/CHE3MZ/terminull/termstyle/internal/color"
 )
 
 func TestIsTerminal(t *testing.T) {
@@ -202,5 +202,21 @@ func TestPaint(t *testing.T) {
 
 	if !strings.Contains(got, "\x1b[") {
 		t.Fatalf("Paint(enabled) = %q, want ANSI escape", got)
+	}
+}
+
+func TestPaintExactSGR(t *testing.T) {
+	t.Parallel()
+
+	if got := Paint(false, FgRed, "x"); got != "x" {
+		t.Fatalf("Paint(disabled) = %q, want x", got)
+	}
+
+	if got := Paint(true, FgRed, "x"); got != "\x1b[31mx\x1b[0m" {
+		t.Fatalf("Paint(FgRed) = %q", got)
+	}
+
+	if got := Paint(true, color.Bold, "x"); got != "\x1b[1mx\x1b[22m" {
+		t.Fatalf("Paint(Bold) = %q", got)
 	}
 }

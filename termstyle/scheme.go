@@ -3,7 +3,7 @@ package termstyle
 import (
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/CHE3MZ/terminull/termstyle/internal/color"
 )
 
 // Scheme paints named styles, returning text unchanged when disabled.

@@ -3,7 +3,7 @@ package termstyle
 import (
 	"testing"
 
-	"github.com/fatih/color"
+	"github.com/CHE3MZ/terminull/termstyle/internal/color"
 )
 
 func TestDimCode(t *testing.T) {

@@ -9,10 +9,11 @@ terminull embeds the following upstream sources as internal engines. Forks are l
 | go-runewidth | github.com/mattn/go-runewidth | v0.0.31 | 466251be9763946c75d1d9491e190cc5e80cf2f8 | MIT | termcore/internal/width | 2026-10-22 | uax29 import repointed to termcore/internal/uax29/graphemes; regen script kept under script/; tests omitted |
 | uax29 | github.com/clipperhouse/uax29/v2 | v2.7.0 | b03477d1fbba89df95a6b55da0a222b2e2228610 | MIT | termcore/internal/uax29/graphemes | 2026-10-22 | graphemes package only; tests omitted |
 | shlex | github.com/google/shlex | e7afc7f (2019-12-02) | e7afc7fbc51079733e9468cdfd1efcd7d196cd1d | Apache-2.0 | termcore/internal/shlex | 2026-10-22 | vendored as-is; tests omitted |
+| color | github.com/fatih/color | v1.19.0 | ca25f6e17f118a5a259f3c2c0d395949d1103a5a | MIT | termstyle/internal/color | 2026-10-22 | imports repointed to termcore for tty detection and console writers; Windows init delegates to termcore.EnsureConsole; tests omitted |
 | echelon | github.com/cirruslabs/echelon | v1.9.0 | 87c7b423b345e0900da54f9243316589bb5b4de4 | MIT | termrender | 2026-10-14 | import paths and formatting changed; x/text usage removed; CI fold decorators added; tests reworked |
 | cirrus-cli foldable logs | github.com/cirruslabs/cirrus-cli | v1.0.0 | 1769788a20dc72f6aef85bcdc92abaa1bf061cdc | MIT | termrender/renderers/ci.go | 2026-10-14 | foldable log decorators only, adapted to termrender renderer interfaces |
 
-Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, and the `LICENSE`/`COPYING` files under `termcore/internal`).
+Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, `termstyle/internal/color/LICENSE.md`, and the `LICENSE`/`COPYING` files under `termcore/internal`).
 
 Forked trees are excluded from repo lint, staticcheck, errcheck, and gosec; upstream CI and the advisory watch are their quality signal.
 

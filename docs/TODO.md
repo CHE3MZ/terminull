@@ -129,7 +129,7 @@
 # phase 14 — v2 owned library workspace (plan: docs/v2-plan.md):
 
 - [x] 14.1 `termcore/` becomes the base: width/ansi/capability primitives move in; isatty, colorable, runewidth (+tables), uax29 graphemes, shlex forked into internal; termrender/node drops x/text; termtable + termimage consume termcore width/depth
-- [ ] 14.2 `termstyle/` forks fatih/color into internal, exact sgr parity, no color mod left
+- [x] 14.2 `termstyle/` forks fatih/color into internal, exact sgr parity, no color mod left
 - [ ] 14.3 small forks: retry-go → `termretry/internal`, humanize subset → `termoutput/internal`
 - [ ] 14.4 `termprompt/` forks liner into internal lineedit, editor parity incl. windows raw mode
 - [ ] 14.5 `termconfig/` forks koanf + yaml parser + providers + mapstructure, yaml.v3 direct, go.yaml.in dropped

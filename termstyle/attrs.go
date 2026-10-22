@@ -1,12 +1,12 @@
 package termstyle
 
 import (
-	"github.com/fatih/color"
+	"github.com/CHE3MZ/terminull/termstyle/internal/color"
 )
 
-// Attribute is a foreground color value. It aliases fatih's attribute
-// type, so style constants flow into Faint and Paint while user code
-// imports only terminull.
+// Attribute is a foreground color value. It aliases the owned color
+// engine's attribute type, so style constants flow into Faint and Paint
+// while user code imports only terminull.
 type Attribute = color.Attribute
 
 // Foreground colors for Faint and Paint. Values match the engine's
