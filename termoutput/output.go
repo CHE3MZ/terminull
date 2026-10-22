@@ -107,31 +107,40 @@ func JSON(w io.Writer, v any) error {
 }
 
 // YAML writes YAML plus a trailing newline with stable key order.
-func YAML(w io.Writer, v any) error {
+func YAML(w io.Writer, v any) (err error) {
 	var buf bytes.Buffer
 	enc := yaml.NewEncoder(&buf)
 	enc.SetIndent(2)
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("output: encode yaml: %v", r)
+		}
+	}()
 	if err := enc.Encode(v); err != nil {
 		return fmt.Errorf("output: encode yaml: %w", err)
 	}
 	if err := enc.Close(); err != nil {
 		return fmt.Errorf("output: close yaml: %w", err)
 	}
-	_, err := io.Copy(w, &buf)
+	_, err = io.Copy(w, &buf)
 	return err
 }
 
 // Graph renders values as a plain-ASCII point chart with a labeled
 // axis: pure ASCII, no color codes, safe on every console including
-// raster fonts.
+// raster fonts. Non-finite values are marked ? and ignored when
+// computing the axis.
 func Graph(values []float64) string {
 	if len(values) == 0 {
 		return ""
 	}
 
 	const height = 10
-	min, max := values[0], values[0]
-	for _, v := range values[1:] {
+	min, max := math.Inf(1), math.Inf(-1)
+	for _, v := range values {
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			continue
+		}
 		if v < min {
 			min = v
 		}
@@ -139,11 +148,20 @@ func Graph(values []float64) string {
 			max = v
 		}
 	}
+	scale := 1.0
+	if math.IsInf(min, 1) {
+		min, max = 0, 0
+	} else if math.IsInf(max-min, 0) {
+		scale = math.Max(math.Abs(min), math.Abs(max))
+		min /= scale
+		max /= scale
+	}
 
 	labels := make([]string, height)
 	labelWidth := 0
 	for r := 0; r < height; r++ {
-		labels[r] = fmt.Sprintf("%.2f", max-(max-min)*float64(r)/float64(height-1))
+		label := (max - (max-min)*float64(r)/float64(height-1)) * scale
+		labels[r] = fmt.Sprintf("%.2f", label)
 		if len(labels[r]) > labelWidth {
 			labelWidth = len(labels[r])
 		}
@@ -154,11 +172,23 @@ func Graph(values []float64) string {
 		rows[r] = []rune(strings.Repeat(" ", len(values)))
 	}
 	for c, v := range values {
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			rows[height-1][c] = '?'
+			continue
+		}
+		v /= scale
 		r := height / 2
 		if max > min {
 			r = int(math.Round((max - v) * float64(height-1) / (max - min)))
+			if r < 0 {
+				r = 0
+			} else if r >= height {
+				r = height - 1
+			}
 		}
-		rows[r][c] = '*'
+		if r >= 0 && r < height {
+			rows[r][c] = '*' // #nosec G602 -- c ranges over values; rows are len(values) wide.
+		}
 	}
 
 	var b strings.Builder

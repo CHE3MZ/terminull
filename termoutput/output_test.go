@@ -1,6 +1,7 @@
 package termoutput
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -177,6 +178,32 @@ func TestGraphNonEmpty(t *testing.T) {
 	}
 	if !strings.Contains(got, "9.00") {
 		t.Fatalf("Graph() = %q, want max label", got)
+	}
+}
+
+func TestGraphNonFiniteValues(t *testing.T) {
+	t.Parallel()
+
+	for _, values := range [][]float64{
+		{math.Inf(1), 1, math.Inf(-1)},
+		{math.NaN(), 1},
+		{math.MaxFloat64, -math.MaxFloat64},
+		{math.Inf(1), math.NaN()},
+	} {
+		got := Graph(values)
+		lines := strings.Split(strings.TrimSuffix(got, "\n"), "\n")
+		if len(lines) != 10 {
+			t.Fatalf("Graph(%v) lines = %d, want 10", values, len(lines))
+		}
+	}
+}
+
+func TestYAMLUnsupportedType(t *testing.T) {
+	t.Parallel()
+
+	var b strings.Builder
+	if err := YAML(&b, make(chan int)); err == nil {
+		t.Fatal("YAML(channel) = nil error")
 	}
 }
 
