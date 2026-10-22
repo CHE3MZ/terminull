@@ -1,31 +1,39 @@
-# core:
+# external (v2 target):
 
-spf13/cobra ( as a mod )
-knadh/koanf ( as a mod , for config )
-CHE3MZ/terminull/render ( internal , fork of cirruslabs/echelon , for hierarchical logs )
-CHE3MZ/terminull/termtable ( internal , five table styles , own renderer )
-CHE3MZ/terminull/prompt ( internal , line engine , for selects and dialogs )
-peterh/liner ( as a mod , for the prompt editor )
-CHE3MZ/terminull/progress ( internal , for spinners and progress bars )
-CHE3MZ/terminull/output ( internal , for tables and graphs )
-CHE3MZ/terminull/box ( internal , for framed boxes )
-CHE3MZ/terminull/termimage ( internal , image backends , stdlib only )
-CHE3MZ/terminull/retry ( internal , for backoff retries )
-CHE3MZ/terminull/pager ( internal , for less paging )
-CHE3MZ/terminull/termtable ( internal , five table styles , own renderer )
-fatih/color ( as a mod )
-mattn/go-isatty ( as a mod )
-mattn/go-colorable ( as a mod )
-mattn/go-runewidth ( as a mod )
-gopkg.in/yaml.v3 ( as a mod )
+gopkg.in/yaml.v3 v3.0.1 ( file codec , config and output )
+golang.org/x/sys v0.49.0 ( windows console + platform syscalls )
+golang.org/x/term v0.44.0 ( terminal size + raw mode )
+log/slog , fmt , and the rest of the standard library ( comes with go )
 
-# other:
+nothing else ships. after phase 14 the module graph holds these three plus stdlib.
 
-golang.org/x/sys ( as a mod )
-golang.org/x/text ( as a mod )
-golang.org/x/term ( as a mod )
-github.com/dustin/go-humanize ( as a mod )
-github.com/google/shlex ( as a mod )
-github.com/avast/retry-go/v4 ( as a mod )
-log/slog ( comes with go )
-fmt ( comes with go )
+# forked ( owned , literal , internal ):
+
+mattn/go-isatty v0.0.24 → termcore/internal/isatty ( MIT )
+mattn/go-colorable v0.1.16 → termcore/internal/colorable ( MIT )
+mattn/go-runewidth v0.0.31 → termcore/internal/width + unicode tables ( MIT )
+google/shlex e7afc7fbc510 → termcore/internal/shlex ( Apache-2.0 )
+fatih/color v1.19.0 → termstyle/internal/color ( MIT )
+avast/retry-go/v4 v4.7.0 → termretry/internal/retry ( MIT )
+dustin/go-humanize v1.0.1 → termoutput/internal/humanize ( MIT )
+peterh/liner v1.2.3 → termprompt/internal/lineedit ( MIT )
+knadh/koanf/v2 v2.3.8 → termconfig/internal/koanf ( MIT )
+knadh/koanf/parsers/yaml v1.1.1 → termconfig/internal/koanf/yaml ( MIT )
+knadh/koanf/providers/{confmap,env/v2,file} → termconfig/internal/koanf ( MIT )
+go-viper/mapstructure/v2 v2.4.0 → termconfig/internal/mapstructure ( MIT )
+spf13/cobra v1.10.2 → termapp/internal/cli ( Apache-2.0 )
+spf13/pflag v1.0.9 → termapp/internal/cli/pflag ( BSD-3-Clause )
+
+# removed by v2:
+
+cobra , pflag , koanf ( all ) , mapstructure , go.yaml.in/yaml/v3 , liner , retry-go , humanize , shlex , fatih/color , isatty , colorable , runewidth , x/text.
+
+stale indirects cleared by tidy: fsnotify , clipperhouse/uax29 , mousetrap , testify.
+
+# policy:
+
+forks are literal copies pinned by version, minimally modified at integration seams, and never surfaced in public apis.
+provenance lives in THIRD_PARTY.md ( repo , version , commit , license , fork date ).
+task upstream sweeps the recorded origins for releases and advisories, because renamed modules fall out of osv and govulncheck visibility.
+gopkg.in/yaml.v3 and golang.org/x/* stay external by design; everything else is owned.
+see docs/v2-plan.md for the phase order and acceptance gates.

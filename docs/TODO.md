@@ -125,6 +125,19 @@
 - [x] 13.2 `termimage` consumes style.ColorDepth; local depth detector, sentinel consts, and console probe removed; half-block tiers unchanged
 - [x] 13.3 `output.TableStyleWith` styles headers on any termtable style, TableWith delegates to it
 
+# phase 14 — v2 owned library workspace (plan: docs/v2-plan.md):
+
+- [ ] 14.1 `core/` becomes the base: width/ansi/capability primitives move in; isatty, colorable, runewidth (+tables), shlex forked into internal; render/node drops x/text; termtable + termimage consume core width/depth
+- [ ] 14.2 `style/` forks fatih/color into internal, exact sgr parity, no color mod left
+- [ ] 14.3 small forks: retry-go → `retry/internal`, humanize subset → `output/internal`
+- [ ] 14.4 `prompt/` forks liner into internal lineedit, editor parity incl. windows raw mode
+- [ ] 14.5 `config/` forks koanf + yaml parser + providers + mapstructure, yaml.v3 direct, go.yaml.in dropped
+- [ ] 14.6 `app/` forks cobra + pflag into internal cli, facade + completion directive parity
+- [ ] 14.7 rename packages to term* (termcore, termstyle, termbox, termtable, termimage, termoutput, termprogress, termprompt, termrender, termpager, termstatic, termretry, termconfig, termapp)
+- [ ] 14.8 final integration review: parity harness per fork, standalone-build CI per library, dependency-law test, windows/mac/linux matrix, tidy to yaml.v3 + x/sys + x/term
+- [ ] 14.9 THIRD_PARTY.md provenance + `task upstream` advisory sweep
+- [ ] 14.10 tag v2.0.0 after all gates (approval required)
+
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)
