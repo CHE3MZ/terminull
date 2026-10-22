@@ -2,7 +2,7 @@
 
 gopkg.in/yaml.v3 v3.0.1 ( file codec , config and output )
 golang.org/x/sys v0.49.0 ( windows console + platform syscalls )
-golang.org/x/term v0.44.0 ( raw mode + no-echo password reads )
+golang.org/x/term v0.47.0 ( raw mode + no-echo password reads )
 log/slog , fmt , and the rest of the standard library ( comes with go )
 
 nothing else ships. after phase 14 the module graph holds these three plus stdlib.

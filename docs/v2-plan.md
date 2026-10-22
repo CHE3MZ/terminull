@@ -92,7 +92,7 @@ rules:
 | spf13/cobra | v1.10.2 | termapp/internal/cli | Apache-2.0 |
 | spf13/pflag | v1.0.9 | termapp/internal/cli/pflag | BSD-3-Clause |
 | gopkg.in/yaml.v3 | v3.0.1 | stays external | MIT/Apache-2.0 |
-| golang.org/x/{sys,term} | v0.49.0 v0.44.0 | stays external | BSD-3-Clause |
+| golang.org/x/{sys,term} | v0.49.0 v0.47.0 | stays external | BSD-3-Clause |
 
 # what leaves go.mod:
 
