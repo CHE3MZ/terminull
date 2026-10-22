@@ -27,6 +27,10 @@ tasks:
     desc: End-to-end smoke with the generator CLI.
     cmds:
       - sh scripts/smoke.sh
+  standalone:
+    desc: Build and run each library in a throwaway module.
+    cmds:
+      - sh scripts/standalone.sh
   build-site:
     cmds:
       - mkdocs build
