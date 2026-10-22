@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
-	"github.com/google/shlex"
 	"gopkg.in/yaml.v3"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/style"
 	"github.com/CHE3MZ/terminull/termtable"
 )
@@ -180,7 +180,7 @@ func IBytes(n uint64) string {
 
 // Split shell-splits a command line, honouring quotes and escapes.
 func Split(s string) ([]string, error) {
-	parts, err := shlex.Split(s)
+	parts, err := core.ShellSplit(s)
 	if err != nil {
 		return nil, fmt.Errorf("output: split %q: %w", s, err)
 	}

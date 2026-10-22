@@ -7,9 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/shlex"
-
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/core"
 )
 
 type options struct {
@@ -40,7 +38,7 @@ func Start(w io.Writer, opts ...Option) (io.Writer, func(), error) {
 	}
 
 	f, ok := w.(*os.File)
-	if !ok || !style.IsTerminal(f) {
+	if !ok || !core.IsTerminal(f) {
 		return w, noop, nil
 	}
 
@@ -68,7 +66,7 @@ func resolvePager(pagerFlag, envPager, term string, lookPath func(string) (strin
 	if want == "" {
 		prog = "less"
 	} else {
-		parts, err := shlex.Split(want)
+		parts, err := core.ShellSplit(want)
 		if err != nil || len(parts) == 0 {
 			return "", nil, false
 		}

@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/render"
 	"github.com/CHE3MZ/terminull/render/renderers/config"
 	"github.com/CHE3MZ/terminull/render/terminal"
-	"github.com/CHE3MZ/terminull/style"
 )
 
 // AutoRenderer picks the right renderer for out, mirroring cirrus-cli's
@@ -21,9 +21,9 @@ import (
 func AutoRenderer(out *os.File, noColor bool) (render.LogRendered, func()) {
 	noop := func() {}
 
-	if !style.IsTerminal(out) || os.Getenv("CI") == "true" || isDumbTerminal() {
+	if !core.IsTerminal(out) || os.Getenv("CI") == "true" || isDumbTerminal() {
 		schema := terminal.DefaultColorSchema()
-		if !style.Color(out, noColor) {
+		if !core.Color(out, noColor) {
 			schema = terminal.NoColorSchema()
 		}
 		return NewSimpleRenderer(colorableWriter(out), schema), noop
@@ -48,9 +48,9 @@ func isDumbTerminal() bool {
 func colorableWriter(out *os.File) io.Writer {
 	switch out {
 	case os.Stdout:
-		return style.Stdout()
+		return core.Stdout()
 	case os.Stderr:
-		return style.Stderr()
+		return core.Stderr()
 	default:
 		return out
 	}

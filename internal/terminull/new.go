@@ -73,7 +73,7 @@ func runNew(ctx *app.Context) error {
 		return err
 	}
 
-	if err := static.Banner(ctx.Out, "terminull", version, style.ColorFor(ctx.Out, ctx.NoColor)); err != nil {
+	if err := static.Banner(ctx.Out, "terminull", version, core.ColorFor(ctx.Out, ctx.NoColor)); err != nil {
 		return err
 	}
 
@@ -128,7 +128,7 @@ func runNew(ctx *app.Context) error {
 	for _, file := range files {
 		rows = append(rows, []string{file})
 	}
-	scheme := style.NewScheme(style.ColorFor(ctx.Out, ctx.NoColor))
+	scheme := style.NewScheme(core.ColorFor(ctx.Out, ctx.NoColor))
 	if err := output.TableWith(ctx.Out, output.TableValue{
 		Header: []string{"created"},
 		Rows:   rows,
@@ -190,7 +190,7 @@ func defaultModule(ctx *app.Context, name string) (string, error) {
 
 func stdinTerminal(ctx *app.Context) bool {
 	if f, ok := ctx.In.(*os.File); ok {
-		return style.IsTerminal(f)
+		return core.IsTerminal(f)
 	}
 	return false
 }
@@ -202,7 +202,7 @@ func stdinTerminal(ctx *app.Context) bool {
 func promptIO(ctx *app.Context) prompt.IO {
 	io := prompt.StdIO()
 	io.Err = ctx.ErrOut
-	io.NoColor = !style.ColorFor(ctx.Out, ctx.NoColor)
+	io.NoColor = !core.ColorFor(ctx.Out, ctx.NoColor)
 	if f, ok := ctx.In.(prompt.FileReader); ok {
 		io.In = f
 	}

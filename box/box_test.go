@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/style"
 )
 
@@ -105,7 +106,7 @@ func TestTitleTruncation(t *testing.T) {
 		t.Fatalf("got %d lines, want 3: %q", len(lines), got)
 	}
 	for i, line := range lines {
-		if w := style.VisibleWidth(line); w != 20 {
+		if w := core.VisibleWidth(line); w != 20 {
 			t.Errorf("line %d width = %d, want 20: %q", i, w, line)
 		}
 	}
@@ -160,7 +161,7 @@ func TestANSIContentMeasuredByGlyphs(t *testing.T) {
 	}
 	lines := strings.Split(strings.TrimSuffix(got, "\n"), "\n")
 	for i, line := range lines {
-		if w := style.VisibleWidth(line); w != 6 {
+		if w := core.VisibleWidth(line); w != 6 {
 			t.Errorf("line %d visible width = %d, want 6: %q", i, w, line)
 		}
 	}

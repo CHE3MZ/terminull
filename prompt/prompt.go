@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/style"
 	"golang.org/x/term"
 )
@@ -42,14 +43,14 @@ func StdIO() IO {
 }
 
 // paint styles the bullet green when colors are allowed. The gate is
-// style.Color on the actual destination: NoColor flag, NO_COLOR, dumb
+// core.Color on the actual destination: NoColor flag, NO_COLOR, dumb
 // terminals, CI, and non-terminal writers all stay plain.
 func paint(w FileWriter, noColor bool, s string) string {
 	f, ok := w.(*os.File)
 	if !ok {
 		return s
 	}
-	return style.NewScheme(style.Color(f, noColor)).Green(s)
+	return style.NewScheme(core.Color(f, noColor)).Green(s)
 }
 
 func interactive(in io.Reader) bool {
@@ -57,7 +58,7 @@ func interactive(in io.Reader) bool {
 	if !ok {
 		return false
 	}
-	return style.IsTerminal(f)
+	return core.IsTerminal(f)
 }
 
 func flagName(flag string) string {
@@ -351,7 +352,7 @@ func Password(ctx context.Context, io IO, opts PasswordOptions) (string, error) 
 		return *opts.Preset, nil
 	}
 	f, ok := io.In.(*os.File)
-	if !ok || !style.IsTerminal(f) {
+	if !ok || !core.IsTerminal(f) {
 		return "", requiredError(opts.Flag)
 	}
 	if _, err := fmt.Fprintln(io.Out, paint(io.Out, io.NoColor, "•")+" "+opts.Message); err != nil {

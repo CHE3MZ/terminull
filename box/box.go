@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/style"
 )
 
@@ -135,8 +136,8 @@ func frameGlyphs(s Style) frame {
 // "─ Title ─" so the line keeps the box width.
 func topLine(glyphs frame, title string, span int) string {
 	if title != "" && span >= 4 {
-		title = style.Truncate(title, span-3)
-		tail := span - 3 - style.VisibleWidth(title)
+		title = core.Truncate(title, span-3)
+		tail := span - 3 - core.VisibleWidth(title)
 		return glyphs.topLeft + glyphs.horizontal + " " + title + " " +
 			strings.Repeat(glyphs.horizontal, tail) + glyphs.topRight
 	}
@@ -159,12 +160,12 @@ func contentWidth(lines []string, opts Options, padding int, framed bool) int {
 	}
 	cols := 1
 	for _, line := range lines {
-		if w := style.VisibleWidth(line); w > cols {
+		if w := core.VisibleWidth(line); w > cols {
 			cols = w
 		}
 	}
 	if framed && opts.Title != "" {
-		if min := style.VisibleWidth(opts.Title) + 3 - 2*padding; min > cols {
+		if min := core.VisibleWidth(opts.Title) + 3 - 2*padding; min > cols {
 			cols = min
 		}
 	}
@@ -172,7 +173,7 @@ func contentWidth(lines []string, opts Options, padding int, framed bool) int {
 }
 
 func padLine(line string, cols int) string {
-	if pad := cols - style.VisibleWidth(line); pad > 0 {
+	if pad := cols - core.VisibleWidth(line); pad > 0 {
 		return line + strings.Repeat(" ", pad)
 	}
 	return line

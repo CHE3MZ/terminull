@@ -3,31 +3,20 @@ package style
 import (
 	"io"
 	"os"
+
+	"github.com/CHE3MZ/terminull/core"
 )
 
-// DefaultTerminalWidth is used when detection fails (pipes, files,
-// dumb terminals): the classic 80 columns.
-const DefaultTerminalWidth = 80
+// DefaultTerminalWidth is used when detection fails.
+const DefaultTerminalWidth = core.DefaultTerminalWidth
 
 // TerminalWidth returns console columns for f, or DefaultTerminalWidth
-// when unknown. Never returns zero or negative.
+// when unknown.
 func TerminalWidth(f *os.File) int {
-	if cols, ok := terminalColumns(f); ok {
-		return cols
-	}
-	return DefaultTerminalWidth
+	return core.TerminalWidth(f)
 }
 
-// ColorFor reports whether ANSI may be written to w: false for
-// --no-color, non-file writers (buffers, pipes without files), dumb
-// terminals, and CI; true only for capable terminal files.
+// ColorFor reports whether ANSI may be written to w.
 func ColorFor(w io.Writer, noColor bool) bool {
-	if noColor {
-		return false
-	}
-	f, ok := w.(*os.File)
-	if !ok {
-		return false
-	}
-	return Color(f, false)
+	return core.ColorFor(w, noColor)
 }

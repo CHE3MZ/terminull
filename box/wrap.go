@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/core"
 )
 
 // cell is one printable unit of a styled line: any ANSI prefix bytes
@@ -23,7 +23,7 @@ func cells(s string) []cell {
 	var out []cell
 	pending := -1
 	for i := 0; i < len(s); {
-		if n := style.EscapeLen(s, i); n > 0 {
+		if n := core.EscapeLen(s, i); n > 0 {
 			if pending < 0 {
 				pending = i
 			}
@@ -36,7 +36,7 @@ func cells(s string) []cell {
 			start = pending
 			pending = -1
 		}
-		out = append(out, cell{start: start, end: i + size, r: r, w: style.RuneWidth(r)})
+		out = append(out, cell{start: start, end: i + size, r: r, w: core.RuneWidth(r)})
 		i += size
 	}
 	if pending >= 0 {
@@ -65,7 +65,7 @@ func wrapLine(s string, cols int) []string {
 		cols = 1
 	}
 	var out []string
-	for style.VisibleWidth(s) > cols {
+	for core.VisibleWidth(s) > cols {
 		cut := breakAt(s, cols)
 		out = append(out, strings.TrimRight(s[:cut], " "))
 		s = strings.TrimLeft(s[cut:], " ")
@@ -80,7 +80,7 @@ func wrapLine(s string, cols int) []string {
 func pendingSGR(s string) string {
 	var b strings.Builder
 	for i := 0; i < len(s); {
-		n := style.EscapeLen(s, i)
+		n := core.EscapeLen(s, i)
 		if n == 0 {
 			i++
 			continue

@@ -27,6 +27,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/style"
 )
 
@@ -120,14 +121,14 @@ func Render(w io.Writer, img image.Image, opts Options, scheme style.Scheme) err
 		return errors.New("termimage: empty image")
 	}
 	backend := opts.Backend
-	depth := style.ColorDepth()
+	depth := core.ColorDepth()
 	if backend == Auto {
 		backend = Detect()
 		if !scheme.Enabled && backend != ASCII {
 			backend = ASCII
 		}
 	}
-	if backend == HalfBlock && (!scheme.Enabled || depth == style.Depth16) {
+	if backend == HalfBlock && (!scheme.Enabled || depth == core.Depth16) {
 		backend = ASCII
 	}
 
@@ -194,10 +195,10 @@ func writeASCII(w io.Writer, img *image.RGBA, cols, rows int, dither bool) error
 // keep their escapes; a console that refuses VT asks for the ASCII tier.
 func consoleReady(w io.Writer) bool {
 	f, ok := w.(*os.File)
-	if !ok || !style.IsTerminal(f) {
+	if !ok || !core.IsTerminal(f) {
 		return true
 	}
-	return style.EnsureConsole() == nil
+	return core.EnsureConsole() == nil
 }
 
 // targetSize resolves the cell footprint; the cell pixel estimate cw by
@@ -223,8 +224,8 @@ func targetSize(img *image.RGBA, opts Options, cw, ch int) (cols, rows int) {
 }
 
 func terminalColumns() int {
-	if style.IsTerminal(os.Stdout) {
-		if n := style.TerminalWidth(os.Stdout); n > 0 {
+	if core.IsTerminal(os.Stdout) {
+		if n := core.TerminalWidth(os.Stdout); n > 0 {
 			return n
 		}
 	}

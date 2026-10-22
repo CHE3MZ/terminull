@@ -3,8 +3,8 @@ package config
 import (
 	"time"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/render/terminal"
-	"github.com/CHE3MZ/terminull/style"
 )
 
 const defaultVisibleLines = 5
@@ -25,10 +25,10 @@ type InteractiveRendererConfig struct {
 }
 
 // NewDefaultRenderingConfig selects emoji where the terminal renders it
-// and symbols-only elsewhere, sharing style.Emoji's verdict so live
+// and symbols-only elsewhere, sharing core.Emoji's verdict so live
 // trees, spinners, and prompts always agree on glyphs.
 func NewDefaultRenderingConfig() *InteractiveRendererConfig {
-	if style.Emoji() {
+	if core.Emoji() {
 		return NewDefaultEmojiRenderingConfig()
 	}
 	return NewDefaultSymbolsOnlyRenderingConfig()

@@ -17,7 +17,6 @@ import (
 	"github.com/CHE3MZ/terminull/render/renderers"
 	renderconfig "github.com/CHE3MZ/terminull/render/renderers/config"
 	"github.com/CHE3MZ/terminull/render/terminal"
-	"github.com/CHE3MZ/terminull/style"
 )
 
 // App owns the root cobra command. Build one per process with New,
@@ -164,7 +163,7 @@ func (a *App) preRun(cmd *cobra.Command, args []string) error {
 
 	// Best effort: legacy Windows consoles need VT enabled before any
 	// ANSI is written. Failure just means plain output there.
-	_ = style.EnsureConsole()
+	_ = core.EnsureConsole()
 
 	if a.output != output.FormatTable && a.output != output.FormatJSON && a.output != output.FormatYAML {
 		return fmt.Errorf("invalid --output %q: want table|json|yaml", a.output)

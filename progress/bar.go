@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/style"
 )
 
@@ -33,7 +34,7 @@ type Bar struct {
 func NewBar(w io.Writer, total int, description string) *Bar {
 	width := defaultBarWidth
 	if f, ok := w.(*os.File); ok {
-		if cols := style.TerminalWidth(f); cols < 80 && cols >= 10 {
+		if cols := core.TerminalWidth(f); cols < 80 && cols >= 10 {
 			width = cols
 		}
 	}

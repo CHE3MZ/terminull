@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/style"
 )
 
@@ -32,7 +33,7 @@ type Spinner struct {
 	done   chan struct{}
 }
 
-// NewSpinner builds a stopped spinner writing to w. Pass style.Emoji()
+// NewSpinner builds a stopped spinner writing to w. Pass core.Emoji()
 // as emoji to pick dots vs ASCII frames.
 //
 // Animation runs only when the destination is a terminal: Start on a
@@ -45,7 +46,7 @@ func NewSpinner(w io.Writer, message string, emoji bool) *Spinner {
 	}
 	tty := false
 	if f, ok := w.(*os.File); ok {
-		tty = style.IsTerminal(f)
+		tty = core.IsTerminal(f)
 	}
 	return &Spinner{out: w, frames: frames, message: message, tty: tty}
 }

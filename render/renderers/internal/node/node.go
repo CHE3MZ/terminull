@@ -5,11 +5,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/CHE3MZ/terminull/render/renderers/config"
 	"github.com/CHE3MZ/terminull/render/terminal"
 	"github.com/CHE3MZ/terminull/render/utils"
-	"golang.org/x/text/width"
 )
 
 // EchelonNode is one tree node: title, spinner/status, duration,
@@ -121,9 +122,11 @@ func (node *EchelonNode) Render() []string {
 		tail = append(tail, node.description...)
 	}
 	indent := "  " // two spaces by default
-	props, _ := width.LookupString(title)
-	if props.Kind() == width.EastAsianWide || props.Kind() == width.EastAsianFullwidth {
-		indent = "   " // three spaces since title start with a wide emoji
+	if title != "" {
+		r, _ := utf8.DecodeRuneInString(title)
+		if core.RuneWidth(r) == 2 {
+			indent = "   " // three spaces since title start with a wide emoji
+		}
 	}
 	result := []string{title}
 	for _, descriptionLine := range tail {

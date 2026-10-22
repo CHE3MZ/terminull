@@ -1,11 +1,10 @@
-//go:build !windows
-
 package style
 
-// EnsureConsole prepares the console for ANSI output. No-op on Unix.
-func EnsureConsole() error {
-	return nil
-}
+import (
+	"github.com/CHE3MZ/terminull/core"
+)
 
-// isWindowsConsole is always false off Windows.
-func isWindowsConsole() bool { return false }
+// EnsureConsole prepares the console for ANSI output.
+func EnsureConsole() error {
+	return core.EnsureConsole()
+}

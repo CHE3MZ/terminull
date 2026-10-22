@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/core"
 	"github.com/peterh/liner"
 )
 
@@ -126,7 +126,7 @@ func interactiveWriter(w io.Writer) bool {
 	if !ok {
 		return false
 	}
-	return style.IsTerminal(f)
+	return core.IsTerminal(f)
 }
 
 // fallbackLine is the pipe and dumb-terminal path: print the prefix and

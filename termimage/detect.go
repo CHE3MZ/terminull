@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/core"
 )
 
 // Detect picks the richest backend the current terminal can host:
@@ -16,7 +16,7 @@ func Detect() Backend {
 	if b, ok := backendFromEnv(os.Getenv); ok {
 		return b
 	}
-	if style.IsTerminal(os.Stdin) && probeSixel() {
+	if core.IsTerminal(os.Stdin) && probeSixel() {
 		return Sixel
 	}
 	return HalfBlock

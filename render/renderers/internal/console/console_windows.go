@@ -3,13 +3,13 @@ package console
 import (
 	"os"
 
-	"github.com/CHE3MZ/terminull/style"
+	"github.com/CHE3MZ/terminull/core"
 )
 
 // PrepareTerminalEnvironment enables ANSI processing on Windows consoles
 // (a no-op where already on, an error where unsupported).
 func PrepareTerminalEnvironment() error {
-	return style.EnsureConsole()
+	return core.EnsureConsole()
 }
 
 // TerminalHeight is unimplemented on Windows: figure out how to query
