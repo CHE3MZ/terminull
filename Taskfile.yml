@@ -31,6 +31,10 @@ tasks:
     desc: Build and run each library in a throwaway module.
     cmds:
       - sh scripts/standalone.sh
+  upstream:
+    desc: Check forked upstreams for newer releases and advisories.
+    cmds:
+      - sh scripts/upstream.sh
   build-site:
     cmds:
       - mkdocs build

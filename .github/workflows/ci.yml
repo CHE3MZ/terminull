@@ -50,3 +50,15 @@ jobs:
       - name: Build and run each library standalone
         shell: bash
         run: sh scripts/standalone.sh
+
+  upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check forked upstreams
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: sh scripts/upstream.sh
