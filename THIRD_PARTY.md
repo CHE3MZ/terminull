@@ -22,10 +22,12 @@ terminull embeds the following upstream sources as internal engines. Forks are l
 | mapstructure | github.com/go-viper/mapstructure/v2 | v2.4.0 | b9794a5f0e73d425210d6614ed833067029155f5 | MIT | termconfig/internal/mapstructure | 2026-10-22 | internal errors import repointed to the local fork; tests omitted |
 | copystructure | github.com/mitchellh/copystructure | v1.2.0 | d4ce1f938f7a7ea2a40bff4544b56be9c00b5e84 | MIT | termconfig/internal/copystructure | 2026-10-22 | reflectwalk import repointed to the local fork; tests omitted |
 | reflectwalk | github.com/mitchellh/reflectwalk | v1.0.2 | e0c24fdb021963cd2c4013097a0b993a7c4e344f | MIT | termconfig/internal/reflectwalk | 2026-10-22 | vendored as-is; tests omitted |
+| cobra | github.com/spf13/cobra | v1.10.2 | 88b30ab89da2d0d0abb153818746c5a2d30eccec | Apache-2.0 | termapp/internal/cli | 2026-10-22 | package renamed cli; pflag import repointed to the internal fork; mousetrap win hook and variables removed; tests, docs, and generators omitted |
+| pflag | github.com/spf13/pflag | v1.0.9 | 10438578954bba2527fe5cae3684d4532b064bbe | BSD-3-Clause | termapp/internal/cli/pflag | 2026-10-22 | non-constant Fprintf calls replaced with Fprint to satisfy go vet; tests omitted |
 | echelon | github.com/cirruslabs/echelon | v1.9.0 | 87c7b423b345e0900da54f9243316589bb5b4de4 | MIT | termrender | 2026-10-14 | import paths and formatting changed; x/text usage removed; CI fold decorators added; tests reworked |
 | cirrus-cli foldable logs | github.com/cirruslabs/cirrus-cli | v1.0.0 | 1769788a20dc72f6aef85bcdc92abaa1bf061cdc | MIT | termrender/renderers/ci.go | 2026-10-14 | foldable log decorators only, adapted to termrender renderer interfaces |
 
-Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, `termstyle/internal/color/LICENSE.md`, `termretry/internal/retry/LICENSE`, `termoutput/internal/humanize/LICENSE`, `termprompt/internal/lineedit/COPYING`, the `LICENSE`/`COPYING` files under `termcore/internal`, and the `LICENSE` files under `termconfig/internal`).
+Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, `termstyle/internal/color/LICENSE.md`, `termretry/internal/retry/LICENSE`, `termoutput/internal/humanize/LICENSE`, `termprompt/internal/lineedit/COPYING`, the `LICENSE`/`COPYING` files under `termcore/internal`, the `LICENSE` files under `termconfig/internal`, and `termapp/internal/cli/LICENSE.txt` plus `termapp/internal/cli/pflag/LICENSE`).
 
 Forked trees are excluded from repo lint, staticcheck, errcheck, and gosec; upstream CI and the advisory watch are their quality signal.
 

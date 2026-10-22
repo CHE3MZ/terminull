@@ -6,8 +6,8 @@ import (
 )
 
 // PositionalArgs validates positional args. It takes only args, unlike
-// cobra's hook: the framework owns the command, so validators stay pure
-// functions over argv. Count messages match cobra's wording.
+// engine's hook: the framework owns the command, so validators stay pure
+// functions over argv. Count messages match the engine's wording.
 type PositionalArgs func(args []string) error
 
 // NoArgs returns an error if any args are included.
@@ -63,10 +63,10 @@ func RangeArgs(min, max int) PositionalArgs {
 	}
 }
 
-// OnlyValidArgs returns an error for args outside valid. Unlike cobra's
-// version it takes the list explicitly instead of reading command state,
-// so it stays a pure function. Tab-suffixed descriptions are stripped
-// before comparing, matching cobra's ValidArgs convention.
+// OnlyValidArgs returns an error for args outside valid. Unlike the
+// engine's version it takes the list explicitly instead of reading
+// command state, so it stays a pure function. Tab-suffixed descriptions
+// are stripped before comparing, matching the engine's ValidArgs convention.
 func OnlyValidArgs(valid []string) PositionalArgs {
 	return func(args []string) error {
 		if len(valid) == 0 {

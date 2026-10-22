@@ -7,9 +7,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
+	"github.com/CHE3MZ/terminull/termapp/internal/cli"
+	"github.com/CHE3MZ/terminull/termapp/internal/cli/pflag"
 	"github.com/CHE3MZ/terminull/termconfig"
 	"github.com/CHE3MZ/terminull/termcore"
 	"github.com/CHE3MZ/terminull/termoutput"
@@ -19,14 +18,14 @@ import (
 	"github.com/CHE3MZ/terminull/termrender/terminal"
 )
 
-// App owns the root cobra command. Build one per process with New,
+// App owns the root CLI command. Build one per process with New,
 // register commands with Add, run with Execute.
 type App struct {
 	name    string
 	version string
 	short   string
 	long    string
-	cmd     *cobra.Command
+	cmd     *cli.Command
 	ran     bool
 
 	configFile string
@@ -87,14 +86,14 @@ func New(name string, opts ...Option) *App {
 		opt(a)
 	}
 
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use:           name,
 		Short:         a.short,
 		Long:          a.long,
 		Version:       a.version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cli.Command, args []string) error {
 			return a.preRun(cmd, args)
 		},
 	}
@@ -129,9 +128,9 @@ func (a *App) SetIn(r io.Reader) {
 	a.cmd.SetIn(r)
 }
 
-// Raw escapes to the underlying cobra command for advanced use.
+// Raw escapes to the underlying CLI command for advanced use.
 // Prefer Add/Execute; Raw exists so the wrapper never blocks you.
-func (a *App) Raw() *cobra.Command {
+func (a *App) Raw() *cli.Command {
 	return a.cmd
 }
 
@@ -158,7 +157,7 @@ func (a *App) Execute(ctx context.Context, args []string) error {
 // preRun boots, in order: console setup, debug switch, output
 // validation, renderer + logger, layered config. The *Context travels
 // via cmd.Context().
-func (a *App) preRun(cmd *cobra.Command, args []string) error {
+func (a *App) preRun(cmd *cli.Command, args []string) error {
 	termcore.SetDebug(a.debug || a.verbose)
 
 	// Best effort: legacy Windows consoles need VT enabled before any
@@ -215,7 +214,7 @@ func (a *App) preRun(cmd *cobra.Command, args []string) error {
 // plain simple renderer for captured writers (tests, pipes without files),
 // so static output stays assertion-friendly. WithSymbolsOnly pins the
 // interactive tree to ASCII glyphs on terminals.
-func (a *App) selectRenderer(cmd *cobra.Command) (termrender.LogRendered, func()) {
+func (a *App) selectRenderer(cmd *cli.Command) (termrender.LogRendered, func()) {
 	if outFile, ok := cmd.OutOrStdout().(*os.File); ok {
 		if a.symbolsOnly {
 			return a.symbolsRenderer(outFile)
@@ -239,8 +238,8 @@ func (a *App) symbolsRenderer(outFile *os.File) (termrender.LogRendered, func())
 
 // build converts a Command, recursing into Children groups. Drawing starts
 // inside RunE (not preRun) so --help/--version/completion never draw.
-func (a *App) build(c Command) *cobra.Command {
-	cmd := &cobra.Command{
+func (a *App) build(c Command) *cli.Command {
+	cmd := &cli.Command{
 		Use:               c.Use,
 		Short:             c.Short,
 		Long:              c.Long,
@@ -251,7 +250,7 @@ func (a *App) build(c Command) *cobra.Command {
 		Hidden:            c.Hidden,
 		SilenceUsage:      true,
 		SilenceErrors:     true,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(cmd *cli.Command, _ []string) error {
 			tctx, ok := cmd.Context().Value(contextKey{}).(*Context)
 			if !ok || tctx == nil {
 				return fmt.Errorf("terminull: missing context (was PersistentPreRunE skipped?)")
@@ -287,11 +286,11 @@ func (a *App) build(c Command) *cobra.Command {
 // adaptArgs maps a terminull validator onto the engine hook. Nil keeps
 // the engine default, so group parents and bare commands behave exactly
 // as before.
-func adaptArgs(pa PositionalArgs) cobra.PositionalArgs {
+func adaptArgs(pa PositionalArgs) cli.PositionalArgs {
 	if pa == nil {
 		return nil
 	}
-	return func(_ *cobra.Command, args []string) error {
+	return func(_ *cli.Command, args []string) error {
 		return pa(args)
 	}
 }
@@ -299,19 +298,19 @@ func adaptArgs(pa PositionalArgs) cobra.PositionalArgs {
 // adaptCompletion maps a terminull completion onto the engine hook. The
 // directive cast is safe: our values are bit-identical to the engine's
 // (see TestDirectivesMatchEngine).
-func adaptCompletion(fn CompletionFunc) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func adaptCompletion(fn CompletionFunc) func(*cli.Command, []string, string) ([]string, cli.ShellCompDirective) {
 	if fn == nil {
 		return nil
 	}
-	return func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(_ *cli.Command, args []string, toComplete string) ([]string, cli.ShellCompDirective) {
 		completions, directive := fn(args, toComplete)
-		return completions, cobra.ShellCompDirective(directive)
+		return completions, cli.ShellCompDirective(directive)
 	}
 }
 
 // collectOverrides gathers explicitly-changed flags with types, so CLI
 // flags win over env and files in the config layer.
-func collectOverrides(cmd *cobra.Command) map[string]any {
+func collectOverrides(cmd *cli.Command) map[string]any {
 	overrides := make(map[string]any)
 
 	collect := func(fs *pflag.FlagSet) {

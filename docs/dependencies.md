@@ -36,7 +36,7 @@ spf13/pflag v1.0.9 → termapp/internal/cli/pflag ( BSD-3-Clause )
 
 cobra , pflag , koanf ( all ) , mapstructure , go.yaml.in/yaml/v3 , liner , retry-go , humanize , shlex , fatih/color , isatty , colorable , runewidth , uax29 , x/text.
 
-stale indirects cleared so far: fsnotify , testify. mousetrap leaves with cobra in 14.6. yaml.v3's test-only check.v1 and kr modules remain indirect.
+stale indirects cleared: fsnotify , mousetrap , testify. yaml.v3's test-only check.v1 and kr modules remain indirect.
 
 # policy:
 

@@ -4,8 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/spf13/cobra"
-
+	"github.com/CHE3MZ/terminull/termapp/internal/cli"
 	"github.com/CHE3MZ/terminull/termconfig"
 	"github.com/CHE3MZ/terminull/termrender"
 )
@@ -23,7 +22,7 @@ type contextKey struct{}
 type Context struct {
 	context.Context
 
-	cmd    *cobra.Command
+	cmd    *cli.Command
 	args   []string
 	stop   func()
 	Config *termconfig.Config

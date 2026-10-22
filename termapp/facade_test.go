@@ -3,28 +3,25 @@ package termapp
 import (
 	"strings"
 	"testing"
-
-	"github.com/spf13/cobra"
 )
 
-// TestDirectivesMatchEngine pins our completion directives bit-identical
-// to the engine's. The adaptCompletion cast depends on it; if upstream
-// ever renumbers, this fails loudly instead of misbehaving quietly.
-func TestDirectivesMatchEngine(t *testing.T) {
+// TestCompletionDirectives pins the shell protocol values. The
+// adaptCompletion cast depends on them staying stable.
+func TestCompletionDirectives(t *testing.T) {
 	t.Parallel()
 
-	pairs := map[ShellCompDirective]cobra.ShellCompDirective{
-		ShellCompDirectiveError:         cobra.ShellCompDirectiveError,
-		ShellCompDirectiveNoSpace:       cobra.ShellCompDirectiveNoSpace,
-		ShellCompDirectiveNoFileComp:    cobra.ShellCompDirectiveNoFileComp,
-		ShellCompDirectiveFilterFileExt: cobra.ShellCompDirectiveFilterFileExt,
-		ShellCompDirectiveFilterDirs:    cobra.ShellCompDirectiveFilterDirs,
-		ShellCompDirectiveKeepOrder:     cobra.ShellCompDirectiveKeepOrder,
-		ShellCompDirectiveDefault:       cobra.ShellCompDirectiveDefault,
+	cases := map[ShellCompDirective]int{
+		ShellCompDirectiveError:         1,
+		ShellCompDirectiveNoSpace:       2,
+		ShellCompDirectiveNoFileComp:    4,
+		ShellCompDirectiveFilterFileExt: 8,
+		ShellCompDirectiveFilterDirs:    16,
+		ShellCompDirectiveKeepOrder:     32,
+		ShellCompDirectiveDefault:       0,
 	}
-	for ours, engine := range pairs {
-		if cobra.ShellCompDirective(ours) != engine {
-			t.Fatalf("directive %d != engine %d", int(ours), int(engine))
+	for directive, want := range cases {
+		if int(directive) != want {
+			t.Fatalf("directive %d != %d", int(directive), want)
 		}
 	}
 }

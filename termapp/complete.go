@@ -1,7 +1,7 @@
 package termapp
 
 // ShellCompDirective controls shell completion behavior. Values are
-// bit-identical to cobra's directives (asserted in tests), so behavior
+// bit-identical to the engine's directives (asserted in tests), so behavior
 // matches exactly while user code imports only app.
 type ShellCompDirective int
 
@@ -25,7 +25,7 @@ const (
 	ShellCompDirectiveDefault ShellCompDirective = 0
 )
 
-// CompletionFunc computes positional completions. It drops cobra's
+// CompletionFunc computes positional completions. It drops the engine's
 // *Command parameter: handlers complete from args and the prefix only,
 // the framework owns the rest.
 type CompletionFunc func(args []string, toComplete string) ([]string, ShellCompDirective)
