@@ -40,6 +40,14 @@ run_check() {
     echo
 }
 
-run_check gosec gosec -exclude-dir=termcore/internal -exclude-dir=dist ./...
+run_check gosec gosec \
+    -exclude-dir=termcore/internal \
+    -exclude-dir=termstyle/internal \
+    -exclude-dir=termretry/internal \
+    -exclude-dir=termoutput/internal \
+    -exclude-dir=termprompt/internal \
+    -exclude-dir=termconfig/internal \
+    -exclude-dir=termapp/internal \
+    -exclude-dir=dist ./...
 
 exit "$failed"

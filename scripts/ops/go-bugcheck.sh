@@ -28,16 +28,25 @@ run_check() {
 run_check golangci-lint golangci-lint run ./...
 
 # Pass Go files safely, including paths containing spaces. Vendored engine
-# forks under termcore/internal are upstream code and stay out of our lint gates.
-if [ -n "$(find . -name '*.go' -type f -not -path './termcore/internal/*' -not -path './dist/*' -print -quit)" ]; then
-    run_check gopls sh -c 'find . -name "*.go" -type f -not -path "./termcore/internal/*" -not -path "./dist/*" -print0 | xargs -0 -n 50 gopls check'
+# forks live under each package's internal tree and stay out of our lint gates.
+if [ -n "$(find . \( \
+    -path './termcore/internal/*' -o \
+    -path './termstyle/internal/*' -o \
+    -path './termretry/internal/*' -o \
+    -path './termoutput/internal/*' -o \
+    -path './termprompt/internal/*' -o \
+    -path './termconfig/internal/*' -o \
+    -path './termapp/internal/*' -o \
+    -path './dist/*' \
+\) -prune -o -name '*.go' -type f -print -quit)" ]; then
+    run_check gopls sh -c 'find . \( -path "./termcore/internal/*" -o -path "./termstyle/internal/*" -o -path "./termretry/internal/*" -o -path "./termoutput/internal/*" -o -path "./termprompt/internal/*" -o -path "./termconfig/internal/*" -o -path "./termapp/internal/*" -o -path "./dist/*" \) -prune -o -name "*.go" -type f -print0 | xargs -0 -n 50 gopls check'
 else
     echo "No Go files found; skipping gopls check."
 fi
 
 run_check govulncheck govulncheck ./...
-run_check staticcheck sh -c 'go list ./... | grep -v /termcore/internal/ | xargs staticcheck'
-run_check errcheck sh -c 'go list ./... | grep -v /termcore/internal/ | xargs errcheck'
+run_check staticcheck sh -c 'go list ./... | grep -Ev "/(termcore|termstyle|termretry|termoutput|termprompt|termconfig|termapp)/internal/" | xargs staticcheck'
+run_check errcheck sh -c 'go list ./... | grep -Ev "/(termcore|termstyle|termretry|termoutput|termprompt|termconfig|termapp)/internal/" | xargs errcheck'
 run_check vet go vet ./...
 run_check test go test ./...
 

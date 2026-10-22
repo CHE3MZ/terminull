@@ -31,6 +31,12 @@ linters:
     # Literal upstream forks: kept close to source and gated upstream instead.
     paths:
       - termcore/internal/
+      - termstyle/internal/
+      - termretry/internal/
+      - termoutput/internal/
+      - termprompt/internal/
+      - termconfig/internal/
+      - termapp/internal/
 
 formatters:
   enable:
