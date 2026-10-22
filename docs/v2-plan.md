@@ -59,7 +59,7 @@ rules:
 # fork policy:
 
 - literal forks: upstream source is copied into the owning library's internal tree at a pinned version.
-- provenance: THIRD_PARTY.md records repo, version, commit, license, and fork date for every fork.
+- provenance: .github/THIRD_PARTY.md records repo, version, commit, license, and fork date for every fork.
 - minimal modification: only integration seams change (termcore width/ansi, console setup, error wrapping, removal of unused surface). engine logic and upstream tests stay recognizable so security fixes cherry-pick cleanly.
 - forked engines never appear in public apis; users see term* types only.
 - no cosmetic churn. upstream fixes arrive only for a bug we hit or a capability we document.
@@ -149,7 +149,7 @@ cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, hu
 
 ## 14.9 provenance and upstream watch
 
-- THIRD_PARTY.md complete: repo, version, commit, license, fork date for every fork.
+- .github/THIRD_PARTY.md complete: repo, version, commit, license, fork date for every fork.
 - task upstream implemented: checks recorded origins for newer releases and advisories, green locally and in ci.
 
 ## 14.10 release
@@ -160,7 +160,7 @@ cobra, pflag, koanf (all), mapstructure, go.yaml.in/yaml/v3, liner, retry-go, hu
 
 - windows console behavior in colorable/liner forks: dogfood + test matrix gates, behavior parity tests.
 - unicode width tables are now ours: regen script and a documented upstream watch duty.
-- renamed forks lose osv/govulncheck visibility: task upstream sweep plus THIRD_PARTY.md provenance.
+- renamed forks lose osv/govulncheck visibility: task upstream sweep plus .github/THIRD_PARTY.md provenance.
 - big-bang renames: kept last and isolated; behavior work never mixes with rename commits.
 
 # non-goals:

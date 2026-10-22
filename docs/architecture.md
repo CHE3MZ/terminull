@@ -109,7 +109,7 @@ wrapping matters more than features. underlying engines are frozen forks now; ou
 
 fork policy:
 literal forks: upstream source is copied into the owning library's internal tree at a pinned version, license kept.
-provenance: THIRD_PARTY.md records repo, version, commit, license, and fork date for every fork.
+provenance: .github/THIRD_PARTY.md records repo, version, commit, license, and fork date for every fork.
 minimal modification: only integration seams change (termcore widths and ansi, console setup, error wrapping, removal of unused surface). engine logic and upstream tests stay recognizable so security fixes cherry-pick cleanly.
 forked engines never surface in public apis; users see term* types only.
 no cosmetic churn. upstream fixes arrive only for a bug we hit or a capability we document.

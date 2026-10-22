@@ -136,7 +136,7 @@
 - [x] 14.6 `termapp/` forks cobra + pflag into internal cli, facade + completion directive parity
 - [x] 14.7 rename packages to term* (termcore, termstyle, termbox, termtable, termimage, termoutput, termprogress, termprompt, termrender, termpager, termstatic, termretry, termconfig, termapp); pulled forward right after 14.1
 - [x] 14.8 final integration review: cross-fork parity snapshots, standalone-build CI per library, dependency-law + go.mod tests, windows/mac/linux test and dogfood matrix, ops and scan green
-- [x] 14.9 THIRD_PARTY.md provenance complete; `task upstream` checks newer tags and OSV advisories, green locally and in CI
+- [x] 14.9 .github/THIRD_PARTY.md provenance complete; `task upstream` checks newer tags and OSV advisories, green locally and in CI
 - [x] 14.10 tagged v2.0.0 at `cd9320d`; goreleaser published six archives + checksums
 
 # next (backlog, not scheduled):

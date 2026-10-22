@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Check every pinned fork in THIRD_PARTY.md for newer releases and advisories.
+# Check every pinned fork in .github/THIRD_PARTY.md for newer releases and advisories.
 # Renamed forks are invisible to govulncheck and osv-scanner, so this table is
 # the source of truth for the upstream watch.
 # Usage: sh scripts/upstream.sh
@@ -130,7 +130,7 @@ while IFS='|' read -r _ fork upstream version _ _ _ _ _; do
 	echo "    advisories:"
 	printf '%s\n' "$ids" | sed 's/^/      /'
 	advisories=$((advisories + $(printf '%s\n' "$ids" | wc -l)))
-done <THIRD_PARTY.md
+done <.github/THIRD_PARTY.md
 
 echo
 if [ "$advisories" -gt 0 ]; then
