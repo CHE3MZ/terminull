@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-viper/mapstructure/v2"
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/confmap"
-	"github.com/knadh/koanf/providers/env/v2"
-	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/v2"
+	"github.com/CHE3MZ/terminull/termconfig/internal/koanf"
+	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/confmap"
+	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/env"
+	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/file"
+	"github.com/CHE3MZ/terminull/termconfig/internal/koanf/yaml"
+	"github.com/CHE3MZ/terminull/termconfig/internal/mapstructure"
 )
 
 // Options tunes a Load call. Zero value loads nothing but empty defaults.

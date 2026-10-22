@@ -132,7 +132,7 @@
 - [x] 14.2 `termstyle/` forks fatih/color into internal, exact sgr parity, no color mod left
 - [x] 14.3 small forks: retry-go → `termretry/internal`, humanize subset → `termoutput/internal`
 - [x] 14.4 `termprompt/` forks liner into internal lineedit, editor parity incl. windows raw mode
-- [ ] 14.5 `termconfig/` forks koanf + yaml parser + providers + mapstructure, yaml.v3 direct, go.yaml.in dropped
+- [x] 14.5 `termconfig/` forks koanf + yaml parser + providers + mapstructure, yaml.v3 direct, go.yaml.in dropped
 - [ ] 14.6 `termapp/` forks cobra + pflag into internal cli, facade + completion directive parity
 - [x] 14.7 rename packages to term* (termcore, termstyle, termbox, termtable, termimage, termoutput, termprogress, termprompt, termrender, termpager, termstatic, termretry, termconfig, termapp); pulled forward right after 14.1
 - [ ] 14.8 final integration review: parity harness per fork, standalone-build CI per library, dependency-law test, windows/mac/linux matrix, tidy to yaml.v3 + x/sys + x/term

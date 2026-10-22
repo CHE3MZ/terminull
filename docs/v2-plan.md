@@ -81,9 +81,14 @@ rules:
 | dustin/go-humanize | v1.0.1 | termoutput/internal/humanize | MIT |
 | peterh/liner | v1.2.3 | termprompt/internal/lineedit | MIT |
 | knadh/koanf/v2 | v2.3.8 | termconfig/internal/koanf | MIT |
+| knadh/koanf/maps | v0.1.2 | termconfig/internal/koanf/maps | MIT |
 | knadh/koanf/parsers/yaml | v1.1.1 | termconfig/internal/koanf/yaml | MIT |
-| knadh/koanf/providers/{confmap,env/v2,file} | v1.0.1 v2.0.2 v1.2.1 | termconfig/internal/koanf | MIT |
+| knadh/koanf/providers/confmap | v1.0.1 | termconfig/internal/koanf/confmap | MIT |
+| knadh/koanf/providers/env/v2 | v2.0.2 | termconfig/internal/koanf/env | MIT |
+| knadh/koanf/providers/file | v1.2.1 | termconfig/internal/koanf/file | MIT |
 | go-viper/mapstructure/v2 | v2.4.0 | termconfig/internal/mapstructure | MIT |
+| mitchellh/copystructure | v1.2.0 | termconfig/internal/copystructure | MIT |
+| mitchellh/reflectwalk | v1.0.2 | termconfig/internal/reflectwalk | MIT |
 | spf13/cobra | v1.10.2 | termapp/internal/cli | Apache-2.0 |
 | spf13/pflag | v1.0.9 | termapp/internal/cli/pflag | BSD-3-Clause |
 | gopkg.in/yaml.v3 | v3.0.1 | stays external | MIT/Apache-2.0 |

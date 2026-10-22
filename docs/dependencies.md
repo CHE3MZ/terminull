@@ -21,9 +21,14 @@ avast/retry-go/v4 v4.7.0 → termretry/internal/retry ( MIT )
 dustin/go-humanize v1.0.1 → termoutput/internal/humanize ( MIT )
 peterh/liner v1.2.3 → termprompt/internal/lineedit ( MIT )
 knadh/koanf/v2 v2.3.8 → termconfig/internal/koanf ( MIT )
+knadh/koanf/maps v0.1.2 → termconfig/internal/koanf/maps ( MIT )
 knadh/koanf/parsers/yaml v1.1.1 → termconfig/internal/koanf/yaml ( MIT )
-knadh/koanf/providers/{confmap,env/v2,file} → termconfig/internal/koanf ( MIT )
+knadh/koanf/providers/confmap v1.0.1 → termconfig/internal/koanf/confmap ( MIT )
+knadh/koanf/providers/env/v2 v2.0.2 → termconfig/internal/koanf/env ( MIT )
+knadh/koanf/providers/file v1.2.1 → termconfig/internal/koanf/file ( MIT , load-only )
 go-viper/mapstructure/v2 v2.4.0 → termconfig/internal/mapstructure ( MIT )
+mitchellh/copystructure v1.2.0 → termconfig/internal/copystructure ( MIT )
+mitchellh/reflectwalk v1.0.2 → termconfig/internal/reflectwalk ( MIT )
 spf13/cobra v1.10.2 → termapp/internal/cli ( Apache-2.0 )
 spf13/pflag v1.0.9 → termapp/internal/cli/pflag ( BSD-3-Clause )
 
@@ -31,7 +36,7 @@ spf13/pflag v1.0.9 → termapp/internal/cli/pflag ( BSD-3-Clause )
 
 cobra , pflag , koanf ( all ) , mapstructure , go.yaml.in/yaml/v3 , liner , retry-go , humanize , shlex , fatih/color , isatty , colorable , runewidth , uax29 , x/text.
 
-stale indirects cleared by tidy: fsnotify , mousetrap , testify.
+stale indirects cleared so far: fsnotify , testify. mousetrap leaves with cobra in 14.6. yaml.v3's test-only check.v1 and kr modules remain indirect.
 
 # policy:
 
