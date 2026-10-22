@@ -239,6 +239,19 @@ func TestInputPresetGuardAnswers(t *testing.T) {
 	}
 }
 
+func TestInputPromptStaysOnOneLine(t *testing.T) {
+	t.Parallel()
+
+	io, drain := pipeIO(t, "alice\n")
+	got, err := inputPrompt(context.Background(), io, InputOptions{Message: "Name?", Default: "bob"})
+	if err != nil || got != "alice" {
+		t.Fatalf("Input() = %q, %v; want alice, nil", got, err)
+	}
+	if gotOut := drain(); gotOut != "• Name? (bob)" {
+		t.Fatalf("input prompt output %q, want inline prompt", gotOut)
+	}
+}
+
 func TestPasswordPresetGuard(t *testing.T) {
 	t.Parallel()
 

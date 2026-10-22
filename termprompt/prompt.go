@@ -106,7 +106,7 @@ func ask(ctx context.Context, io IO, message, hint string) (string, error) {
 	if hint != "" {
 		line += " " + hint
 	}
-	if _, err := fmt.Fprintln(io.Out, line); err != nil {
+	if _, err := fmt.Fprint(io.Out, line); err != nil {
 		return "", err
 	}
 	return readLine(ctx, io.In)
@@ -354,7 +354,7 @@ func Password(ctx context.Context, io IO, opts PasswordOptions) (string, error) 
 	if !ok || !termcore.IsTerminal(f) {
 		return "", requiredError(opts.Flag)
 	}
-	if _, err := fmt.Fprintln(io.Out, paint(io.Out, io.NoColor, "•")+" "+opts.Message); err != nil {
+	if _, err := fmt.Fprint(io.Out, paint(io.Out, io.NoColor, "•")+" "+opts.Message); err != nil {
 		return "", err
 	}
 	secret, err := readPassword(ctx, f)
