@@ -135,7 +135,7 @@
 - [x] 14.5 `termconfig/` forks koanf + yaml parser + providers + mapstructure, yaml.v3 direct, go.yaml.in dropped
 - [x] 14.6 `termapp/` forks cobra + pflag into internal cli, facade + completion directive parity
 - [x] 14.7 rename packages to term* (termcore, termstyle, termbox, termtable, termimage, termoutput, termprogress, termprompt, termrender, termpager, termstatic, termretry, termconfig, termapp); pulled forward right after 14.1
-- [ ] 14.8 final integration review: parity harness per fork, standalone-build CI per library, dependency-law test, windows/mac/linux matrix, tidy to yaml.v3 + x/sys + x/term
+- [x] 14.8 final integration review: cross-fork parity snapshots, standalone-build CI per library, dependency-law + go.mod tests, windows/mac/linux test and dogfood matrix, ops and scan green
 - [ ] 14.9 THIRD_PARTY.md provenance + `task upstream` advisory sweep
 - [ ] 14.10 tag v2.0.0 after all gates (approval required)
 

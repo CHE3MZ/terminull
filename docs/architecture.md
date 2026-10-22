@@ -59,7 +59,7 @@ L2 termbox termtable termprogress termstatic termpager termprompt termrender ter
 L3 termoutput → termtable termstyle termcore yaml.v3 ; termconfig → yaml.v3 ; termretry → stdlib
 L4 termapp → every library below + its internal cli fork ; cmd and internal → termapp and friends
 
-imports point down only, no cycles. a library's public api may only reference its own and lower-layer types. the standalone-module build gate lands with 14.8.
+imports point down only, no cycles. a library's public api may only reference its own and lower-layer types. `tests/dependency_law_test.go` checks the edges and `scripts/standalone.sh` builds each library in a throwaway module.
 
 # explanation:
 

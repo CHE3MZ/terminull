@@ -44,4 +44,5 @@ forks are literal copies pinned by version, minimally modified at integration se
 provenance lives in THIRD_PARTY.md ( repo , version , commit , license , fork date ).
 task upstream sweeps the recorded origins for releases and advisories, because renamed modules fall out of osv and govulncheck visibility.
 gopkg.in/yaml.v3 and golang.org/x/* stay external by design; everything else is owned.
+tests/dependency_law_test.go enforces the import edges and the go.mod end state; scripts/standalone.sh builds and runs every public library alone in a throwaway module.
 see docs/v2-plan.md for the phase order and acceptance gates.
