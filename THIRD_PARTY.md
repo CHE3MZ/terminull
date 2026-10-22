@@ -12,10 +12,11 @@ terminull embeds the following upstream sources as internal engines. Forks are l
 | color | github.com/fatih/color | v1.19.0 | ca25f6e17f118a5a259f3c2c0d395949d1103a5a | MIT | termstyle/internal/color | 2026-10-22 | imports repointed to termcore for tty detection and console writers; Windows init delegates to termcore.EnsureConsole; tests omitted |
 | retry-go | github.com/avast/retry-go/v4 | v4.7.0 | 375037b55dceec39815fd3d0c5bfbccf30255a38 | MIT | termretry/internal/retry | 2026-10-22 | production retry.go and options.go only; tests and examples omitted |
 | go-humanize | github.com/dustin/go-humanize | v1.0.1 | 9ec74ab2f7a7161664182fd4e5e292fccffbc75f | MIT | termoutput/internal/humanize | 2026-10-22 | bytes.go and package documentation only; remaining formats and tests omitted |
+| liner | github.com/peterh/liner | v1.2.3 | 67e095d9354414a42bb18709a0f6df73e328f6b4 | MIT | termprompt/internal/lineedit | 2026-10-22 | width uses termcore.RuneWidth; Solaris keeps the plain fallback instead of the x/sys editing path; tests omitted |
 | echelon | github.com/cirruslabs/echelon | v1.9.0 | 87c7b423b345e0900da54f9243316589bb5b4de4 | MIT | termrender | 2026-10-14 | import paths and formatting changed; x/text usage removed; CI fold decorators added; tests reworked |
 | cirrus-cli foldable logs | github.com/cirruslabs/cirrus-cli | v1.0.0 | 1769788a20dc72f6aef85bcdc92abaa1bf061cdc | MIT | termrender/renderers/ci.go | 2026-10-14 | foldable log decorators only, adapted to termrender renderer interfaces |
 
-Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, `termstyle/internal/color/LICENSE.md`, `termretry/internal/retry/LICENSE`, `termoutput/internal/humanize/LICENSE`, and the `LICENSE`/`COPYING` files under `termcore/internal`).
+Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, `termstyle/internal/color/LICENSE.md`, `termretry/internal/retry/LICENSE`, `termoutput/internal/humanize/LICENSE`, `termprompt/internal/lineedit/COPYING`, and the `LICENSE`/`COPYING` files under `termcore/internal`).
 
 Forked trees are excluded from repo lint, staticcheck, errcheck, and gosec; upstream CI and the advisory watch are their quality signal.
 

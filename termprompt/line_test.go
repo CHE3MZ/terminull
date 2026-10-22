@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/peterh/liner"
+	liner "github.com/CHE3MZ/terminull/termprompt/internal/lineedit"
 )
 
 func TestLineFallbackReadsRawLines(t *testing.T) {
