@@ -97,7 +97,9 @@ func pendingSGR(s string) string {
 			if last >= 0 {
 				b.Reset()
 				if rest := parts[last+1:]; len(rest) > 0 {
-					b.WriteString("\x1b[" + strings.Join(rest, ";") + "m")
+					b.WriteString("\x1b[")
+					b.WriteString(strings.Join(rest, ";"))
+					b.WriteByte('m')
 				}
 			} else {
 				b.WriteString(esc)
