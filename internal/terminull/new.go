@@ -19,9 +19,9 @@ import (
 	"github.com/CHE3MZ/terminull/v2/termstyle"
 )
 
-// NewApp builds the terminull CLI in its house style: plain ASCII
-// spinners and tree glyphs on every terminal. Framework default stays
-// capability-based (emoji where supported).
+// NewApp builds the terminull CLI in its house style: capability-based
+// spinner frames and plain ASCII tree glyphs. Legacy consoles fall back
+// to ASCII spinner frames.
 func NewApp() *termapp.App {
 	a := termapp.New("terminull",
 		termapp.WithShort("Scaffold batteries-included Go CLI apps."),
@@ -219,7 +219,7 @@ func tidyWithSpinner(ctx *termapp.Context, dir string) error {
 	ctx.PauseDrawing()
 	defer ctx.ResumeDrawing()
 
-	spin := termprogress.NewSpinner(ctx.Out, "resolving modules", false)
+	spin := termprogress.NewSpinner(ctx.Out, "resolving modules", termcore.Emoji())
 	spin.Start()
 	var out string
 	err := termretry.Do(func() error {
