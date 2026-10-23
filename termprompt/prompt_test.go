@@ -247,8 +247,21 @@ func TestInputPromptStaysOnOneLine(t *testing.T) {
 	if err != nil || got != "alice" {
 		t.Fatalf("Input() = %q, %v; want alice, nil", got, err)
 	}
-	if gotOut := drain(); gotOut != "• Name? (bob)" {
-		t.Fatalf("input prompt output %q, want inline prompt", gotOut)
+	if gotOut := drain(); gotOut != "• Name? (bob) " {
+		t.Fatalf("input prompt output %q, want inline prompt with trailing space", gotOut)
+	}
+}
+
+func TestInputPromptSeparatesTypedText(t *testing.T) {
+	t.Parallel()
+
+	io, drain := pipeIO(t, "alice\n")
+	got, err := inputPrompt(context.Background(), io, InputOptions{Message: "Name?"})
+	if err != nil || got != "alice" {
+		t.Fatalf("Input() = %q, %v; want alice, nil", got, err)
+	}
+	if gotOut := drain(); gotOut != "• Name? " {
+		t.Fatalf("input prompt output %q, want trailing space after prompt", gotOut)
 	}
 }
 
