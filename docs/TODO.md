@@ -140,6 +140,7 @@
 - [x] 14.10 tagged v2.0.0 at `cd9320d`; goreleaser published six archives + checksums
 - [x] 14.11 moved the module path to `/v2` and pinned scaffolds to `v2.0.1`; v2.0.0 predates the required suffix
 - [x] 14.12 tagged v2.0.1 at `4ec6e39`; goreleaser published six archives + checksums
+- [x] 14.13 tagged v2.0.2 at `b65aade`; inline prompt spacing + capable spinner frames; goreleaser published six archives + checksums
 
 # next (backlog, not scheduled):
 
