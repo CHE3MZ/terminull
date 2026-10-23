@@ -30,7 +30,7 @@ module example.com/standalone/$lib
 
 go 1.26.0
 
-require github.com/CHE3MZ/terminull/v2 v2.0.1
+require github.com/CHE3MZ/terminull/v2 v2.0.2
 
 replace github.com/CHE3MZ/terminull/v2 => "$ROOT"
 EOF
