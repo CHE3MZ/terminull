@@ -27,7 +27,9 @@ terminull embeds the following upstream sources as internal engines. Forks are l
 | echelon | github.com/cirruslabs/echelon | v1.9.0 | 87c7b423b345e0900da54f9243316589bb5b4de4 | MIT | termrender | 2026-10-14 | import paths and formatting changed; x/text usage removed; CI fold decorators added; tests reworked |
 | cirrus-cli foldable logs | github.com/cirruslabs/cirrus-cli | v1.0.0 | 1769788a20dc72f6aef85bcdc92abaa1bf061cdc | MIT | termrender/renderers/ci.go | 2026-10-14 | foldable log decorators only, adapted to termrender renderer interfaces |
 
-Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, `termstyle/internal/color/LICENSE.md`, `termretry/internal/retry/LICENSE`, `termoutput/internal/humanize/LICENSE`, `termprompt/internal/lineedit/COPYING`, the `LICENSE`/`COPYING` files under `termcore/internal`, the `LICENSE` files under `termconfig/internal`, and `termapp/internal/cli/LICENSE.txt` plus `termapp/internal/cli/pflag/LICENSE`).
+Vendored data: `termprogress/charsets.go` reproduces the character-set tables from `github.com/briandowns/spinner` v1.23.2 (`55430861f77b20de3f456775b00c706519464f36`), Apache-2.0. The spinner implementation is rewritten around `termcore`; only the charset data is copied. License and notice live in `termprogress/CHARSETS_LICENSE` and `termprogress/CHARSETS_NOTICE`. The data is intentionally outside the fork watch above because no upstream Go code is vendored.
+
+Fork dates are per row; upstream licenses sit beside each tree (`termrender/LICENSE`, `termrender/renderers/LICENSE.cirrus-cli`, `termstyle/internal/color/LICENSE.md`, `termretry/internal/retry/LICENSE`, `termoutput/internal/humanize/LICENSE`, `termprompt/internal/lineedit/COPYING`, `termprogress/CHARSETS_LICENSE`/`termprogress/CHARSETS_NOTICE`, the `LICENSE`/`COPYING` files under `termcore/internal`, the `LICENSE` files under `termconfig/internal`, and `termapp/internal/cli/LICENSE.txt` plus `termapp/internal/cli/pflag/LICENSE`).
 
 Forked trees are excluded from repo lint, staticcheck, errcheck, and gosec; upstream CI and the advisory watch are their quality signal.
 

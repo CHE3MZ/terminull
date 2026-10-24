@@ -141,10 +141,12 @@
 - [x] 14.11 moved the module path to `/v2` and pinned scaffolds to `v2.0.1`; v2.0.0 predates the required suffix
 - [x] 14.12 tagged v2.0.1 at `4ec6e39`; goreleaser published six archives + checksums
 - [x] 14.13 tagged v2.0.2 at `b65aade`; inline prompt spacing + capable spinner frames; goreleaser published six archives + checksums
+- [x] 14.14 termprogress spinner parity: briandowns CharSets/options, wrapped erase, hidden cursor, final message, legacy fallback; gates green, release pending
 
 # next (backlog, not scheduled):
 
 - [ ] prompt live verification on a real console (conhost vs terminal matrix)
+- [ ] spinner live verification on a real console (windows terminal, conhost, linux console matrix)
 - [x] termimage live verification: wt sixel default, ghostty kitty default, terminal.app + alacritty half-block default, wezterm now routes kitty to iterm2 (conpty mangles kitty escapes, imgcat needs explicit compensation), iterm2 and kitty full matrix on mac, kitty id=0 multi-image fix confirmed
 - [ ] termimage live verification inside tmux: kitty/iterm2 passthrough with allow-passthrough on, sixel raw on tmux 3.4+ (behavior set from tmux source and issues, not yet run live)
 - [ ] docs nav for mkdocs once index content lands (see 4.3)
