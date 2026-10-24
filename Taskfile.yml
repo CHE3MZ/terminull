@@ -35,6 +35,10 @@ tasks:
     desc: Check forked upstreams for newer releases and advisories.
     cmds:
       - sh scripts/upstream.sh
+  man:
+    desc: Generate man pages into dist/man.
+    cmds:
+      - go run ./cmd/terminull man --dir dist/man
   build-site:
     cmds:
       - mkdocs build

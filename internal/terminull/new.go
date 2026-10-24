@@ -29,6 +29,7 @@ func NewApp() *termapp.App {
 		termapp.WithSymbolsOnly(),
 	)
 	a.Add(newCommand())
+	a.Add(manCommand(a))
 	return a
 }
 
