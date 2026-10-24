@@ -1,6 +1,7 @@
 package termprogress
 
 import (
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -113,16 +114,188 @@ func TestSpinnerSchemeFrame(t *testing.T) {
 
 	var out guarded
 	s := NewSpinner(&out, "spin-msg", false).WithScheme(termstyle.NewScheme(true))
-	s.draw(0)
-	if got := out.String(); got != "\r\x1b[36m|\x1b[0m spin-msg" {
+	if got := s.line("|"); got != "\x1b[36m|\x1b[0m spin-msg" {
 		t.Fatalf("spinner frame %q, want cyan frame", got)
 	}
 
 	var plain guarded
 	p := NewSpinner(&plain, "spin-msg", false)
-	p.draw(0)
-	if got := plain.String(); got != "\r| spin-msg" {
+	if got := p.line("|"); got != "| spin-msg" {
 		t.Fatalf("plain spinner frame %q, want raw frame", got)
+	}
+}
+
+func TestSpinnerOptionsAndCharsets(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	s := New([]string{"a", "b"}, 25*time.Millisecond,
+		WithWriter(&out),
+		WithPrefix("pre "),
+		WithSuffix(" post"),
+		WithFinalMessage("done"),
+		WithHiddenCursor(false),
+		WithColor(termstyle.FgRed),
+	)
+	if got := s.line("a"); got != "pre a post" {
+		t.Fatalf("spinner line %q, want prefix and suffix", got)
+	}
+	if s.delay != 25*time.Millisecond {
+		t.Fatalf("spinner delay = %v, want 25ms", s.delay)
+	}
+	if s.hideCursor {
+		t.Fatal("spinner hides cursor despite WithHiddenCursor(false)")
+	}
+	if got := s.scheme.Paint(termstyle.FgRed, "a"); got != "a" {
+		t.Fatalf("zero scheme painted %q, want plain text", got)
+	}
+
+	if got := CharSets[14][0]; got != "⠋" {
+		t.Fatalf("charset 14 frame = %q, want braille dot", got)
+	}
+	if got := CharSets[9]; len(got) != 4 || got[0] != "|" {
+		t.Fatalf("charset 9 = %v, want ASCII spinner", got)
+	}
+	if got := CharSets[39]; len(got) == 0 {
+		t.Fatal("charset 39 is empty, want emoji globe frames")
+	}
+}
+
+func TestSpinnerWithTerminalKeepsWriter(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	s := New([]string{"x"}, time.Second,
+		WithWriter(&out),
+		WithTerminal(os.Stdout),
+		WithHiddenCursor(false),
+	)
+	if s.out != &out {
+		t.Fatal("WithTerminal replaced the writer")
+	}
+	if s.file != os.Stdout {
+		t.Fatal("WithTerminal did not set the detection file")
+	}
+}
+
+func TestSpinnerUpdateAndReverse(t *testing.T) {
+	t.Parallel()
+
+	s := New([]string{"a", "b", "c"}, time.Second,
+		WithWriter(io.Discard),
+		WithHiddenCursor(false),
+	)
+	s.Reverse()
+	if got := strings.Join(s.frames, ""); got != "cba" {
+		t.Fatalf("reversed frames %q, want cba", got)
+	}
+
+	s.UpdateCharset([]string{"x", "y"})
+	if got := strings.Join(s.frames, ""); got != "xy" {
+		t.Fatalf("updated frames %q, want xy", got)
+	}
+
+	s.UpdateCharset(nil)
+	if got := strings.Join(s.frames, ""); got != "xy" {
+		t.Fatalf("empty update changed frames to %q, want xy", got)
+	}
+
+	s.UpdateSpeed(10 * time.Millisecond)
+	if s.delay != 10*time.Millisecond {
+		t.Fatalf("delay = %v, want 10ms", s.delay)
+	}
+}
+
+func TestSpinnerDisplayLines(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		line string
+		cols int
+		want int
+	}{
+		{name: "empty", line: "", cols: 80, want: 1},
+		{name: "short", line: "hello", cols: 80, want: 1},
+		{name: "exact", line: strings.Repeat("x", 80), cols: 80, want: 1},
+		{name: "wrapped", line: strings.Repeat("x", 81), cols: 80, want: 2},
+		{name: "newline", line: "a\nb", cols: 80, want: 2},
+		{name: "ansi", line: "\x1b[36mhello\x1b[0m", cols: 80, want: 1},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := displayLines(tc.line, tc.cols); got != tc.want {
+				t.Fatalf("displayLines(%q, %d) = %d, want %d", tc.line, tc.cols, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestSpinnerEraseANSI(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	s := New([]string{"x"}, time.Second, WithWriter(&out), WithHiddenCursor(false))
+	s.ansi = true
+	s.lastLines = 2
+
+	if got, want := s.eraseStringLocked(), "\x1b[K\x1b[A\r\x1b[K"; got != want {
+		t.Fatalf("erase sequence %q, want %q", got, want)
+	}
+	if s.lastLines != 0 {
+		t.Fatalf("erase left lastLines = %d, want 0", s.lastLines)
+	}
+}
+
+type writeCounter struct {
+	writes int
+}
+
+func (w *writeCounter) Write(p []byte) (int, error) {
+	w.writes++
+	return len(p), nil
+}
+
+func TestSpinnerDrawIsSingleWrite(t *testing.T) {
+	t.Parallel()
+
+	var out writeCounter
+	s := New([]string{"a", "b"}, time.Second, WithWriter(&out), WithHiddenCursor(false))
+	s.active = true
+	s.drawLocked()
+	s.drawLocked()
+
+	if out.writes != 2 {
+		t.Fatalf("draws = %d writes, want 2 (one per frame)", out.writes)
+	}
+}
+
+func TestSpinnerStartStopFallback(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	s := New([]string{"|", "/"}, 5*time.Millisecond,
+		WithWriter(&out),
+		WithFinalMessage("done"),
+		WithHiddenCursor(false),
+	)
+	s.tty = true
+	s.Start()
+	if !s.Active() {
+		t.Fatal("spinner not active after Start on simulated terminal")
+	}
+	time.Sleep(3 * 5 * time.Millisecond)
+	s.Stop()
+
+	got := out.String()
+	for _, want := range []string{"\r|", "\r \r", "done\n"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("spinner output %q does not contain %q", got, want)
+		}
+	}
+	if s.Active() {
+		t.Fatal("spinner active after Stop")
 	}
 }
 

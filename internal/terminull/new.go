@@ -221,13 +221,13 @@ func tidyWithSpinner(ctx *termapp.Context, dir string) error {
 
 	spin := termprogress.NewSpinner(ctx.Out, "resolving modules", termcore.Emoji())
 	spin.Start()
+	defer spin.Stop()
 	var out string
 	err := termretry.Do(func() error {
 		var err error
 		out, err = runGoModTidy(dir)
 		return err
 	}, termretry.Options{Attempts: 3, Delay: 2 * time.Second})
-	spin.Stop()
 	if err != nil {
 		return fmt.Errorf("go mod tidy: %w: %s", err, out)
 	}
