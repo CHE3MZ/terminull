@@ -306,15 +306,23 @@ func TestPauseResumeInteractive(t *testing.T) {
 	}
 
 	ctx.PauseDrawing()
+	paused := size()
+	if paused <= grown {
+		t.Fatal("PauseDrawing did not restore autowrap")
+	}
 	ctx.Logger.Scoped("b").Infof("y")
 	renderer.DrawFrame()
-	if got := size(); got != grown {
-		t.Fatalf("paused DrawFrame changed %d to %d", grown, got)
+	if got := size(); got != paused {
+		t.Fatalf("paused DrawFrame changed %d to %d", paused, got)
 	}
 
 	ctx.ResumeDrawing()
+	resumed := size()
+	if resumed <= paused {
+		t.Fatal("ResumeDrawing did not restore no-wrap drawing")
+	}
 	renderer.DrawFrame()
-	if got := size(); got <= grown {
+	if got := size(); got <= resumed {
 		t.Fatal("resumed DrawFrame did not grow the frame")
 	}
 }

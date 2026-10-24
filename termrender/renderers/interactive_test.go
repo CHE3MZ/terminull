@@ -54,22 +54,58 @@ func TestPauseSuppressesDrawFrame(t *testing.T) {
 	}
 
 	r.PauseDrawing()
+	paused := readFrame(t, path)
+	if paused != grown+enableAutoWrap {
+		t.Fatalf("PauseDrawing output = %q, want %q", paused, grown+enableAutoWrap)
+	}
 	r.RenderScopeStarted(termrender.NewLogScopeStarted("b"))
 	r.DrawFrame()
-	if got := readFrame(t, path); got != grown {
-		t.Fatalf("DrawFrame while paused changed output %q to %q", grown, got)
+	if got := readFrame(t, path); got != paused {
+		t.Fatalf("DrawFrame while paused changed output %q to %q", paused, got)
 	}
 
 	r.ResumeDrawing()
+	resumed := readFrame(t, path)
+	if resumed != paused+disableAutoWrap {
+		t.Fatalf("ResumeDrawing output = %q, want %q", resumed, paused+disableAutoWrap)
+	}
 	r.DrawFrame()
 	got := readFrame(t, path)
-	if len(got) <= len(grown) {
+	if len(got) <= len(resumed) {
 		t.Fatalf("DrawFrame after resume did not grow %q", got)
 	}
 	for _, want := range []string{"a", "b"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("resumed frame %q misses %q", got, want)
 		}
+	}
+}
+
+func TestPauseRestoresAutowrapForPrompts(t *testing.T) {
+	t.Parallel()
+
+	r, path := frameFile(t)
+	r.Setup()
+	r.PauseDrawing()
+
+	got := readFrame(t, path)
+	if !strings.HasSuffix(got, enableAutoWrap) {
+		t.Fatalf("paused output %q does not enable autowrap for prompts", got)
+	}
+}
+
+func TestResumeAfterStopKeepsAutowrapEnabled(t *testing.T) {
+	t.Parallel()
+
+	r, path := frameFile(t)
+	r.Setup()
+	r.PauseDrawing()
+	r.StopDrawing()
+	r.ResumeDrawing()
+
+	got := readFrame(t, path)
+	if !strings.HasSuffix(got, enableAutoWrap) {
+		t.Fatalf("stopped output %q does not leave autowrap enabled", got)
 	}
 }
 
@@ -81,8 +117,12 @@ func TestStopDrawingFinalizesPaused(t *testing.T) {
 	r.PauseDrawing()
 	r.StopDrawing()
 
-	if got := readFrame(t, path); !strings.Contains(got, "a") {
+	got := readFrame(t, path)
+	if !strings.Contains(got, "a") {
 		t.Fatalf("final frame %q misses scope", got)
+	}
+	if !strings.HasSuffix(got, enableAutoWrap) {
+		t.Fatalf("final output %q does not restore autowrap", got)
 	}
 }
 

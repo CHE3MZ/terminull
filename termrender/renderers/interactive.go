@@ -160,8 +160,13 @@ func (r *InteractiveRenderer) StopDrawing() {
 	// First: no late starter may write past this point.
 	r.stopping.Store(true)
 	r.rootNode.Complete()
-	// one last redraw
+	// Pausing may have left autowrap enabled for foreign output; the
+	// final frame still needs the renderer's no-wrap guarantee.
+	r.drawLock.Lock()
 	r.paused.Store(false)
+	r.writeNoWrapLocked()
+	r.drawLock.Unlock()
+	// one last redraw
 	r.DrawFrame()
 	// Join a running loop, if any. No loop (never started or already
 	// exited) means a zero counter and an immediate return; the single
@@ -175,17 +180,30 @@ func (r *InteractiveRenderer) StopDrawing() {
 }
 
 // PauseDrawing freezes redraws for foreign output (prompts, spinners,
-// bars) sharing the terminal. Tree state is untouched; ResumeDrawing
-// continues where it left off. Safe to call without StartDrawing.
+// bars) sharing the terminal. It restores autowrap so long prompt input
+// wraps instead of overwriting the question. Tree state is untouched;
+// ResumeDrawing continues where it left off. Safe to call without
+// StartDrawing.
 func (r *InteractiveRenderer) PauseDrawing() {
 	r.drawLock.Lock()
 	defer r.drawLock.Unlock()
 	r.paused.Store(true)
+	if r.stopping.Load() {
+		_ = r.out.Flush()
+		return
+	}
+	_, _ = r.out.WriteString(enableAutoWrap)
 	_ = r.out.Flush()
 }
 
-// ResumeDrawing unfreezes redraws after PauseDrawing.
+// ResumeDrawing unfreezes redraws after PauseDrawing. Live frames need
+// autowrap disabled again so overlong lines cannot scroll the tree.
 func (r *InteractiveRenderer) ResumeDrawing() {
+	r.drawLock.Lock()
+	defer r.drawLock.Unlock()
+	if !r.stopping.Load() {
+		r.writeNoWrapLocked()
+	}
 	r.paused.Store(false)
 }
 
@@ -197,6 +215,9 @@ func (r *InteractiveRenderer) DrawFrame() {
 	}
 	r.drawLock.Lock()
 	defer r.drawLock.Unlock()
+	if r.paused.Load() {
+		return
+	}
 	var newFrameLines []string
 	for _, n := range r.rootNode.GetChildren() {
 		newFrameLines = append(newFrameLines, n.Render()...)
