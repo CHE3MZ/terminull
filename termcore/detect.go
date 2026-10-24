@@ -48,11 +48,12 @@ func Color(f *os.File, noColor bool) bool {
 }
 
 // Emoji reports whether emoji glyphs may be used.
-// False on dumb terminals, in CI, and on legacy Windows consoles
-// (conhost without Windows Terminal, detected via missing WT_SESSION),
-// where raster fonts cannot render them and they break column layout.
+// False on dumb terminals, in CI, on the Linux virtual console
+// (TERM=linux, whose raster fonts lack braille and emoji), and on
+// legacy Windows consoles (conhost without Windows Terminal, detected
+// via missing WT_SESSION), where those glyphs break column layout.
 func Emoji() bool {
-	if strings.EqualFold(os.Getenv("TERM"), "dumb") {
+	if plainTerminal() {
 		return false
 	}
 
@@ -67,4 +68,15 @@ func Emoji() bool {
 	}
 
 	return true
+}
+
+// plainTerminal reports whether TERM names a console whose control
+// sequence support is too limited for the live widgets.
+func plainTerminal() bool {
+	switch strings.ToLower(os.Getenv("TERM")) {
+	case "dumb", "linux":
+		return true
+	default:
+		return false
+	}
 }

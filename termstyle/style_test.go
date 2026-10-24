@@ -113,6 +113,12 @@ func TestEmoji(t *testing.T) {
 		t.Fatal("Emoji() with TERM=dumb = true, want false")
 	}
 
+	t.Setenv("TERM", "linux")
+
+	if Emoji() {
+		t.Fatal("Emoji() with TERM=linux = true, want false")
+	}
+
 	t.Setenv("TERM", "xterm")
 	t.Setenv("CI", "true")
 
