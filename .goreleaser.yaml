@@ -45,3 +45,41 @@ changelog:
       - "^test:"
       - "^ci:"
       - "^chore:"
+
+homebrew_casks:
+  - name: terminull
+    repository:
+      owner: CHE3MZ
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: https://github.com/CHE3MZ/terminull
+    description: Scaffold batteries-included Go CLI apps.
+    license: MIT
+    binaries:
+      - terminull
+    skip_upload: auto
+scoops:
+  - name: terminull
+    repository:
+      owner: CHE3MZ
+      name: scoop-bucket
+      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
+    directory: bucket
+    homepage: https://github.com/CHE3MZ/terminull
+    description: Scaffold batteries-included Go CLI apps.
+    license: MIT
+    skip_upload: auto
+
+chocolateys:
+  - name: terminull
+    owners: CHE3MZ
+    title: terminull
+    authors: CHE3MZ
+    project_url: https://github.com/CHE3MZ/terminull
+    license_url: https://github.com/CHE3MZ/terminull/blob/main/LICENSE
+    description: Scaffold batteries-included Go CLI apps.
+    summary: Go CLI scaffolding with prompting, logging, and output.
+    tags: cli terminal go
+    package_source_url: https://github.com/CHE3MZ/terminull
+    skip_publish: true
