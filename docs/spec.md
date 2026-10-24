@@ -9,7 +9,7 @@ wrapping matters more than features, engines are frozen owned forks, our names a
 
 no full screen apps, no ssh, no copy, no metrics in core.
 no charmbracelet mods anywhere.
-no third-party terminal mods; only yaml and golang.org/x/* stay external.
+no third-party terminal mods; only yaml, toml, and golang.org/x/* stay external.
 no new renderer from scratch, render is a fork of echelon.
 no breaking public names without a major version.
 
@@ -109,7 +109,7 @@ file lookup: explicit --config, then home dotfile, then user config dir, then lo
 env prefix is upper app name plus underscore, example MYAPP_ENV.
 decode is strict via the internal mapstructure fork's ErrorUnused, unknown keys fail loudly.
 termconfig never prompts, it only loads and merges, prompt decides what is missing.
-the internal koanf fork is the merge engine; yaml.v3 is the yaml codec and the toml subset parser is owned in termconfig/internal/koanf/toml.
+the internal koanf fork is the merge engine; yaml.v3 and BurntSushi/toml are the codecs, with a thin toml adapter in termconfig/internal/koanf/toml.
 Config.Watch polls the file search path and returns a fresh Config on size or mtime changes; the receiver is not mutated.
 
 # termrender:

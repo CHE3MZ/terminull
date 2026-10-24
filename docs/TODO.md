@@ -151,5 +151,6 @@
 - [x] termimage live verification inside tmux: kitty/iterm2 wrapped passthrough with allow-passthrough on, sixel raw on tmux 3.5a, pane completed cleanly
 - [x] man pages: owned roff generator via App.ManPages, hidden `man` command, `task man`, and tests
 - [x] update notifier with state file throttle: `termapp.CheckUpdate`/`NotifyUpdate` and hidden `update-check`
-- [x] config file watching and toml codec: polling `Config.Watch`, `.toml` search, owned subset parser
+- [x] config file watching and toml codec: polling `Config.Watch`, `.toml` search, BurntSushi codec
 - [x] evaluate plain-line prompt fallback: numbered plain-line engine passed ConPTY/tmux; no console-specific fallback needed
+- [x] full TOML: replaced the owned subset with `github.com/BurntSushi/toml` v1.6.0; dependency law, docs, and tests updated

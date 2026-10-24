@@ -1,11 +1,12 @@
 # external (v2 target):
 
 gopkg.in/yaml.v3 v3.0.1 ( file codec , config and output )
+github.com/BurntSushi/toml v1.6.0 ( toml codec )
 golang.org/x/sys v0.49.0 ( windows console + platform syscalls )
 golang.org/x/term v0.47.0 ( raw mode + no-echo password reads )
 log/slog , fmt , and the rest of the standard library ( comes with go )
 
-nothing else ships. after phase 14 the module graph holds these three plus stdlib.
+nothing else ships. after phase 14 the module graph holds these four plus stdlib.
 
 # forked ( owned , literal , internal ):
 
@@ -43,6 +44,6 @@ stale indirects cleared: fsnotify , mousetrap , testify. yaml.v3's test-only che
 forks are literal copies pinned by version, minimally modified at integration seams, and never surfaced in public apis.
 provenance lives in .github/THIRD_PARTY.md ( repo , version , commit , license , fork date ).
 task upstream sweeps the recorded origins for releases and advisories, because renamed modules fall out of osv and govulncheck visibility.
-gopkg.in/yaml.v3 and golang.org/x/* stay external by design; everything else is owned.
+gopkg.in/yaml.v3, github.com/BurntSushi/toml, and golang.org/x/* stay external by design; everything else is owned.
 tests/dependency_law_test.go enforces the import edges and the go.mod end state; scripts/standalone.sh builds and runs every public library alone in a throwaway module.
-termconfig's TOML codec is owned in-tree; it is a documented subset parser, not a new module.
+termconfig's TOML codec is github.com/BurntSushi/toml behind a thin internal adapter.

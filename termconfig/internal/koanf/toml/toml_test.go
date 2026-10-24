@@ -25,6 +25,9 @@ hello
 world
 """
 when = 2026-10-24T12:00:00Z
+local = 2026-10-24 12:00:00
+day = 2026-10-24
+"" = "blank"
 
 [database]
 host = "localhost"
@@ -42,9 +45,9 @@ name = "hammer"
 name = "nail"
 price = 0.01
 `)
-	got, err := Parse(src)
+	got, err := Parser().Unmarshal(src)
 	if err != nil {
-		t.Fatalf("Parse() error = %v", err)
+		t.Fatalf("Unmarshal() error = %v", err)
 	}
 
 	if got["name"] != "demo" || got["debug"] != true {
@@ -79,9 +82,18 @@ price = 0.01
 	if got["message"] != "hello\nworld\n" {
 		t.Fatalf("message = %q", got["message"])
 	}
+	if got[""] != "blank" {
+		t.Fatalf("empty key = %#v", got[""])
+	}
 	when, ok := got["when"].(time.Time)
 	if !ok || !when.Equal(time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC)) {
-		t.Fatalf("when = %#v", got["when"])
+		t.Fatalf("when = %#v", when)
+	}
+	if local, ok := got["local"].(time.Time); !ok || local.Format("2006-01-02 15:04:05") != "2026-10-24 12:00:00" {
+		t.Fatalf("local = %#v", got["local"])
+	}
+	if day, ok := got["day"].(time.Time); !ok || day.Format("2006-01-02") != "2026-10-24" {
+		t.Fatalf("day = %#v", got["day"])
 	}
 }
 
@@ -93,9 +105,11 @@ func TestParseErrors(t *testing.T) {
 		"a = \n",
 		"a = \"unterminated\n",
 		"[a\nb = 1\n",
+		"[a]\nx = 1\n[a]\ny = 2\n",
+		"a = 0123\n",
 	} {
-		if _, err := Parse([]byte(src)); err == nil {
-			t.Errorf("Parse(%q) returned nil error", src)
+		if _, err := Parser().Unmarshal([]byte(src)); err == nil {
+			t.Errorf("Unmarshal(%q) returned nil error", src)
 		}
 	}
 }
@@ -119,9 +133,9 @@ func TestMarshalRoundTrip(t *testing.T) {
 	if !strings.Contains(string(data), "[db]") || !strings.Contains(string(data), "[[items]]") {
 		t.Fatalf("Marshal() =\n%s", data)
 	}
-	got, err := Parse(data)
+	got, err := Parser().Unmarshal(data)
 	if err != nil {
-		t.Fatalf("round-trip Parse() error = %v\n%s", err, data)
+		t.Fatalf("round-trip Unmarshal() error = %v\n%s", err, data)
 	}
 	if !reflect.DeepEqual(got, in) {
 		t.Fatalf("round trip = %#v, want %#v", got, in)

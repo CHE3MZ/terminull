@@ -34,15 +34,16 @@ var libraryDeps = map[string]map[string]bool{
 
 var directExternal = map[string][]string{
 	"termcore":   {"golang.org/x/sys", "golang.org/x/term"},
-	"termconfig": {"gopkg.in/yaml.v3"},
+	"termconfig": {"github.com/BurntSushi/toml", "gopkg.in/yaml.v3"},
 	"termoutput": {"gopkg.in/yaml.v3"},
 }
 
 var externalModules = map[string]bool{
-	modulePath:          true,
-	"golang.org/x/sys":  true,
-	"golang.org/x/term": true,
-	"gopkg.in/yaml.v3":  true,
+	modulePath:                   true,
+	"github.com/BurntSushi/toml": true,
+	"golang.org/x/sys":           true,
+	"golang.org/x/term":          true,
+	"gopkg.in/yaml.v3":           true,
 }
 
 func repoRoot(t *testing.T) string {
@@ -139,9 +140,10 @@ func TestModuleRequires(t *testing.T) {
 	}
 
 	wantDirect := map[string]bool{
-		"golang.org/x/sys":  true,
-		"golang.org/x/term": true,
-		"gopkg.in/yaml.v3":  true,
+		"github.com/BurntSushi/toml": true,
+		"golang.org/x/sys":           true,
+		"golang.org/x/term":          true,
+		"gopkg.in/yaml.v3":           true,
 	}
 	allowedIndirect := map[string]bool{
 		"github.com/kr/pretty": true,
