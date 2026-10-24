@@ -1,16 +1,19 @@
 package termconfig
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf"
 	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/confmap"
 	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/env"
 	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/file"
+	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/toml"
 	"github.com/CHE3MZ/terminull/v2/termconfig/internal/koanf/yaml"
 	"github.com/CHE3MZ/terminull/v2/termconfig/internal/mapstructure"
 )
@@ -22,6 +25,9 @@ type Options struct {
 	AppName string
 	// ConfigFile is an explicit --config path. Missing file is an error.
 	ConfigFile string
+	// Format overrides file format detection ("yaml" or "toml"). Empty
+	// detects from ConfigFile's extension, defaulting to YAML.
+	Format string
 	// Defaults is the lowest-precedence layer.
 	Defaults map[string]any
 	// Overrides is the highest-precedence layer (parsed CLI flags).
@@ -36,7 +42,8 @@ type Options struct {
 
 // Config wraps the layered koanf instance.
 type Config struct {
-	ko *koanf.Koanf
+	ko   *koanf.Koanf
+	opts Options
 }
 
 // Load layers defaults, files, env, and overrides in that order.
@@ -54,7 +61,7 @@ func Load(opts Options) (*Config, error) {
 		return nil, err
 	}
 	for _, path := range files {
-		if err := ko.Load(file.Provider(path), yaml.Parser()); err != nil {
+		if err := ko.Load(file.Provider(path), opts.parserFor(path)); err != nil {
 			return nil, fmt.Errorf("load config file %s: %w", path, err)
 		}
 	}
@@ -79,7 +86,77 @@ func Load(opts Options) (*Config, error) {
 		}
 	}
 
-	return &Config{ko: ko}, nil
+	return &Config{ko: ko, opts: opts}, nil
+}
+
+// Watch polls the config file search path and calls onChange with a
+// freshly loaded Config whenever a candidate's size or modification time
+// changes. It blocks until ctx is canceled. Call onChange only with the
+// returned Config; the receiver is not mutated in place.
+func (c *Config) Watch(ctx context.Context, interval time.Duration, onChange func(*Config, error)) error {
+	if onChange == nil {
+		return fmt.Errorf("watch: onChange is required")
+	}
+	if interval <= 0 {
+		interval = 500 * time.Millisecond
+	}
+	paths := c.opts.watchFiles()
+	if len(paths) == 0 {
+		<-ctx.Done()
+		return ctx.Err()
+	}
+
+	last := fileFingerprint(paths)
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			next := fileFingerprint(paths)
+			if next == last {
+				continue
+			}
+			last = next
+			cfg, err := Load(c.opts)
+			if err != nil {
+				onChange(nil, err)
+				continue
+			}
+			onChange(cfg, nil)
+		}
+	}
+}
+
+func fileFingerprint(paths []string) string {
+	var b strings.Builder
+	for _, path := range paths {
+		b.WriteString(path)
+		b.WriteByte('|')
+		info, err := os.Stat(path)
+		if err != nil {
+			b.WriteString("missing")
+		} else {
+			b.WriteString(strconv.FormatInt(info.ModTime().UnixNano(), 10))
+			b.WriteByte(':')
+			b.WriteString(strconv.FormatInt(info.Size(), 10))
+		}
+		b.WriteByte('\n')
+	}
+	return b.String()
+}
+
+func (opts Options) parserFor(path string) koanf.Parser {
+	format := strings.ToLower(strings.TrimPrefix(opts.Format, "."))
+	if format == "" {
+		format = strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
+	}
+	if format == "toml" {
+		return toml.Parser()
+	}
+	return yaml.Parser()
 }
 
 func (opts Options) envPrefix() string {
@@ -103,28 +180,53 @@ func (opts Options) configFiles() ([]string, error) {
 		return nil, nil
 	}
 
-	var candidates []string
-
-	if home, err := os.UserHomeDir(); err == nil && home != "" {
-		candidates = append(candidates, filepath.Join(home, "."+opts.AppName+".yaml"))
-	}
-	if dir, err := os.UserConfigDir(); err == nil && dir != "" {
-		candidates = append(candidates, filepath.Join(dir, opts.AppName, opts.AppName+".yaml"))
-	}
-	if cwd, err := os.Getwd(); err == nil && cwd != "" {
-		candidates = append(candidates,
-			filepath.Join(cwd, opts.AppName+".yaml"),
-			filepath.Join(cwd, "."+opts.AppName+".yaml"),
-		)
-	}
-
 	var found []string
-	for _, path := range candidates {
+	for _, path := range opts.candidateFiles() {
 		if _, err := os.Stat(path); err == nil {
 			found = append(found, path)
 		}
 	}
 	return found, nil
+}
+
+// candidateFiles is every search path, whether or not it exists, in
+// low-to-high precedence order.
+func (opts Options) candidateFiles() []string {
+	var candidates []string
+
+	if home, err := os.UserHomeDir(); err == nil && home != "" {
+		candidates = append(candidates,
+			filepath.Join(home, "."+opts.AppName+".yaml"),
+			filepath.Join(home, "."+opts.AppName+".toml"),
+		)
+	}
+	if dir, err := os.UserConfigDir(); err == nil && dir != "" {
+		candidates = append(candidates,
+			filepath.Join(dir, opts.AppName, opts.AppName+".yaml"),
+			filepath.Join(dir, opts.AppName, opts.AppName+".toml"),
+		)
+	}
+	if cwd, err := os.Getwd(); err == nil && cwd != "" {
+		candidates = append(candidates,
+			filepath.Join(cwd, opts.AppName+".yaml"),
+			filepath.Join(cwd, "."+opts.AppName+".yaml"),
+			filepath.Join(cwd, opts.AppName+".toml"),
+			filepath.Join(cwd, "."+opts.AppName+".toml"),
+		)
+	}
+	return candidates
+}
+
+// watchFiles includes missing search candidates so creating a new
+// higher-precedence file triggers a reload.
+func (opts Options) watchFiles() []string {
+	if opts.ConfigFile != "" {
+		return []string{opts.ConfigFile}
+	}
+	if opts.AppName == "" {
+		return nil
+	}
+	return opts.candidateFiles()
 }
 
 // transformFunc maps APPNAME_DB_HOST to db.host and types scalar values

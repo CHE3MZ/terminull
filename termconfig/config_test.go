@@ -1,10 +1,12 @@
 package termconfig
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func writeFile(t *testing.T, path, content string) {
@@ -218,5 +220,103 @@ func TestHomeDotfileLayeredUnderPlatformDir(t *testing.T) {
 	}
 	if got := cfg.Int("onlyhome"); got != 1 {
 		t.Fatalf("Int(onlyhome) = %d, want home file layered too", got)
+	}
+}
+
+func TestWatchReloadsOnChange(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "app.yaml")
+	writeFile(t, path, "value: one\n")
+
+	cfg, err := Load(Options{ConfigFile: path, Environ: []string{}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if got := cfg.String("value"); got != "one" {
+		t.Fatalf("String(value) = %q, want one", got)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	changes := make(chan *Config, 1)
+	errs := make(chan error, 1)
+
+	go func() {
+		errs <- cfg.Watch(ctx, 10*time.Millisecond, func(next *Config, err error) {
+			if err != nil {
+				t.Errorf("Watch callback error = %v", err)
+				return
+			}
+			changes <- next
+		})
+	}()
+
+	writeFile(t, path, "value: two-two\n")
+
+	select {
+	case next := <-changes:
+		if got := next.String("value"); got != "two-two" {
+			t.Fatalf("reloaded String(value) = %q, want two-two", got)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for config reload")
+	}
+
+	cancel()
+	select {
+	case err := <-errs:
+		if err != context.Canceled {
+			t.Fatalf("Watch() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Watch() did not return after cancel")
+	}
+}
+
+func TestWatchRequiresCallback(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{}
+	if err := cfg.Watch(context.Background(), time.Second, nil); err == nil {
+		t.Fatal("Watch() with nil callback returned nil")
+	}
+}
+
+func TestTOMLFileAndPrecedence(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "app.toml")
+	writeFile(t, path, "name = \"file\"\nport = 1\nnested = { enabled = true }\n")
+
+	cfg, err := Load(Options{
+		ConfigFile: path,
+		Defaults:   map[string]any{"name": "default", "port": 0},
+		Environ:    []string{"APP_PORT=2"},
+		Overrides:  map[string]any{"port": 3},
+	})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if got := cfg.String("name"); got != "file" {
+		t.Fatalf("String(name) = %q, want file", got)
+	}
+	if got := cfg.Int("port"); got != 3 {
+		t.Fatalf("Int(port) = %d, want override 3", got)
+	}
+	if !cfg.Bool("nested.enabled") {
+		t.Fatal("Bool(nested.enabled) = false, want true")
+	}
+}
+
+func TestTOMLFormatOverride(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "app.conf")
+	writeFile(t, path, "name = \"demo\"\n")
+
+	cfg, err := Load(Options{ConfigFile: path, Format: "toml", Environ: []string{}})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if got := cfg.String("name"); got != "demo" {
+		t.Fatalf("String(name) = %q, want demo", got)
 	}
 }
