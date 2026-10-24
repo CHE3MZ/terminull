@@ -30,6 +30,7 @@ func NewApp() *termapp.App {
 	)
 	a.Add(newCommand())
 	a.Add(manCommand(a))
+	a.Add(updateCommand())
 	return a
 }
 
