@@ -28,7 +28,7 @@
 - [x] 2.3 `build-matrix.yml`: cross build linux/mac/windows amd64+arm64 into `dist/`, upload artifacts
 - [x] 2.4 `test-matrix.yml`: cross test ubuntu/macos/windows-latest, `go test -v ./...`
 - [x] 2.5 `dogfood.yml`: scaffold, tidy, build, run generated project on 3 OSes with output artifacts
-- [ ] 2.6 verify with `gh workflow list` + `gh run watch` all green
+- [x] 2.6 verify with `gh workflow list` + `gh run watch` all green
 
 # phase 3 — code (reference: cirrus-cli/cmd/cirrus/main.go, internal/commands/root.go, logs/output.go, echelon/logger.go):
 
@@ -62,7 +62,7 @@
 - [x] 4.3 `internal/terminull/` + `cmd/terminull/` new command (flags, prompt, spinner tidy, table)
 - [x] 4.4 `tests/` generator integration (help golden, scaffold files, bad name, non-interactive default)
 - [x] 4.5 `scripts/smoke.sh` + dogfood workflow: scaffold, tidy, build, run on 3 OSes with output artifacts
-- [ ] 4.3 docs: update `docs/index.md` mkdocs nav for TODO/spec/architecture when code lands
+- [x] 4.3 docs: update `docs/index.md` mkdocs nav for TODO/spec/architecture when code lands
 
 # phase 5 — release hygiene:
 
@@ -149,7 +149,6 @@
 - [ ] spinner live verification on a real console (windows terminal, conhost, linux console matrix)
 - [x] termimage live verification: wt sixel default, ghostty kitty default, terminal.app + alacritty half-block default, wezterm now routes kitty to iterm2 (conpty mangles kitty escapes, imgcat needs explicit compensation), iterm2 and kitty full matrix on mac, kitty id=0 multi-image fix confirmed
 - [ ] termimage live verification inside tmux: kitty/iterm2 passthrough with allow-passthrough on, sixel raw on tmux 3.4+ (behavior set from tmux source and issues, not yet run live)
-- [ ] docs nav for mkdocs once index content lands (see 4.3)
 - [ ] man pages via cobra doc generation
 - [ ] update notifier with state file throttle
 - [ ] brew scoop choco distribution extras

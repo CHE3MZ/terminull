@@ -2,3 +2,11 @@ site_name: Terminull Docs
 
 theme:
   name: "readthedocs"
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Specification: spec.md
+  - Dependencies: dependencies.md
+  - Workflow: workflow.md
+  - TODO: TODO.md
