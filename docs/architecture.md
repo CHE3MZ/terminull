@@ -12,7 +12,7 @@ termrender/ ( fork of echelon , single writer logs )
 termpager/ ( less paging , tty gated , epipe safe )
 termstatic/ ( appname banner , out only , no input )
 termretry/ ( owned retry engine fork )
-termconfig/ ( owned merge engine fork + yaml )
+termconfig/ ( owned merge engine fork + yaml + owned toml subset )
 termapp/ ( owned cli engine fork , root and subcommands )
 cmd/terminull ( dogfood generator cli )
 
@@ -56,7 +56,7 @@ cmd/terminull proves the combination end to end.
 L0 termcore → x/sys , x/term
 L1 termstyle → termcore
 L2 termbox termtable termprogress termstatic termpager termprompt termrender termimage → termcore ( + termstyle where color is used )
-L3 termoutput → termtable termstyle termcore yaml.v3 ; termconfig → yaml.v3 ; termretry → stdlib
+L3 termoutput → termtable termstyle termcore yaml.v3 ; termconfig → yaml.v3 + owned toml parser ; termretry → stdlib
 L4 termapp → every library below + its internal cli fork ; cmd and internal → termapp and friends
 
 imports point down only, no cycles. a library's public api may only reference its own and lower-layer types. `tests/dependency_law_test.go` checks the edges and `scripts/standalone.sh` builds each library in a throwaway module.
@@ -78,8 +78,8 @@ how an app runs from start to finish:
 8. core shuts down cleanly and returns the right exit code.
 
 what each folder does:
-termapp/ is the boss. it holds the root command and subcommands, and owns the internal cli engine ( literal fork of cobra + pflag ). it owns flags, help, version, and shutdown. apps never touch the engine directly, only through termapp.
-termconfig/ loads yaml files and env vars and merges them with flags. the merge engine is the internal koanf fork, yaml.v3 is the file codec. it fails loudly on unknown keys so typos are caught early.
+termapp/ is the boss. it holds the root command and subcommands, and owns the internal cli engine ( literal fork of cobra + pflag ). it owns flags, help, version, and shutdown, and exposes roff man page generation plus a throttled GitHub update check. apps never touch the engine directly, only through termapp.
+termconfig/ loads yaml or toml files and env vars and merges them with flags. the merge engine is the internal koanf fork; yaml.v3 is the yaml codec and the toml subset parser is owned in-tree. it fails loudly on unknown keys so typos are caught early, and Watch polls the search path for reloads.
 termrender/ is our fork of echelon. it keeps a tree of jobs like task and subtask. it draws live on a normal terminal and plain lines on ci. it has an emoji mode and a plain ascii mode, picked by capability including windows terminal. its deps are termcore and termstyle.
 termstyle/ decides color or no color. it owns the internal color engine fork and is the only place that builds text sgr. no app prints with fmt directly, all go through termstyle and termrender. widths come from termcore.
 termprompt/ prints a bullet question and reads one line, no cursor games. it works when interactive and errors clearly when not, telling the user which flag to pass instead. its Editor is the opt-in exception for repls: internal lineedit fork-backed editing with history, ctrl+r, and completion, lent to a single Line call and handed back after, plain reads on pipes.

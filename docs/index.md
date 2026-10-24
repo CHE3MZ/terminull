@@ -6,7 +6,7 @@ works standalone, and `termapp` wires them together when you want the
 whole stack.
 
 - consistent terminal output: tables, boxes, images, progress, prompts
-- layered config: flags, environment, YAML files, defaults
+- layered config: flags, environment, YAML/TOML files, defaults
 - owned engines: no cobra, color, prompt, or config framework leaks
 - plain fallbacks for pipes, CI, dumb terminals, and legacy consoles
 
@@ -38,7 +38,7 @@ The generated app uses `termapp`, `termconfig`, `termrender`,
 | `termpager` | paging with TTY and EPIPE handling |
 | `termstatic` | banners, help, version, completion output |
 | `termretry` | retry with capped attempts and backoff |
-| `termconfig` | layered file, env, flag configuration |
+| `termconfig` | layered YAML/TOML, env, flag configuration and polling watch |
 | `termapp` | CLI framework combining the libraries |
 
 ## Documentation

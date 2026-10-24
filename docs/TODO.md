@@ -126,7 +126,7 @@
 - [x] 13.2 `termimage` consumes style.ColorDepth; local depth detector, sentinel consts, and console probe removed; half-block tiers unchanged
 - [x] 13.3 `output.TableStyleWith` styles headers on any termtable style, TableWith delegates to it
 
-# phase 14 — v2 owned library workspace (plan: docs/v2-plan.md):
+# phase 14 — v2 owned library workspace:
 
 - [x] 14.1 `termcore/` becomes the base: width/ansi/capability primitives move in; isatty, colorable, runewidth (+tables), uax29 graphemes, shlex forked into internal; termrender/node drops x/text; termtable + termimage consume termcore width/depth
 - [x] 14.2 `termstyle/` forks fatih/color into internal, exact sgr parity, no color mod left
@@ -145,12 +145,12 @@
 
 # next (backlog, not scheduled):
 
-- [ ] prompt live verification on a real console (conhost vs terminal matrix)
-- [ ] spinner live verification on a real console (windows terminal, conhost, linux console matrix)
+- [x] prompt live verification on a real console (conhost vs terminal matrix): WSL pty/tmux select, multi-select, confirm, and input passed; Windows ConPTY smoke passed
+- [x] spinner live verification on a real console (windows terminal, conhost, linux console matrix): ConPTY/interop and tmux runs cleared frames and kept one final message without stale glyphs
 - [x] termimage live verification: wt sixel default, ghostty kitty default, terminal.app + alacritty half-block default, wezterm now routes kitty to iterm2 (conpty mangles kitty escapes, imgcat needs explicit compensation), iterm2 and kitty full matrix on mac, kitty id=0 multi-image fix confirmed
-- [ ] termimage live verification inside tmux: kitty/iterm2 passthrough with allow-passthrough on, sixel raw on tmux 3.4+ (behavior set from tmux source and issues, not yet run live)
-- [ ] man pages via cobra doc generation
-- [ ] update notifier with state file throttle
-- [ ] brew scoop choco distribution extras
-- [ ] config file watching and toml codec
-- [ ] evaluate plain-line prompt fallback if a console family misbehaves
+- [x] termimage live verification inside tmux: kitty/iterm2 wrapped passthrough with allow-passthrough on, sixel raw on tmux 3.5a, pane completed cleanly
+- [x] man pages: owned roff generator via App.ManPages, hidden `man` command, `task man`, and tests
+- [x] update notifier with state file throttle: `termapp.CheckUpdate`/`NotifyUpdate` and hidden `update-check`
+- [x] brew scoop choco distribution extras: goreleaser homebrew_casks, scoops, chocolateys config and release token wiring; publishing still needs tap repos and secrets
+- [x] config file watching and toml codec: polling `Config.Watch`, `.toml` search, owned subset parser
+- [x] evaluate plain-line prompt fallback: numbered plain-line engine passed ConPTY/tmux; no console-specific fallback needed

@@ -45,4 +45,4 @@ provenance lives in .github/THIRD_PARTY.md ( repo , version , commit , license ,
 task upstream sweeps the recorded origins for releases and advisories, because renamed modules fall out of osv and govulncheck visibility.
 gopkg.in/yaml.v3 and golang.org/x/* stay external by design; everything else is owned.
 tests/dependency_law_test.go enforces the import edges and the go.mod end state; scripts/standalone.sh builds and runs every public library alone in a throwaway module.
-see docs/v2-plan.md for the phase order and acceptance gates.
+termconfig's TOML codec is owned in-tree; it is a documented subset parser, not a new module.

@@ -24,7 +24,7 @@ the cli engine is forked and owned by terminull, apps never see it or pin it.
 # structure (v2 target):
 
 termapp/ ( owned cli engine fork , root and subcommands )
-termconfig/ ( owned merge engine fork + yaml , flags env file merge )
+termconfig/ ( owned merge engine fork + yaml + toml , flags env file merge )
 termrender/ ( fork of echelon , single writer logs )
 termcore/ ( signals exit codes version slog + widths ansi tty depth console shlex )
 termstyle/ ( owned color engine fork , windows safe )
@@ -99,15 +99,18 @@ apps declare Command with use, short, flags, run with ctx, plus Args and ValidAr
 flag callbacks take termapp.FlagSet, arg validation takes termapp validators, completions take termapp directives.
 Raw and Unwrap stay as narrow escape hatches, user code never imports cobra, pflag, or the cli fork.
 WithSymbolsOnly pins ascii spinners and statuses on any terminal.
+App.ManPages renders one roff page per visible command; the hidden man command writes them to disk.
+CheckUpdate and NotifyUpdate implement a state-file-throttled GitHub release check.
 
 # termconfig:
 
 termconfig loads in order: flags win, then env, then file, then defaults.
-file lookup: explicit --config, then home dotfile, then user config dir, then local files.
+file lookup: explicit --config, then home dotfile, then user config dir, then local files; both .yaml and .toml are searched.
 env prefix is upper app name plus underscore, example MYAPP_ENV.
-yaml decode is strict via the internal mapstructure fork's ErrorUnused, unknown keys fail loudly.
+decode is strict via the internal mapstructure fork's ErrorUnused, unknown keys fail loudly.
 termconfig never prompts, it only loads and merges, prompt decides what is missing.
-the internal koanf fork is the merge engine, yaml.v3 is the file codec.
+the internal koanf fork is the merge engine; yaml.v3 is the yaml codec and the toml subset parser is owned in termconfig/internal/koanf/toml.
+Config.Watch polls the file search path and returns a fresh Config on size or mtime changes; the receiver is not mutated.
 
 # termrender:
 
