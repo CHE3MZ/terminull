@@ -151,6 +151,5 @@
 - [x] termimage live verification inside tmux: kitty/iterm2 wrapped passthrough with allow-passthrough on, sixel raw on tmux 3.5a, pane completed cleanly
 - [x] man pages: owned roff generator via App.ManPages, hidden `man` command, `task man`, and tests
 - [x] update notifier with state file throttle: `termapp.CheckUpdate`/`NotifyUpdate` and hidden `update-check`
-- [x] brew scoop choco distribution extras: goreleaser homebrew_casks, scoops, chocolateys config and release token wiring; publishing still needs tap repos and secrets
 - [x] config file watching and toml codec: polling `Config.Watch`, `.toml` search, owned subset parser
 - [x] evaluate plain-line prompt fallback: numbered plain-line engine passed ConPTY/tmux; no console-specific fallback needed
