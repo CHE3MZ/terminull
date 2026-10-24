@@ -115,7 +115,7 @@ func readUpdateState(path string) (updateState, bool) {
 	if path == "" {
 		return updateState{}, false
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- state path is caller-selected cache or test path.
 	if err != nil {
 		return updateState{}, false
 	}

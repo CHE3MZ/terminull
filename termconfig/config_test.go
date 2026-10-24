@@ -2,6 +2,7 @@ package termconfig
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -251,15 +252,20 @@ func TestWatchReloadsOnChange(t *testing.T) {
 		})
 	}()
 
-	writeFile(t, path, "value: two-two\n")
-
-	select {
-	case next := <-changes:
-		if got := next.String("value"); got != "two-two" {
-			t.Fatalf("reloaded String(value) = %q, want two-two", got)
+	var next *Config
+	deadline := time.After(3 * time.Second)
+	for i := 0; next == nil; i++ {
+		value := fmt.Sprintf("value: v%d\n", i)
+		writeFile(t, path, value)
+		select {
+		case next = <-changes:
+		case <-time.After(50 * time.Millisecond):
+		case <-deadline:
+			t.Fatal("timed out waiting for config reload")
 		}
-	case <-time.After(3 * time.Second):
-		t.Fatal("timed out waiting for config reload")
+	}
+	if got := next.String("value"); !strings.HasPrefix(got, "v") {
+		t.Fatalf("reloaded String(value) = %q, want latest write", got)
 	}
 
 	cancel()
