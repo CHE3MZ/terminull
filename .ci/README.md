@@ -1,4 +1,3 @@
-
 # Local CI/CD Jobs via `container`
 
 These CI/CD jobs use the `container` CLI tool to manage their execution environments.
