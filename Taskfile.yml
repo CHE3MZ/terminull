@@ -7,46 +7,39 @@ tasks:
       - task: ops
       - task: build
   ops:
-    desc: Run scripts in scripts/ops
+    desc: Run the ops script.
     cmds:
-      - sh scripts/ops/go-bugcheck.sh
-      - sh scripts/ops/go-seccheck.sh
+      - sh scripts/ops/ops.sh
   lint:
-    desc: Run golangci-lint.
+    desc: Run the lint script.
     cmds:
-      - golangci-lint run ./...
+      - sh scripts/ops/lint.sh
   test:
-    desc: Run go tests via script.
+    desc: Run the test script.
     cmds:
       - sh scripts/test.sh
   build:
-    desc: Build all packages into dist/.
+    desc: Run the build script.
     cmds:
       - sh scripts/build.sh
   smoke:
-    desc: End-to-end smoke with the generator CLI.
+    desc: Run the smoke test script.
     cmds:
       - sh scripts/smoke.sh
-  standalone:
-    desc: Build and run each library in a throwaway module.
+  other:
+    desc: Run other tasks.
     cmds:
-      - sh scripts/standalone.sh
-  upstream:
-    desc: Check forked upstreams for newer releases and advisories.
-    cmds:
-      - sh scripts/upstream.sh
-  man:
-    desc: Generate man pages into dist/man.
-    cmds:
-      - go run ./cmd/terminull man --dir dist/man
+      - sh scripts/task-other.sh
   build-site:
+    desc: Build the project site via mkdocs.
     cmds:
       - mkdocs build
   check-links:
+    desc: Verify links.
     cmds:
       - cmd: lychee .
   ci-local:
-    desc: Runs all jobs in .ci/jobs
+    desc: Run all jobs in .ci/jobs
     cmds:
       - echo RUNNING JOBS.
       - |
@@ -58,7 +51,7 @@ tasks:
         done
       - echo DONE.
   cliff:
-    desc: Run git cliff
+    desc: Run git cliff.
     silent: true
     env:
       RUST_LOG: off
