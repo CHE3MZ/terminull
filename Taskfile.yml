@@ -45,6 +45,18 @@ tasks:
   check-links:
     cmds:
       - cmd: lychee .
+  ci-local:
+    desc: Runs all jobs in .ci/jobs
+    cmds:
+      - echo RUNNING JOBS.
+      - |
+        for f in .ci/jobs/*.sh; do
+          if [ -f "$f" ] && [ "$(basename "$f")" != "example.sh" ]; then
+            echo "Running CI job: $f"
+            sh "$f"
+          fi
+        done
+      - echo DONE.
   cliff:
     desc: Run git cliff
     silent: true
