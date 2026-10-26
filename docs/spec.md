@@ -71,9 +71,9 @@ docs/ ( index + dependencies + architecture + spec + TODO )
 how every app runs from start to finish:
 1. main makes a stop context for ctrl+c and sigterm.
 2. termapp.New creates the root command from the owned cli engine with SilenceUsage true and SilenceErrors true.
-3. termapp adds global flags once: config, output, no-color, verbose, debug.
+3. termapp adds global flags once: config, output, no-color, verbose, debug, log-style.
 4. outputs default to process streams, tests redirect with SetOut SetErr SetIn.
-5. PersistentPreRunE runs in fixed order: debug switch, console ansi setup, output validation, renderer plus logger, config load.
+5. PersistentPreRunE runs in fixed order: debug switch, console ansi setup, output and log-style validation, renderer plus logger, config load.
 6. the cli engine parses flags and finds subcommand, help and version bypass live render.
 7. RunE wrapper builds ctx with context, config, logger, io, output mode, flag getters.
 8. app code runs with ctx only, returns error or nil.
@@ -92,8 +92,9 @@ validate names and flags before banners and logs, so usage errors print clean an
 
 termapp is the boss, it owns the cli engine inside ( literal fork of cobra + pflag ) and never exposes it except one Raw escape.
 termapp holds name, version, root command, subcommands.
-termapp owns global flags: --config, --output table json yaml, --no-color, --verbose, --debug.
+termapp owns global flags: --config, --output table json yaml, --no-color, --verbose, --debug, --log-style tree plain time time-level logrus k8s.
 globals carry no shorthands, so subcommands own -f -o -e -v freely.
+WithLogStyle sets the default log style; --log-style overrides it.
 help, version, and completion output come from the owned engine and stay stock-compatible.
 apps declare Command with use, short, flags, run with ctx, plus Args and ValidArgs completion.
 flag callbacks take termapp.FlagSet, arg validation takes termapp validators, completions take termapp directives.
@@ -118,6 +119,9 @@ termrender is the fork of cirruslabs/echelon, MIT kept and owned in this repo.
 api stays compatible: NewLogger, Scoped, Infof Debugf Warnf Errorf, AsWriter, Finish.
 single writer with one draw goroutine, all output goes through it.
 modes: interactive live tree on tty, simple lines on ci pipe dumb.
+flat styles: plain, time [15:04:05], time-level [15:04:05] INFO, logrus INFO[0000], k8s I1026 15:04:05.123456.
+use termapp.WithLogStyle or --log-style; root messages stay ctx.Logger.Infof, scopes still work.
+non-tree styles force flat lines on tty; AsWriter stays raw so subprocess output is not decorated.
 emoji where the terminal renders it including windows terminal, ascii SymbolsOnly elsewhere.
 ci decorators for travis github teamcity are kept from echelon pattern.
 setup runs synchronously before handlers, drawing starts alongside, stop joins the loop.

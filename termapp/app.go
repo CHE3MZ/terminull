@@ -28,11 +28,13 @@ type App struct {
 	cmd     *cli.Command
 	ran     bool
 
-	configFile string
-	output     string
-	noColor    bool
-	verbose    bool
-	debug      bool
+	configFile    string
+	output        string
+	noColor       bool
+	verbose       bool
+	debug         bool
+	logStyle      termrender.LogStyle
+	logStyleValue string
 	// symbolsOnly forces ASCII spinners and statuses even where emoji
 	// would render: deterministic output for logs, scripts, and house
 	// styles that prefer it.
@@ -72,15 +74,25 @@ func WithSymbolsOnly() Option {
 	}
 }
 
-// New builds an App with the five global flags (no shorthands, so
+// WithLogStyle sets the default flat log style. Any non-tree style
+// forces flat lines on terminals; --log-style overrides it.
+func WithLogStyle(style termrender.LogStyle) Option {
+	return func(a *App) {
+		a.logStyle = style
+	}
+}
+
+// New builds an App with the six global flags (no shorthands, so
 // subcommands own -f -o -e -v freely):
 //
-//	--config, --output table|json|yaml, --no-color, --verbose, --debug
+//	--config, --output table|json|yaml, --no-color, --verbose, --debug,
+//	--log-style tree|plain|time|time-level|logrus|k8s
 func New(name string, opts ...Option) *App {
 	a := &App{
-		name:    name,
-		version: termcore.FullVersion(),
-		output:  termoutput.FormatTable,
+		name:     name,
+		version:  termcore.FullVersion(),
+		output:   termoutput.FormatTable,
+		logStyle: termrender.LogStyleTree,
 	}
 	for _, opt := range opts {
 		opt(a)
@@ -103,6 +115,7 @@ func New(name string, opts ...Option) *App {
 	cmd.PersistentFlags().BoolVar(&a.noColor, "no-color", false, "disable color output")
 	cmd.PersistentFlags().BoolVar(&a.verbose, "verbose", false, "verbose logging")
 	cmd.PersistentFlags().BoolVar(&a.debug, "debug", false, "debug logging")
+	cmd.PersistentFlags().StringVar(&a.logStyleValue, "log-style", a.logStyle.String(), "log style: tree|plain|time|time-level|logrus|k8s")
 
 	a.cmd = cmd
 	return a
@@ -154,9 +167,9 @@ func (a *App) Execute(ctx context.Context, args []string) error {
 	return nil
 }
 
-// preRun boots, in order: console setup, debug switch, output
-// validation, renderer + logger, layered config. The *Context travels
-// via cmd.Context().
+// preRun boots, in order: console setup, debug switch, output and
+// log-style validation, renderer + logger, layered config. The *Context
+// travels via cmd.Context().
 func (a *App) preRun(cmd *cli.Command, args []string) error {
 	termcore.SetDebug(a.debug || a.verbose)
 
@@ -167,6 +180,12 @@ func (a *App) preRun(cmd *cli.Command, args []string) error {
 	if a.output != termoutput.FormatTable && a.output != termoutput.FormatJSON && a.output != termoutput.FormatYAML {
 		return fmt.Errorf("invalid --output %q: want table|json|yaml", a.output)
 	}
+
+	style, err := termrender.ParseLogStyle(a.logStyleValue)
+	if err != nil {
+		return fmt.Errorf("invalid --log-style %q: %w", a.logStyleValue, err)
+	}
+	a.logStyle = style
 
 	level := termrender.InfoLevel
 	if a.verbose || a.debug {
@@ -213,15 +232,20 @@ func (a *App) preRun(cmd *cli.Command, args []string) error {
 // selectRenderer uses the auto renderer for real terminal files and a
 // plain simple renderer for captured writers (tests, pipes without files),
 // so static output stays assertion-friendly. WithSymbolsOnly pins the
-// interactive tree to ASCII glyphs on terminals.
+// interactive tree to ASCII glyphs on terminals. A non-tree log style
+// always uses flat lines.
 func (a *App) selectRenderer(cmd *cli.Command) (termrender.LogRendered, func()) {
 	if outFile, ok := cmd.OutOrStdout().(*os.File); ok {
-		if a.symbolsOnly {
+		if a.symbolsOnly && a.logStyle == termrender.LogStyleTree {
 			return a.symbolsRenderer(outFile)
 		}
-		return renderers.AutoRenderer(outFile, a.noColor)
+		return renderers.AutoRendererWithStyle(outFile, a.noColor, a.logStyle)
 	}
-	renderer := renderers.NewSimpleRenderer(cmd.OutOrStdout(), terminal.NoColorSchema())
+	if a.logStyle == termrender.LogStyleTree {
+		renderer := renderers.NewSimpleRenderer(cmd.OutOrStdout(), terminal.NoColorSchema())
+		return renderer, func() {}
+	}
+	renderer := renderers.NewSimpleRendererWithStyle(cmd.OutOrStdout(), terminal.NoColorSchema(), a.logStyle)
 	return renderer, func() {}
 }
 

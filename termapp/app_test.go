@@ -68,7 +68,7 @@ func TestHelpIsOutOnly(t *testing.T) {
 	}
 
 	got := combined(&out, &errOut)
-	for _, want := range []string{"demo", "deploy", "deploy things"} {
+	for _, want := range []string{"demo", "deploy", "deploy things", "--log-style"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("help %q does not contain %q", got, want)
 		}
@@ -474,5 +474,83 @@ func TestSymbolsOnlyMatchesDefaultOffTerminal(t *testing.T) {
 	// flag changes TTY glyphs only, never piped output.
 	if plain, symbols := run(), run(WithSymbolsOnly()); plain != symbols {
 		t.Fatalf("outputs differ off-terminal:\n%q\nvs\n%q", plain, symbols)
+	}
+}
+
+func TestLogStyleFlag(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use: "log",
+		Run: func(ctx *Context) error {
+			ctx.Logger.Infof("starting")
+			return nil
+		},
+	})
+
+	if err := app.Execute(context.Background(), []string{"--log-style", "logrus", "log"}); err != nil {
+		t.Fatalf("Execute(--log-style logrus) error = %v", err)
+	}
+
+	got := out.String()
+	if !strings.HasPrefix(got, "INFO[") || !strings.HasSuffix(got, "] starting\n") {
+		t.Fatalf("logrus output = %q, want INFO[0000] starting", got)
+	}
+}
+
+func TestWithLogStyleDefault(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	app := New("demo", WithVersion("1-test"), WithLogStyle(termrender.LogStyleTime))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use: "log",
+		Run: func(ctx *Context) error {
+			ctx.Logger.Infof("starting")
+			return nil
+		},
+	})
+
+	if err := app.Execute(context.Background(), []string{"log"}); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	got := out.String()
+	if !strings.HasPrefix(got, "[") || !strings.HasSuffix(got, "] starting\n") {
+		t.Fatalf("time output = %q, want [15:04:05] starting", got)
+	}
+}
+
+func TestInvalidLogStyleExits2(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	ran := false
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use: "log",
+		Run: func(*Context) error {
+			ran = true
+			return nil
+		},
+	})
+
+	err := app.Execute(context.Background(), []string{"--log-style", "rainbow", "log"})
+	if err == nil {
+		t.Fatal("Execute with bad --log-style = nil, want error")
+	}
+	if ran {
+		t.Fatal("handler must not run on bad --log-style")
+	}
+	if got := termcore.ExitCodeOf(err); got != 2 {
+		t.Fatalf("ExitCodeOf = %d, want 2 for usage errors", got)
 	}
 }
