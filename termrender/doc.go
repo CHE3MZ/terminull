@@ -11,4 +11,7 @@
 //	interactive with emoji on a modern terminal,
 //	symbols-only on legacy Windows consoles,
 //	plain simple lines on CI, pipes, and dumb terminals.
+//
+// Flat output can be decorated with LogStyle presets such as time,
+// time-level, logrus, and k8s.
 package termrender

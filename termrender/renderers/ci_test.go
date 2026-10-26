@@ -64,3 +64,21 @@ func TestTeamCityFoldMarkers(t *testing.T) {
 		}
 	}
 }
+
+func TestStyledRendererKeepsFoldMarkersRaw(t *testing.T) {
+	t.Parallel()
+
+	var out safeBuffer
+	simple := NewSimpleRendererWithStyle(&out, terminal.NoColorSchema(), termrender.LogStyleLogrus)
+	fold := NewGithubActionsLogsRenderer(simple)
+	fold.RenderScopeStarted(termrender.NewLogScopeStarted("build"))
+	fold.RenderScopeFinished(termrender.NewLogScopeFinished(termrender.FinishTypeSucceeded, "build"))
+
+	got := out.String()
+	if !strings.Contains(got, "##[group]build\n") || !strings.Contains(got, "##[endgroup]\n") {
+		t.Fatalf("styled fold output %q misses raw markers", got)
+	}
+	if strings.Contains(got, "INFO[0000] ##[") {
+		t.Fatalf("styled fold output %q decorated a CI marker", got)
+	}
+}

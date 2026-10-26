@@ -3,6 +3,7 @@ package renderers
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -19,21 +20,43 @@ type SimpleRenderer struct {
 	out        io.Writer
 	colors     *terminal.ColorSchema
 	startTimes map[string]time.Time
+	style      termrender.LogStyle
+	startedAt  time.Time
 
 	StubRenderer
 }
 
 // NewSimpleRenderer builds a SimpleRenderer; nil colors select the default schema.
 func NewSimpleRenderer(out io.Writer, colors *terminal.ColorSchema) *SimpleRenderer {
+	return NewSimpleRendererWithStyle(out, colors, termrender.LogStylePlain)
+}
+
+// NewSimpleRendererWithStyle builds a SimpleRenderer with flat log styling.
+func NewSimpleRendererWithStyle(out io.Writer, colors *terminal.ColorSchema, style termrender.LogStyle) *SimpleRenderer {
 	if colors == nil {
 		colors = terminal.DefaultColorSchema()
+	}
+	if style == termrender.LogStyleTree {
+		style = termrender.LogStylePlain
 	}
 	_ = termcore.EnsureConsole()
 	return &SimpleRenderer{
 		out:        out,
 		colors:     colors,
 		startTimes: make(map[string]time.Time),
+		style:      style,
+		startedAt:  time.Now(),
 	}
+}
+
+// NewFlatRenderer builds a styled SimpleRenderer for a terminal file,
+// choosing color from the destination capability and --no-color.
+func NewFlatRenderer(out *os.File, noColor bool, style termrender.LogStyle) *SimpleRenderer {
+	schema := terminal.DefaultColorSchema()
+	if !termcore.Color(out, noColor) {
+		schema = terminal.NoColorSchema()
+	}
+	return NewSimpleRendererWithStyle(colorableWriter(out), schema, style)
 }
 
 // RenderScopeStarted prints "Started 'scope'", ignoring duplicates and roots.
@@ -48,10 +71,14 @@ func (r SimpleRenderer) RenderScopeStarted(entry *termrender.LogScopeStarted) {
 		// duplicate event
 		return
 	}
-	r.startTimes[timeKey] = time.Now()
+	started := entry.GetTime()
+	if started.IsZero() {
+		started = time.Now()
+	}
+	r.startTimes[timeKey] = started
 	lastScope := scopes[level-1]
 	message := terminal.GetColoredText(r.colors.NeutralColor, fmt.Sprintf("Started %s", quotedIfNeeded(lastScope)))
-	r.RenderRawMessage(message + "\n")
+	r.RenderRawMessage(r.prefix(started, termrender.InfoLevel) + message + "\n")
 }
 
 // RenderScopeFinished prints "'scope' <outcome> in <duration>!".
@@ -61,7 +88,10 @@ func (r SimpleRenderer) RenderScopeFinished(entry *termrender.LogScopeFinished) 
 	if level == 0 {
 		return
 	}
-	now := time.Now()
+	now := entry.GetTime()
+	if now.IsZero() {
+		now = time.Now()
+	}
 	startTime := now
 	if t, ok := r.startTimes[strings.Join(scopes, "/")]; ok {
 		startTime = t
@@ -74,21 +104,108 @@ func (r SimpleRenderer) RenderScopeFinished(entry *termrender.LogScopeFinished) 
 	case termrender.FinishTypeSucceeded:
 		message := fmt.Sprintf("%s succeeded in %s!", quotedIfNeeded(lastScope), formatedDuration)
 		coloredMessage := terminal.GetColoredText(r.colors.SuccessColor, message)
-		r.RenderRawMessage(coloredMessage + "\n")
+		r.RenderRawMessage(r.prefix(now, termrender.InfoLevel) + coloredMessage + "\n")
 	case termrender.FinishTypeFailed:
 		message := fmt.Sprintf("%s failed in %s!", quotedIfNeeded(lastScope), formatedDuration)
 		coloredMessage := terminal.GetColoredText(r.colors.FailureColor, message)
-		r.RenderRawMessage(coloredMessage + "\n")
+		r.RenderRawMessage(r.prefix(now, termrender.ErrorLevel) + coloredMessage + "\n")
 	case termrender.FinishTypeSkipped:
 		message := fmt.Sprintf("%s skipped in %s!", quotedIfNeeded(lastScope), formatedDuration)
 		coloredMessage := terminal.GetColoredText(r.colors.NeutralColor, message)
-		r.RenderRawMessage(coloredMessage + "\n")
+		r.RenderRawMessage(r.prefix(now, termrender.WarnLevel) + coloredMessage + "\n")
 	}
 }
 
-// RenderMessage prints the message as-is.
+// RenderMessage prints the message, decorated when a flat style is active.
 func (r SimpleRenderer) RenderMessage(entry *termrender.LogEntryMessage) {
-	r.RenderRawMessage(entry.GetMessage())
+	if !r.styled() || entry.IsRaw() {
+		r.RenderRawMessage(entry.GetMessage())
+		return
+	}
+
+	message := entry.GetMessage()
+	prefix := r.prefix(entry.GetTime(), entry.Level)
+	if !strings.HasSuffix(message, "\n") {
+		r.RenderRawMessage(prefix + message)
+		return
+	}
+	for _, line := range strings.Split(strings.TrimSuffix(message, "\n"), "\n") {
+		r.RenderRawMessage(prefix + line + "\n")
+	}
+}
+
+func (r SimpleRenderer) styled() bool {
+	return r.style != termrender.LogStylePlain && r.style != termrender.LogStyleTree
+}
+
+func (r SimpleRenderer) prefix(at time.Time, level termrender.LogLevel) string {
+	switch r.style {
+	case termrender.LogStyleTime:
+		return "[" + at.Format("15:04:05") + "] "
+	case termrender.LogStyleTimeLevel:
+		return "[" + at.Format("15:04:05") + "] " + logLevelName(level) + " "
+	case termrender.LogStyleLogrus:
+		start := r.startedAt
+		if start.IsZero() || at.Before(start) {
+			start = at
+		}
+		return logrusLevelName(level) + fmt.Sprintf("[%04d] ", int(at.Sub(start)/time.Second))
+	case termrender.LogStyleKubernetes:
+		return kubernetesLevelName(level) + at.Format("0102 15:04:05.000000") + " "
+	default:
+		return ""
+	}
+}
+
+func logLevelName(level termrender.LogLevel) string {
+	switch level {
+	case termrender.ErrorLevel:
+		return "ERROR"
+	case termrender.WarnLevel:
+		return "WARN"
+	case termrender.InfoLevel:
+		return "INFO"
+	case termrender.DebugLevel:
+		return "DEBUG"
+	case termrender.TraceLevel:
+		return "TRACE"
+	default:
+		return "INFO"
+	}
+}
+
+func logrusLevelName(level termrender.LogLevel) string {
+	switch level {
+	case termrender.ErrorLevel:
+		return "ERRO"
+	case termrender.WarnLevel:
+		return "WARN"
+	case termrender.InfoLevel:
+		return "INFO"
+	case termrender.DebugLevel:
+		return "DEBU"
+	case termrender.TraceLevel:
+		return "TRAC"
+	default:
+		return "INFO"
+	}
+}
+
+func kubernetesLevelName(level termrender.LogLevel) string {
+	switch level {
+	case termrender.ErrorLevel:
+		return "E"
+	case termrender.WarnLevel:
+		return "W"
+	case termrender.InfoLevel:
+		return "I"
+	case termrender.DebugLevel:
+		return "D"
+	case termrender.TraceLevel:
+		return "T"
+	default:
+		return "I"
+	}
 }
 
 // RenderRawMessage writes bytes without any decoration.

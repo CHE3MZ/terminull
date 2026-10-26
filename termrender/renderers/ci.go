@@ -1,6 +1,7 @@
 package renderers
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/CHE3MZ/terminull/v2/termrender"
@@ -50,16 +51,12 @@ func (r FoldableLogsRenderer) printFoldMessage(scopes []string, template string,
 			lastScope = r.escapeFunc(lastScope)
 		}
 
-		var args []any
-
-		// Templates without a verb (e.g. GitHub's ##[endgroup]) take no
-		// args: surplus Sprintf args would print as %!(EXTRA ...).
+		foldingMessage := template
 		if needsLastScope && strings.Contains(template, "%s") {
-			args = append(args, lastScope)
+			foldingMessage = fmt.Sprintf(template, lastScope)
 		}
 
-		foldingMessage := termrender.NewLogEntryMessage(scopes, termrender.InfoLevel, template, args...)
-		r.delegate.RenderMessage(foldingMessage)
+		r.delegate.RenderRawMessage(foldingMessage + "\n")
 	}
 }
 

@@ -56,3 +56,24 @@ func TestAutoRendererNoColorPipeIsSimple(t *testing.T) {
 		t.Fatalf("AutoRenderer(pipe, noColor) = %T, want *SimpleRenderer", renderer)
 	}
 }
+
+func TestAutoRendererWithStylePipeIsSimple(t *testing.T) {
+	t.Parallel()
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe() error = %v", err)
+	}
+
+	t.Cleanup(func() {
+		_ = r.Close()
+		_ = w.Close()
+	})
+
+	renderer, stop := AutoRendererWithStyle(w, false, termrender.LogStyleLogrus)
+	defer stop()
+
+	if _, ok := renderer.(*SimpleRenderer); !ok {
+		t.Fatalf("AutoRendererWithStyle(pipe) = %T, want *SimpleRenderer", renderer)
+	}
+}

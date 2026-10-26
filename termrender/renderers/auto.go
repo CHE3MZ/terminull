@@ -38,6 +38,15 @@ func AutoRenderer(out *os.File, noColor bool) (termrender.LogRendered, func()) {
 	return interactive, interactive.StopDrawing
 }
 
+// AutoRendererWithStyle uses AutoRenderer for the tree style and a flat
+// renderer for every other style, including on interactive terminals.
+func AutoRendererWithStyle(out *os.File, noColor bool, style termrender.LogStyle) (termrender.LogRendered, func()) {
+	if style == termrender.LogStyleTree {
+		return AutoRenderer(out, noColor)
+	}
+	return NewFlatRenderer(out, noColor, style), func() {}
+}
+
 func isDumbTerminal() bool {
 	return strings.EqualFold(os.Getenv("TERM"), "dumb")
 }
