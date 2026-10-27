@@ -124,7 +124,7 @@ flat styles: plain, time [15:04:05], time-level [15:04:05] INFO, logrus INFO[000
 use termapp.WithLogStyle or --log-style; root messages stay ctx.Logger.Infof, scopes still work.
 non-tree styles force flat lines on tty; AsWriter stays raw so subprocess output is not decorated.
 tty prefix colors: error red, warn yellow, info blue, debug and trace gray, timestamps and elapsed use the terminal default; termapp.WithLogStyleColors overrides, --no-color wins.
-logrus truncates level names to four characters: ERRO, WARN, INFO, DEBU, TRAC.
+logrus keeps its INFO[0000] layout but uses full level names: ERROR, WARN, INFO, DEBUG, TRACE.
 levels are error warn info debug trace; success and skipped are scope outcomes, not log levels; there is no fatal level.
 emoji where the terminal renders it including windows terminal, ascii SymbolsOnly elsewhere.
 ci decorators for travis github teamcity are kept from echelon pattern.

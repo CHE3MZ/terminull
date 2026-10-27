@@ -160,7 +160,7 @@ func (r SimpleRenderer) prefix(at time.Time, level termrender.LogLevel) string {
 			start = at
 		}
 		elapsed := fmt.Sprintf("[%04d]", int(at.Sub(start)/time.Second))
-		return paintFlat(colors, flatLevelColor(colors, level), logrusLevelName(level)) +
+		return paintFlat(colors, flatLevelColor(colors, level), logLevelName(level)) +
 			paintFlat(colors, flatElapsedColor(colors), elapsed) + " "
 	case termrender.LogStyleKubernetes:
 		return paintFlat(colors, flatLevelColor(colors, level), kubernetesLevelName(level)) +
@@ -230,24 +230,6 @@ func logLevelName(level termrender.LogLevel) string {
 		return "DEBUG"
 	case termrender.TraceLevel:
 		return "TRACE"
-	default:
-		return "INFO"
-	}
-}
-
-// logrusLevelName matches logrus's default four-character level truncation.
-func logrusLevelName(level termrender.LogLevel) string {
-	switch level {
-	case termrender.ErrorLevel:
-		return "ERRO"
-	case termrender.WarnLevel:
-		return "WARN"
-	case termrender.InfoLevel:
-		return "INFO"
-	case termrender.DebugLevel:
-		return "DEBU"
-	case termrender.TraceLevel:
-		return "TRAC"
 	default:
 		return "INFO"
 	}
