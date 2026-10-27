@@ -17,7 +17,8 @@ const (
 	LogStyleTime
 	// LogStyleTimeLevel prefixes each line with [15:04:05] INFO.
 	LogStyleTimeLevel
-	// LogStyleLogrus prefixes each line with INFO[0000], using elapsed seconds.
+	// LogStyleLogrus prefixes each line with INFO[0000], using elapsed
+	// seconds and logrus's four-character level names (ERRO, DEBU, TRAC).
 	LogStyleLogrus
 	// LogStyleKubernetes prefixes each line with I1026 15:04:05.123456.
 	LogStyleKubernetes

@@ -1,6 +1,7 @@
 package renderers
 
 import (
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -121,6 +122,65 @@ func TestSimpleRendererStylePrefixes(t *testing.T) {
 				t.Fatalf("prefix() = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestSimpleRendererStylePrefixColors(t *testing.T) {
+	t.Parallel()
+
+	base := time.Date(2026, 10, 26, 15, 4, 5, 123456000, time.UTC)
+	defaults := terminal.DefaultColorSchema()
+	custom := terminal.DefaultColorSchema()
+	custom.FlatStyle.WarnColor = terminal.BlueColor
+	custom.FlatStyle.ElapsedColor = terminal.MagentaColor
+
+	tests := []struct {
+		name   string
+		style  termrender.LogStyle
+		at     time.Time
+		level  termrender.LogLevel
+		colors *terminal.ColorSchema
+		want   string
+	}{
+		{"time", termrender.LogStyleTime, base, termrender.InfoLevel, defaults, "[15:04:05] "},
+		{"time-level", termrender.LogStyleTimeLevel, base, termrender.WarnLevel, defaults, "[15:04:05] \x1b[33mWARN\x1b[0m "},
+		{"logrus-info", termrender.LogStyleLogrus, base, termrender.InfoLevel, defaults, "\x1b[34mINFO\x1b[0m[0000] "},
+		{"logrus-warn", termrender.LogStyleLogrus, base.Add(46 * time.Second), termrender.WarnLevel, defaults, "\x1b[33mWARN\x1b[0m[0046] "},
+		{"logrus-debug", termrender.LogStyleLogrus, base, termrender.DebugLevel, defaults, "\x1b[90mDEBU\x1b[0m[0000] "},
+		{"kubernetes", termrender.LogStyleKubernetes, base, termrender.ErrorLevel, defaults, "\x1b[31mE\x1b[0m1026 15:04:05.123456 "},
+		{"custom", termrender.LogStyleLogrus, base.Add(46 * time.Second), termrender.WarnLevel, custom, "\x1b[34mWARN\x1b[0m\x1b[35m[0046]\x1b[0m "},
+		{"no-color", termrender.LogStyleLogrus, base.Add(46 * time.Second), termrender.WarnLevel, terminal.NoColorSchema(), "WARN[0046] "},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := SimpleRenderer{style: tt.style, startedAt: base, colors: tt.colors}
+			if got := r.prefix(tt.at, tt.level); got != tt.want {
+				t.Fatalf("prefix() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewFlatRendererWithColorsPipeStaysPlain(t *testing.T) {
+	t.Parallel()
+
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os.Pipe() error = %v", err)
+	}
+	t.Cleanup(func() {
+		_ = reader.Close()
+		_ = writer.Close()
+	})
+
+	base := time.Date(2026, 10, 26, 15, 4, 5, 0, time.UTC)
+	renderer := NewFlatRendererWithColors(writer, false, termrender.LogStyleLogrus, terminal.DefaultFlatStyleColors())
+	renderer.startedAt = base
+	if got := renderer.prefix(base.Add(46*time.Second), termrender.WarnLevel); got != "WARN[0046] " {
+		t.Fatalf("pipe prefix() = %q, want plain text", got)
 	}
 }
 

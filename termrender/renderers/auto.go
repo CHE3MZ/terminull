@@ -41,10 +41,16 @@ func AutoRenderer(out *os.File, noColor bool) (termrender.LogRendered, func()) {
 // AutoRendererWithStyle uses AutoRenderer for the tree style and a flat
 // renderer for every other style, including on interactive terminals.
 func AutoRendererWithStyle(out *os.File, noColor bool, style termrender.LogStyle) (termrender.LogRendered, func()) {
+	return AutoRendererWithStyleColors(out, noColor, style, terminal.DefaultFlatStyleColors())
+}
+
+// AutoRendererWithStyleColors is AutoRendererWithStyle with a custom
+// prefix palette. Custom colors do not apply to the tree style.
+func AutoRendererWithStyleColors(out *os.File, noColor bool, style termrender.LogStyle, colors *terminal.FlatStyleColors) (termrender.LogRendered, func()) {
 	if style == termrender.LogStyleTree {
 		return AutoRenderer(out, noColor)
 	}
-	return NewFlatRenderer(out, noColor, style), func() {}
+	return NewFlatRendererWithColors(out, noColor, style, colors), func() {}
 }
 
 func isDumbTerminal() bool {

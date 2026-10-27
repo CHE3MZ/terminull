@@ -52,7 +52,15 @@ func NewSimpleRendererWithStyle(out io.Writer, colors *terminal.ColorSchema, sty
 // NewFlatRenderer builds a styled SimpleRenderer for a terminal file,
 // choosing color from the destination capability and --no-color.
 func NewFlatRenderer(out *os.File, noColor bool, style termrender.LogStyle) *SimpleRenderer {
+	return NewFlatRendererWithColors(out, noColor, style, terminal.DefaultFlatStyleColors())
+}
+
+// NewFlatRendererWithColors builds a NewFlatRenderer with a custom
+// prefix palette. Nil colors leave level, timestamp, and elapsed tokens
+// plain; --no-color still disables all ANSI.
+func NewFlatRendererWithColors(out *os.File, noColor bool, style termrender.LogStyle, colors *terminal.FlatStyleColors) *SimpleRenderer {
 	schema := terminal.DefaultColorSchema()
+	schema.FlatStyle = colors
 	if !termcore.Color(out, noColor) {
 		schema = terminal.NoColorSchema()
 	}
@@ -139,22 +147,75 @@ func (r SimpleRenderer) styled() bool {
 }
 
 func (r SimpleRenderer) prefix(at time.Time, level termrender.LogLevel) string {
+	colors := r.flatColors()
 	switch r.style {
 	case termrender.LogStyleTime:
-		return "[" + at.Format("15:04:05") + "] "
+		return paintFlat(colors, flatTimestampColor(colors), "["+at.Format("15:04:05")+"]") + " "
 	case termrender.LogStyleTimeLevel:
-		return "[" + at.Format("15:04:05") + "] " + logLevelName(level) + " "
+		return paintFlat(colors, flatTimestampColor(colors), "["+at.Format("15:04:05")+"]") + " " +
+			paintFlat(colors, flatLevelColor(colors, level), logLevelName(level)) + " "
 	case termrender.LogStyleLogrus:
 		start := r.startedAt
 		if start.IsZero() || at.Before(start) {
 			start = at
 		}
-		return logrusLevelName(level) + fmt.Sprintf("[%04d] ", int(at.Sub(start)/time.Second))
+		elapsed := fmt.Sprintf("[%04d]", int(at.Sub(start)/time.Second))
+		return paintFlat(colors, flatLevelColor(colors, level), logrusLevelName(level)) +
+			paintFlat(colors, flatElapsedColor(colors), elapsed) + " "
 	case termrender.LogStyleKubernetes:
-		return kubernetesLevelName(level) + at.Format("0102 15:04:05.000000") + " "
+		return paintFlat(colors, flatLevelColor(colors, level), kubernetesLevelName(level)) +
+			paintFlat(colors, flatTimestampColor(colors), at.Format("0102 15:04:05.000000")) + " "
 	default:
 		return ""
 	}
+}
+
+func (r SimpleRenderer) flatColors() *terminal.FlatStyleColors {
+	if r.colors == nil {
+		return nil
+	}
+	return r.colors.FlatStyle
+}
+
+func paintFlat(colors *terminal.FlatStyleColors, color int, text string) string {
+	if colors == nil {
+		return text
+	}
+	return terminal.GetColoredText(color, text)
+}
+
+func flatLevelColor(colors *terminal.FlatStyleColors, level termrender.LogLevel) int {
+	if colors == nil {
+		return terminal.NoColor
+	}
+	switch level {
+	case termrender.ErrorLevel:
+		return colors.ErrorColor
+	case termrender.WarnLevel:
+		return colors.WarnColor
+	case termrender.InfoLevel:
+		return colors.InfoColor
+	case termrender.DebugLevel:
+		return colors.DebugColor
+	case termrender.TraceLevel:
+		return colors.TraceColor
+	default:
+		return colors.InfoColor
+	}
+}
+
+func flatTimestampColor(colors *terminal.FlatStyleColors) int {
+	if colors == nil {
+		return terminal.NoColor
+	}
+	return colors.TimestampColor
+}
+
+func flatElapsedColor(colors *terminal.FlatStyleColors) int {
+	if colors == nil {
+		return terminal.NoColor
+	}
+	return colors.ElapsedColor
 }
 
 func logLevelName(level termrender.LogLevel) string {
@@ -174,6 +235,7 @@ func logLevelName(level termrender.LogLevel) string {
 	}
 }
 
+// logrusLevelName matches logrus's default four-character level truncation.
 func logrusLevelName(level termrender.LogLevel) string {
 	switch level {
 	case termrender.ErrorLevel:
