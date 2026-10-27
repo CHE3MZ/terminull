@@ -35,6 +35,7 @@ type App struct {
 	debug         bool
 	logStyle      termrender.LogStyle
 	logStyleValue string
+	styleColors   *terminal.FlatStyleColors
 	// symbolsOnly forces ASCII spinners and statuses even where emoji
 	// would render: deterministic output for logs, scripts, and house
 	// styles that prefer it.
@@ -82,6 +83,21 @@ func WithLogStyle(style termrender.LogStyle) Option {
 	}
 }
 
+// WithLogStyleColors overrides flat prefix colors. Start from
+// terminal.DefaultFlatStyleColors and override fields:
+//
+//	colors := terminal.DefaultFlatStyleColors()
+//	colors.WarnColor = terminal.BlueColor
+//	app := termapp.New("app", termapp.WithLogStyleColors(colors))
+//
+// Pass nil to leave level, timestamp, and elapsed tokens plain.
+// --no-color disables all ANSI regardless of this option.
+func WithLogStyleColors(colors *terminal.FlatStyleColors) Option {
+	return func(a *App) {
+		a.styleColors = colors
+	}
+}
+
 // New builds an App with the six global flags (no shorthands, so
 // subcommands own -f -o -e -v freely):
 //
@@ -89,10 +105,11 @@ func WithLogStyle(style termrender.LogStyle) Option {
 //	--log-style tree|plain|time|time-level|logrus|k8s
 func New(name string, opts ...Option) *App {
 	a := &App{
-		name:     name,
-		version:  termcore.FullVersion(),
-		output:   termoutput.FormatTable,
-		logStyle: termrender.LogStyleTree,
+		name:        name,
+		version:     termcore.FullVersion(),
+		output:      termoutput.FormatTable,
+		logStyle:    termrender.LogStyleTree,
+		styleColors: terminal.DefaultFlatStyleColors(),
 	}
 	for _, opt := range opts {
 		opt(a)
@@ -239,7 +256,7 @@ func (a *App) selectRenderer(cmd *cli.Command) (termrender.LogRendered, func()) 
 		if a.symbolsOnly && a.logStyle == termrender.LogStyleTree {
 			return a.symbolsRenderer(outFile)
 		}
-		return renderers.AutoRendererWithStyle(outFile, a.noColor, a.logStyle)
+		return renderers.AutoRendererWithStyleColors(outFile, a.noColor, a.logStyle, a.styleColors)
 	}
 	if a.logStyle == termrender.LogStyleTree {
 		renderer := renderers.NewSimpleRenderer(cmd.OutOrStdout(), terminal.NoColorSchema())

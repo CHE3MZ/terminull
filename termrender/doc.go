@@ -13,5 +13,7 @@
 //	plain simple lines on CI, pipes, and dumb terminals.
 //
 // Flat output can be decorated with LogStyle presets such as time,
-// time-level, logrus, and k8s.
+// time-level, logrus, and k8s. On color terminals, level, timestamp,
+// and elapsed tokens use the FlatStyle palette; termapp.WithLogStyleColors
+// overrides it and --no-color disables all ANSI.
 package termrender

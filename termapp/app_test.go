@@ -13,6 +13,7 @@ import (
 	"github.com/CHE3MZ/terminull/v2/termrender"
 	"github.com/CHE3MZ/terminull/v2/termrender/renderers"
 	rendercfg "github.com/CHE3MZ/terminull/v2/termrender/renderers/config"
+	"github.com/CHE3MZ/terminull/v2/termrender/terminal"
 )
 
 // testDeployRun records what the handler saw.
@@ -448,6 +449,23 @@ func TestWithSymbolsOnlySetsField(t *testing.T) {
 	}
 	if got := New("demo"); got.symbolsOnly {
 		t.Fatal("default app forces symbols")
+	}
+}
+
+func TestWithLogStyleColorsSetsField(t *testing.T) {
+	t.Parallel()
+
+	if got := New("demo"); got.styleColors == nil {
+		t.Fatal("default app has no flat prefix colors")
+	}
+
+	colors := terminal.DefaultFlatStyleColors()
+	colors.WarnColor = terminal.BlueColor
+	if got := New("demo", WithLogStyleColors(colors)); got.styleColors != colors {
+		t.Fatal("WithLogStyleColors did not use the supplied palette")
+	}
+	if got := New("demo", WithLogStyleColors(nil)); got.styleColors != nil {
+		t.Fatal("WithLogStyleColors(nil) did not disable prefix colors")
 	}
 }
 

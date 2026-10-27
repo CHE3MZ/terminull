@@ -95,6 +95,7 @@ termapp holds name, version, root command, subcommands.
 termapp owns global flags: --config, --output table json yaml, --no-color, --verbose, --debug, --log-style tree plain time time-level logrus k8s.
 globals carry no shorthands, so subcommands own -f -o -e -v freely.
 WithLogStyle sets the default log style; --log-style overrides it.
+WithLogStyleColors customizes flat prefix colors; --no-color wins.
 help, version, and completion output come from the owned engine and stay stock-compatible.
 apps declare Command with use, short, flags, run with ctx, plus Args and ValidArgs completion.
 flag callbacks take termapp.FlagSet, arg validation takes termapp validators, completions take termapp directives.
@@ -122,6 +123,9 @@ modes: interactive live tree on tty, simple lines on ci pipe dumb.
 flat styles: plain, time [15:04:05], time-level [15:04:05] INFO, logrus INFO[0000], k8s I1026 15:04:05.123456.
 use termapp.WithLogStyle or --log-style; root messages stay ctx.Logger.Infof, scopes still work.
 non-tree styles force flat lines on tty; AsWriter stays raw so subprocess output is not decorated.
+tty prefix colors: error red, warn yellow, info blue, debug and trace gray, timestamps and elapsed use the terminal default; termapp.WithLogStyleColors overrides, --no-color wins.
+logrus truncates level names to four characters: ERRO, WARN, INFO, DEBU, TRAC.
+levels are error warn info debug trace; success and skipped are scope outcomes, not log levels; there is no fatal level.
 emoji where the terminal renders it including windows terminal, ascii SymbolsOnly elsewhere.
 ci decorators for travis github teamcity are kept from echelon pattern.
 setup runs synchronously before handlers, drawing starts alongside, stop joins the loop.
