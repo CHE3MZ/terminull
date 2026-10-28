@@ -328,6 +328,7 @@ func (a *App) preRun(cmd *cli.Command, args []string) error {
 		Output:  a.output,
 		NoColor: a.noColor,
 		Verbose: a.verbose || a.debug || level >= termrender.DebugLevel,
+		Emoji:   termcore.Emoji() && !a.symbolsOnly,
 	}
 	cmd.SetContext(context.WithValue(cmd.Context(), contextKey{}, tctx))
 	return nil

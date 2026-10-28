@@ -452,6 +452,38 @@ func TestWithSymbolsOnlySetsField(t *testing.T) {
 	}
 }
 
+func TestContextEmojiHonorsSymbolsOnly(t *testing.T) {
+	t.Setenv("TERM", "xterm")
+	t.Setenv("CI", "")
+	t.Setenv("WT_SESSION", "test")
+
+	run := func(opts ...Option) bool {
+		var got bool
+		var out, errOut bytes.Buffer
+		app := New("demo", append([]Option{WithVersion("1-test")}, opts...)...)
+		app.SetOut(&out)
+		app.SetErr(&errOut)
+		app.Add(Command{
+			Use: "emoji",
+			Run: func(ctx *Context) error {
+				got = ctx.Emoji
+				return nil
+			},
+		})
+		if err := app.Execute(context.Background(), []string{"emoji"}); err != nil {
+			t.Fatalf("Execute() error = %v", err)
+		}
+		return got
+	}
+
+	if !run() {
+		t.Fatal("default Context.Emoji is false on an emoji-capable terminal")
+	}
+	if run(WithSymbolsOnly()) {
+		t.Fatal("WithSymbolsOnly did not disable Context.Emoji")
+	}
+}
+
 func TestWithLogStyleColorsSetsField(t *testing.T) {
 	t.Parallel()
 

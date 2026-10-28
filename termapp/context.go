@@ -40,6 +40,11 @@ type Context struct {
 	// Verbose reports whether logs include debug/trace detail, whether
 	// from --verbose, --debug, or --log-level.
 	Verbose bool
+	// Emoji reports whether built-in emoji glyphs may be used after
+	// terminal detection and WithSymbolsOnly are applied. Commands that
+	// write their own emoji or wide status glyphs should gate them on
+	// this instead of calling termcore.Emoji directly.
+	Emoji bool
 }
 
 // Args returns the positional args after flag parsing.
