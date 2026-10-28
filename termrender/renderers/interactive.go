@@ -49,7 +49,8 @@ type InteractiveRenderer struct {
 }
 
 // NewInteractiveRenderer builds an InteractiveRenderer for a terminal file.
-// A nil config selects emoji on Unix and symbols-only on Windows.
+// A nil config selects emoji where termcore.Emoji allows it and
+// symbols-only elsewhere, including legacy Windows consoles.
 func NewInteractiveRenderer(out *os.File, rendererConfig *config.InteractiveRendererConfig) *InteractiveRenderer {
 	if rendererConfig == nil {
 		rendererConfig = config.NewDefaultRenderingConfig()
