@@ -12,6 +12,11 @@
 //	symbols-only on legacy Windows consoles,
 //	plain simple lines on CI, pipes, and dumb terminals.
 //
+// Call Logger.Close when done: it drains pending entries, stops the
+// consumer goroutine, and drops later logs without blocking. Logger can
+// write anywhere the caller points it; termapp points it at stderr so
+// stdout remains machine-readable.
+//
 // Flat output can be decorated with LogStyle presets such as time,
 // time-level, logrus, and k8s. On color terminals, level, timestamp,
 // and elapsed tokens use the FlatStyle palette; termapp.WithLogStyleColors

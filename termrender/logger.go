@@ -1,6 +1,9 @@
 package termrender
 
-import "io"
+import (
+	"io"
+	"sync"
+)
 
 type genericLogEntry struct {
 	LogStarted  *LogScopeStarted
@@ -18,13 +21,21 @@ type LogRendered interface {
 	RenderMessage(entry *LogEntryMessage)
 }
 
-// Logger is goroutine-safe: one consumer goroutine drains entriesChannel
-// while any number of producers log through Scoped/Logf/AsWriter.
-type Logger struct {
-	maxLogLevel    LogLevel
-	scopes         []string
+type loggerState struct {
 	entriesChannel chan *genericLogEntry
 	renderer       LogRendered
+	done           chan struct{}
+	closeOnce      sync.Once
+	wg             sync.WaitGroup
+}
+
+// Logger is goroutine-safe: one consumer goroutine drains the shared
+// channel while any number of producers log through Scoped/Logf/AsWriter.
+// Close releases the consumer goroutine; after Close returns, logging is dropped.
+type Logger struct {
+	maxLogLevel LogLevel
+	scopes      []string
+	state       *loggerState
 }
 
 type loggerAsWriter struct {
@@ -36,7 +47,7 @@ func (w *loggerAsWriter) Write(p []byte) (n int, err error) {
 	if w.logger.IsLogLevelEnabled(w.level) {
 		logEntryMessage := NewLogEntryMessage(w.logger.scopes, w.level, "%s", string(p))
 		logEntryMessage.raw = true
-		w.logger.entriesChannel <- &genericLogEntry{LogEntry: logEntryMessage}
+		w.logger.send(&genericLogEntry{LogEntry: logEntryMessage})
 	}
 	return len(p), err
 }
@@ -51,19 +62,25 @@ const (
 )
 
 // NewLogger starts the consumer goroutine and returns the root logger.
+// Call Close when the logger is no longer needed.
 func NewLogger(level LogLevel, renderer LogRendered) *Logger {
-	logger := &Logger{
-		maxLogLevel:    level,
+	state := &loggerState{
 		entriesChannel: make(chan *genericLogEntry),
 		renderer:       renderer,
+		done:           make(chan struct{}),
 	}
-	go logger.streamEntries(renderer)
-	return logger
+	state.wg.Add(1)
+	go streamEntries(state)
+
+	return &Logger{
+		maxLogLevel: level,
+		state:       state,
+	}
 }
 
 // Renderer returns the underlying renderer (e.g. to stop drawing).
 func (logger *Logger) Renderer() LogRendered {
-	return logger.renderer
+	return logger.state.renderer
 }
 
 // Scoped emits a scope-started event and returns a child logger for it.
@@ -72,32 +89,50 @@ func (logger *Logger) Scoped(scope string) *Logger {
 	copy(scopes, logger.scopes)
 	scopes[len(scopes)-1] = scope
 	result := &Logger{
-		maxLogLevel:    logger.maxLogLevel,
-		scopes:         scopes,
-		entriesChannel: logger.entriesChannel,
+		maxLogLevel: logger.maxLogLevel,
+		scopes:      scopes,
+		state:       logger.state,
 	}
-	result.entriesChannel <- &genericLogEntry{
+	logger.send(&genericLogEntry{
 		LogStarted: NewLogScopeStarted(result.scopes...),
-	}
+	})
 	return result
 }
 
-func (logger *Logger) streamEntries(renderer LogRendered) {
+func streamEntries(state *loggerState) {
+	defer state.wg.Done()
+
 	for {
-		entry := <-logger.entriesChannel
-		if entry.barrier != nil {
-			close(entry.barrier)
-			continue
+		select {
+		case entry := <-state.entriesChannel:
+			if entry.barrier != nil {
+				close(entry.barrier)
+				continue
+			}
+			if entry.LogStarted != nil {
+				state.renderer.RenderScopeStarted(entry.LogStarted)
+			}
+			if entry.LogFinished != nil {
+				state.renderer.RenderScopeFinished(entry.LogFinished)
+			}
+			if entry.LogEntry != nil {
+				state.renderer.RenderMessage(entry.LogEntry)
+			}
+		case <-state.done:
+			return
 		}
-		if entry.LogStarted != nil {
-			renderer.RenderScopeStarted(entry.LogStarted)
-		}
-		if entry.LogFinished != nil {
-			renderer.RenderScopeFinished(entry.LogFinished)
-		}
-		if entry.LogEntry != nil {
-			renderer.RenderMessage(entry.LogEntry)
-		}
+	}
+}
+
+func (logger *Logger) send(entry *genericLogEntry) bool {
+	if logger == nil || logger.state == nil {
+		return false
+	}
+	select {
+	case logger.state.entriesChannel <- entry:
+		return true
+	case <-logger.state.done:
+		return false
 	}
 }
 
@@ -129,9 +164,9 @@ func (logger *Logger) Errorf(format string, args ...any) {
 // Logf logs at the given level when enabled, dropping silently otherwise.
 func (logger *Logger) Logf(level LogLevel, format string, args ...any) {
 	if logger.IsLogLevelEnabled(level) {
-		logger.entriesChannel <- &genericLogEntry{
+		logger.send(&genericLogEntry{
 			LogEntry: NewLogEntryMessage(logger.scopes, level, format, args...),
-		}
+		})
 	}
 }
 
@@ -156,9 +191,9 @@ func (logger *Logger) Finish(success bool) {
 
 // FinishWithType ends the scope with an explicit FinishType.
 func (logger *Logger) FinishWithType(finishType FinishType) {
-	logger.entriesChannel <- &genericLogEntry{
+	logger.send(&genericLogEntry{
 		LogFinished: NewLogScopeFinished(finishType, logger.scopes...),
-	}
+	})
 }
 
 // IsLogLevelEnabled reports whether level passes the logger's max.
@@ -171,7 +206,30 @@ func (logger *Logger) IsLogLevelEnabled(level LogLevel) bool {
 // StopDrawing) to avoid racing the drain: without Sync, Finish returns
 // at channel handoff while the finish event may still be unprocessed.
 func (logger *Logger) Sync() {
+	if logger == nil || logger.state == nil {
+		return
+	}
 	done := make(chan struct{})
-	logger.entriesChannel <- &genericLogEntry{barrier: done}
-	<-done
+	if !logger.send(&genericLogEntry{barrier: done}) {
+		return
+	}
+	select {
+	case <-done:
+	case <-logger.state.done:
+	}
+}
+
+// Close drains pending entries, stops the consumer goroutine, and waits
+// for it to exit. It is safe to call more than once and from a child
+// logger. Logging after Close is dropped without blocking.
+func (logger *Logger) Close() {
+	if logger == nil || logger.state == nil {
+		return
+	}
+	state := logger.state
+	state.closeOnce.Do(func() {
+		logger.Sync()
+		close(state.done)
+		state.wg.Wait()
+	})
 }

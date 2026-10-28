@@ -184,3 +184,89 @@ func TestLoggerSyncDrains(t *testing.T) {
 		t.Fatalf("event order after Sync = %+v", got)
 	}
 }
+
+func TestLoggerChildSeeRenderer(t *testing.T) {
+	t.Parallel()
+
+	rec := &recorder{}
+	root := NewLogger(InfoLevel, rec)
+	child := root.Scoped("build")
+	if child.Renderer() != rec {
+		t.Fatalf("child renderer = %T, want recorder", child.Renderer())
+	}
+	root.Close()
+}
+
+func TestLoggerCloseDrains(t *testing.T) {
+	t.Parallel()
+
+	rec := &recorder{}
+	root := NewLogger(InfoLevel, rec)
+	child := root.Scoped("build")
+	child.Infof("hello")
+	child.Close()
+
+	got := rec.snapshot()
+	if len(got) != 2 {
+		t.Fatalf("events after Close = %+v, want start/message", got)
+	}
+	if got[0].kind != "start" || got[1].kind != "msg" {
+		t.Fatalf("event order after Close = %+v", got)
+	}
+}
+
+func TestLoggerCloseIsIdempotentAndDropsLateLogs(t *testing.T) {
+	t.Parallel()
+
+	rec := &recorder{}
+	root := NewLogger(InfoLevel, rec)
+	root.Close()
+	root.Close()
+
+	done := make(chan struct{})
+	go func() {
+		root.Infof("late")
+		root.Scoped("late").Finish(true)
+		root.Sync()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("logging after Close blocked")
+	}
+	if got := rec.snapshot(); len(got) != 0 {
+		t.Fatalf("events after Close = %+v, want dropped", got)
+	}
+}
+
+func TestLoggerCloseWhileSyncing(t *testing.T) {
+	t.Parallel()
+
+	rec := &recorder{}
+	root := NewLogger(InfoLevel, rec)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			root.Infof("working")
+			root.Sync()
+		}
+	}()
+
+	root.Close()
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Close or Sync deadlocked")
+	}
+}
