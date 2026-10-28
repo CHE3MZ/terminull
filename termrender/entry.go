@@ -2,6 +2,7 @@ package termrender
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -16,6 +17,44 @@ const (
 	DebugLevel
 	TraceLevel
 )
+
+const logLevelChoices = "error|warn|info|debug|trace"
+
+// String returns the flag value for a log level.
+func (level LogLevel) String() string {
+	switch level {
+	case ErrorLevel:
+		return "error"
+	case WarnLevel:
+		return "warn"
+	case InfoLevel:
+		return "info"
+	case DebugLevel:
+		return "debug"
+	case TraceLevel:
+		return "trace"
+	default:
+		return "unknown"
+	}
+}
+
+// ParseLogLevel parses a --log-level flag value.
+func ParseLogLevel(value string) (LogLevel, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "error", "err":
+		return ErrorLevel, nil
+	case "warn", "warning":
+		return WarnLevel, nil
+	case "info":
+		return InfoLevel, nil
+	case "debug":
+		return DebugLevel, nil
+	case "trace":
+		return TraceLevel, nil
+	default:
+		return 0, fmt.Errorf("want %s", logLevelChoices)
+	}
+}
 
 // LogScopeStarted marks a scope opening.
 type LogScopeStarted struct {
@@ -91,13 +130,13 @@ func NewLogEntryMessage(scopes []string, level LogLevel, format string, argument
 	}
 }
 
-// GetMessage returns the message with a trailing newline,
+// GetMessage returns the message with exactly one trailing newline,
 // unless it arrived raw (e.g. via AsWriter), when it is kept as-is.
 func (entry *LogEntryMessage) GetMessage() string {
 	if entry.raw {
 		return entry.message
 	}
-	return entry.message + "\n"
+	return strings.TrimRight(entry.message, "\r\n") + "\n"
 }
 
 // GetScopes returns the scope path.
