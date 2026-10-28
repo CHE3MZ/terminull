@@ -17,7 +17,7 @@ import (
 // (deferred after the command runs; a no-op for simple output).
 //
 // noColor disables ANSI even where supported (--no-color / NO_COLOR).
-// Pass os.Stdout for normal command output.
+// Pass the destination stream; termapp uses stderr so stdout stays data-only.
 func AutoRenderer(out *os.File, noColor bool) (termrender.LogRendered, func()) {
 	noop := func() {}
 

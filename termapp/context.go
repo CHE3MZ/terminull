@@ -37,7 +37,8 @@ type Context struct {
 	Output string
 	// NoColor mirrors --no-color.
 	NoColor bool
-	// Verbose mirrors --verbose or --debug.
+	// Verbose reports whether logs include debug/trace detail, whether
+	// from --verbose, --debug, or --log-level.
 	Verbose bool
 }
 

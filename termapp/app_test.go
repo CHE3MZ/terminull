@@ -69,7 +69,7 @@ func TestHelpIsOutOnly(t *testing.T) {
 	}
 
 	got := combined(&out, &errOut)
-	for _, want := range []string{"demo", "deploy", "deploy things", "--log-style"} {
+	for _, want := range []string{"demo", "deploy", "deploy things", "--log-level", "--log-style"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("help %q does not contain %q", got, want)
 		}
@@ -514,7 +514,10 @@ func TestLogStyleFlag(t *testing.T) {
 		t.Fatalf("Execute(--log-style logrus) error = %v", err)
 	}
 
-	got := out.String()
+	if out.Len() != 0 {
+		t.Fatalf("stdout = %q, want logs on stderr", out.String())
+	}
+	got := errOut.String()
 	if !strings.HasPrefix(got, "INFO[") || !strings.HasSuffix(got, "] starting\n") {
 		t.Fatalf("logrus output = %q, want INFO[0000] starting", got)
 	}
@@ -539,7 +542,10 @@ func TestWithLogStyleDefault(t *testing.T) {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	got := out.String()
+	if out.Len() != 0 {
+		t.Fatalf("stdout = %q, want logs on stderr", out.String())
+	}
+	got := errOut.String()
 	if !strings.HasPrefix(got, "[") || !strings.HasSuffix(got, "] starting\n") {
 		t.Fatalf("time output = %q, want [15:04:05] starting", got)
 	}

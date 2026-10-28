@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/CHE3MZ/terminull/v2/termapp/internal/cli"
 	"github.com/CHE3MZ/terminull/v2/termapp/internal/cli/pflag"
@@ -33,14 +34,40 @@ type App struct {
 	noColor       bool
 	verbose       bool
 	debug         bool
+	logLevel      termrender.LogLevel
+	logLevelValue string
 	logStyle      termrender.LogStyle
 	logStyleValue string
 	styleColors   *terminal.FlatStyleColors
+	logOutput     io.Writer
+	logRenderer   LogRendererFactory
 	// symbolsOnly forces ASCII spinners and statuses even where emoji
 	// would render: deterministic output for logs, scripts, and house
 	// styles that prefer it.
 	symbolsOnly bool
 }
+
+// LogRendererOptions describes the logging destination and built-in
+// style choices available to a LogRendererFactory.
+type LogRendererOptions struct {
+	// Out receives log output. It defaults to the command's stderr.
+	Out io.Writer
+	// File is Out when it is an *os.File, otherwise nil.
+	File *os.File
+	// Style is the selected flat log style.
+	Style termrender.LogStyle
+	// NoColor mirrors --no-color. Custom renderers must also honor
+	// NO_COLOR, TERM=dumb, CI, and non-terminal writers when needed.
+	NoColor bool
+	// Colors is the flat prefix palette. Nil means plain prefix tokens.
+	Colors *terminal.FlatStyleColors
+	// SymbolsOnly mirrors WithSymbolsOnly.
+	SymbolsOnly bool
+}
+
+// LogRendererFactory builds a custom log renderer and its stop function.
+// Returning a nil renderer is an error. A nil stop is treated as a no-op.
+type LogRendererFactory func(LogRendererOptions) (termrender.LogRendered, func())
 
 // Option tunes an App at construction.
 type Option func(*App)
@@ -98,16 +125,50 @@ func WithLogStyleColors(colors *terminal.FlatStyleColors) Option {
 	}
 }
 
-// New builds an App with the six global flags (no shorthands, so
+// WithLogLevel sets the default log level threshold. --log-level overrides
+// it; --verbose and --debug still raise the level to debug unless an
+// explicit --log-level is present.
+func WithLogLevel(level termrender.LogLevel) Option {
+	return func(a *App) {
+		a.logLevel = level
+	}
+}
+
+// WithLogOutput redirects logs away from the default stderr. Use it for
+// a file or a test buffer; stdout stays reserved for command data.
+func WithLogOutput(w io.Writer) Option {
+	return func(a *App) {
+		a.logOutput = w
+	}
+}
+
+// WithLogRendererFactory replaces built-in renderer selection. The
+// factory can build a custom style or wrap a flat renderer in CI folds:
+//
+//	termapp.WithLogRendererFactory(func(opts termapp.LogRendererOptions) (termrender.LogRendered, func()) {
+//		simple := renderers.NewSimpleRenderer(opts.Out, terminal.NoColorSchema())
+//		return renderers.NewGithubActionsLogsRenderer(simple), func() {}
+//	})
+//
+// A nil factory keeps the built-in auto selection.
+func WithLogRendererFactory(factory LogRendererFactory) Option {
+	return func(a *App) {
+		a.logRenderer = factory
+	}
+}
+
+// New builds an App with the seven global flags (no shorthands, so
 // subcommands own -f -o -e -v freely):
 //
 //	--config, --output table|json|yaml, --no-color, --verbose, --debug,
+//	--log-level error|warn|info|debug|trace,
 //	--log-style tree|plain|time|time-level|logrus|k8s
 func New(name string, opts ...Option) *App {
 	a := &App{
 		name:        name,
 		version:     termcore.FullVersion(),
 		output:      termoutput.FormatTable,
+		logLevel:    termrender.InfoLevel,
 		logStyle:    termrender.LogStyleTree,
 		styleColors: terminal.DefaultFlatStyleColors(),
 	}
@@ -132,6 +193,7 @@ func New(name string, opts ...Option) *App {
 	cmd.PersistentFlags().BoolVar(&a.noColor, "no-color", false, "disable color output")
 	cmd.PersistentFlags().BoolVar(&a.verbose, "verbose", false, "verbose logging")
 	cmd.PersistentFlags().BoolVar(&a.debug, "debug", false, "debug logging")
+	cmd.PersistentFlags().StringVar(&a.logLevelValue, "log-level", a.logLevel.String(), "log level: error|warn|info|debug|trace")
 	cmd.PersistentFlags().StringVar(&a.logStyleValue, "log-style", a.logStyle.String(), "log style: tree|plain|time|time-level|logrus|k8s")
 
 	a.cmd = cmd
@@ -184,18 +246,31 @@ func (a *App) Execute(ctx context.Context, args []string) error {
 	return nil
 }
 
-// preRun boots, in order: console setup, debug switch, output and
-// log-style validation, renderer + logger, layered config. The *Context
-// travels via cmd.Context().
+// preRun boots, in order: output, log-level, and log-style validation;
+// debug switch; console setup; renderer + logger; layered config. The
+// *Context travels via cmd.Context().
 func (a *App) preRun(cmd *cli.Command, args []string) error {
-	termcore.SetDebug(a.debug || a.verbose)
-
-	// Best effort: legacy Windows consoles need VT enabled before any
-	// ANSI is written. Failure just means plain output there.
-	_ = termcore.EnsureConsole()
-
 	if a.output != termoutput.FormatTable && a.output != termoutput.FormatJSON && a.output != termoutput.FormatYAML {
 		return fmt.Errorf("invalid --output %q: want table|json|yaml", a.output)
+	}
+
+	level := a.logLevel
+	if cmd.Flags().Changed("log-level") {
+		var err error
+		level, err = termrender.ParseLogLevel(a.logLevelValue)
+		if err != nil {
+			return fmt.Errorf("invalid --log-level %q: %w", a.logLevelValue, err)
+		}
+	} else if a.verbose || a.debug {
+		if level < termrender.DebugLevel {
+			level = termrender.DebugLevel
+		}
+	} else {
+		var err error
+		level, err = termrender.ParseLogLevel(a.logLevelValue)
+		if err != nil {
+			return fmt.Errorf("invalid --log-level %q: %w", a.logLevelValue, err)
+		}
 	}
 
 	style, err := termrender.ParseLogStyle(a.logStyleValue)
@@ -204,18 +279,30 @@ func (a *App) preRun(cmd *cli.Command, args []string) error {
 	}
 	a.logStyle = style
 
-	level := termrender.InfoLevel
-	if a.verbose || a.debug {
-		level = termrender.DebugLevel
-	}
+	termcore.SetDebug(level >= termrender.DebugLevel)
 
-	renderer, renderStop := a.selectRenderer(cmd)
+	// Best effort: legacy Windows consoles need VT enabled before any
+	// ANSI is written. Failure just means plain output there.
+	_ = termcore.EnsureConsole()
+
+	logOut := a.logOutput
+	if logOut == nil {
+		logOut = cmd.ErrOrStderr()
+	}
+	renderer, renderStop, err := a.selectRenderer(logOut)
+	if err != nil {
+		return err
+	}
 	logger := termrender.NewLogger(level, renderer)
-	// The full stop drains the logger before finalizing, so deferred
-	// and explicit stops never race unprocessed events.
+	// Close drains logs and stops the consumer before the renderer is
+	// finalized, so late producers cannot draw over stopped output.
+	// Repeated stops stay safe.
+	var stopOnce sync.Once
 	stopAll := func() {
-		logger.Sync()
-		renderStop()
+		stopOnce.Do(func() {
+			logger.Close()
+			renderStop()
+		})
 	}
 
 	cfg, err := termconfig.Load(termconfig.Options{
@@ -240,30 +327,52 @@ func (a *App) preRun(cmd *cli.Command, args []string) error {
 		In:      cmd.InOrStdin(),
 		Output:  a.output,
 		NoColor: a.noColor,
-		Verbose: a.verbose || a.debug,
+		Verbose: a.verbose || a.debug || level >= termrender.DebugLevel,
 	}
 	cmd.SetContext(context.WithValue(cmd.Context(), contextKey{}, tctx))
 	return nil
 }
 
-// selectRenderer uses the auto renderer for real terminal files and a
-// plain simple renderer for captured writers (tests, pipes without files),
-// so static output stays assertion-friendly. WithSymbolsOnly pins the
-// interactive tree to ASCII glyphs on terminals. A non-tree log style
-// always uses flat lines.
-func (a *App) selectRenderer(cmd *cli.Command) (termrender.LogRendered, func()) {
-	if outFile, ok := cmd.OutOrStdout().(*os.File); ok {
-		if a.symbolsOnly && a.logStyle == termrender.LogStyleTree {
-			return a.symbolsRenderer(outFile)
+// selectRenderer lets a custom factory take over, then falls back to
+// the auto renderer for real terminal files and a plain simple renderer
+// for captured writers (tests, pipes without files), so static output
+// stays assertion-friendly. WithSymbolsOnly pins the interactive tree to
+// ASCII glyphs on terminals. A non-tree log style always uses flat lines.
+func (a *App) selectRenderer(out io.Writer) (termrender.LogRendered, func(), error) {
+	file, _ := out.(*os.File)
+
+	if a.logRenderer != nil {
+		renderer, stop := a.logRenderer(LogRendererOptions{
+			Out:         out,
+			File:        file,
+			Style:       a.logStyle,
+			NoColor:     a.noColor,
+			Colors:      a.styleColors,
+			SymbolsOnly: a.symbolsOnly,
+		})
+		if renderer == nil {
+			return nil, nil, fmt.Errorf("log renderer factory returned nil")
 		}
-		return renderers.AutoRendererWithStyleColors(outFile, a.noColor, a.logStyle, a.styleColors)
+		if stop == nil {
+			stop = func() {}
+		}
+		return renderer, stop, nil
+	}
+
+	if file != nil {
+		if a.symbolsOnly && a.logStyle == termrender.LogStyleTree {
+			renderer, stop := a.symbolsRenderer(file)
+			return renderer, stop, nil
+		}
+		renderer, stop := renderers.AutoRendererWithStyleColors(file, a.noColor, a.logStyle, a.styleColors)
+		return renderer, stop, nil
 	}
 	if a.logStyle == termrender.LogStyleTree {
-		renderer := renderers.NewSimpleRenderer(cmd.OutOrStdout(), terminal.NoColorSchema())
-		return renderer, func() {}
+		renderer := renderers.NewSimpleRenderer(out, terminal.NoColorSchema())
+		return renderer, func() {}, nil
 	}
-	renderer := renderers.NewSimpleRendererWithStyle(cmd.OutOrStdout(), terminal.NoColorSchema(), a.logStyle)
-	return renderer, func() {}
+	renderer := renderers.NewSimpleRendererWithStyle(out, terminal.NoColorSchema(), a.logStyle)
+	return renderer, func() {}, nil
 }
 
 // symbolsRenderer mirrors AutoRenderer's interactive branch with a
