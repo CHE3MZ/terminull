@@ -106,6 +106,7 @@ apps declare Command with use, short, flags, run with ctx, plus Args and ValidAr
 flag callbacks take termapp.FlagSet, arg validation takes termapp validators, completions take termapp directives.
 Raw and Unwrap stay as narrow escape hatches, user code never imports cobra, pflag, or the cli fork.
 WithSymbolsOnly pins ascii spinners and statuses on any terminal.
+Context.Emoji carries the resolved capability after terminal detection and WithSymbolsOnly, so commands gate custom glyphs without calling termcore.Emoji directly.
 App.ManPages renders one roff page per visible command; the hidden man command writes them to disk.
 CheckUpdate and NotifyUpdate implement a state-file-throttled GitHub release check.
 
@@ -154,7 +155,7 @@ Muted dims the current color through sgr faint, Faint is the deterministic form.
 termcore ColorDepth feeds dimming and image tiers: case-insensitive COLORTERM truecolor wins, a real windows console is 24-bit under VT, then 256color terms, else 16.
 termcore TerminalWidth and TerminalHeight report console metrics with safe fallbacks, used to fit bars and bound frames.
 termcore also owns timed terminal capability queries, cell pixel size, and no-echo password reads, so no other package touches raw or console modes.
-all widths come from termcore, whose owned width engine carries its own unicode tables; cjk never breaks tables.
+all widths come from termcore, whose owned width engine carries its own unicode tables; cjk never breaks tables, and box/table wrapping keeps extended grapheme clusters such as emoji families, flags, skin tones, and combining marks intact.
 piped out like app list piped to grep must be plain with no codes.
 
 # termprompt:
@@ -167,6 +168,7 @@ presets return validated without prompting, so flags always win.
 termprompt only runs when isatty true, else it returns a clear flag required error naming the flag.
 termprompt Editor opts into the internal lineedit fork for repl input: history, ctrl+r search, tab completion, multiline.
 editor lends the console only for the duration of a Line call and hands it back, pipes and dumb terminals degrade to plain reads.
+editor cursor movement, backspace, and deletion move by grapheme cluster, so emoji and combining sequences stay whole.
 editor ctrl+c returns context canceled, ctrl+d and piped eof return io eof.
 termprompt tests drive real reads over pipes, never real tty.
 
@@ -199,6 +201,7 @@ StyleBordered is a unicode box, the default look; StyleRounded, StyleASCII, and 
 styles arrive as enum values, unknown styles error instead of guessing.
 empty tables render nothing, ragged rows normalize to header width.
 termtable carries no style scheme and stays monochrome: termoutput.TableWith applies header emphasis at the call site and every renderer measures visible width, so styled cells align on all five styles.
+hard wrapping keeps grapheme clusters intact, so an emoji at a cell boundary moves to the next line instead of splitting.
 
 # termbox:
 
@@ -208,7 +211,7 @@ titles sit in the top border and truncate with an ellipsis when the box is narro
 padding is inner horizontal spaces, width sets the outer size and wraps content.
 content may carry ansi, borders measure visible glyphs so lines stay aligned.
 open styles reset at each line end and resume on the next wrapped line, borders stay clean.
-cjk counts double via termcore width, combining marks stay with their base rune.
+cjk counts double via termcore width, and wraps keep combining marks, emoji families, flags, and skin tones with their grapheme cluster.
 frame color goes through scheme, a disabled scheme prints plain bytes.
 
 # termimage:
@@ -260,7 +263,8 @@ app specific lists like list users belong in output, not static, but follow the 
 
 # termcore:
 
-termcore holds signals, exit codes, version, slog logging, plus the shared terminal and text primitives: widths, ansi parse, tty, color depth, console setup, terminal width and height, capability queries, password reads, shell split.
+termcore holds signals, exit codes, version, slog logging, plus the shared terminal and text primitives: widths, grapheme clusters, ansi parse, tty, color depth, console setup, terminal width and height, capability queries, password reads, shell split.
+FirstGrapheme returns the next cluster and width for wrappers and editors, while Width, VisibleWidth, and Truncate remain the whole-string forms.
 signals: SIGINT SIGTERM cancel the app context, render stops, prompt aborts, exit code 130 on ctrl+c.
 exit codes: 0 ok, 1 error, 2 usage, 130 interrupted, custom via ExitCodeError like cirrus helpers.
 version: semver from build info plus git tag, --version uses static plain output.
@@ -281,6 +285,7 @@ Sentry and otel are not in core, apps add them as contrib if needed.
 unit tests live beside code on every package, integration in tests/.
 tests run on windows, mac, linux, plus piped and non tty paths everywhere.
 golden files for help, version, table, json, yaml, ascii vs emoji tree.
+emoji tests cover zwj families, flags, skin tones, variation selectors, and ansi styled clusters at wrap/cut boundaries.
 termprompt tests drive real reads over pipes, never real tty.
 termrender tests assert join silence after stop and no garble under race detector.
 no network in tests except dogfood CI which tidies for real.
