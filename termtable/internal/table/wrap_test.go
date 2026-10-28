@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+const emojiFamily = "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"
+
 func TestWrapCell(t *testing.T) {
 	t.Parallel()
 
@@ -34,6 +36,18 @@ func TestWrapCell(t *testing.T) {
 			want:  []string{"\x1b[4mhello", "\x1b[4mworld\x1b[0m"},
 		},
 		{name: "never splits wide runes", in: "日本語", width: 3, want: []string{"日-", "本-", "語"}},
+		{
+			name:  "keeps emoji cluster whole",
+			in:    emojiFamily + "xy",
+			width: 2,
+			want:  []string{emojiFamily, "xy"},
+		},
+		{
+			name:  "narrow words make progress",
+			in:    "abc",
+			width: 1,
+			want:  []string{"a", "b", "c"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -43,6 +57,20 @@ func TestWrapCell(t *testing.T) {
 				t.Fatalf("wrapCell(%q, %d) = %q, want %q", tt.in, tt.width, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCutCellsEmoji(t *testing.T) {
+	t.Parallel()
+
+	head, tail := cutCells(emojiFamily+"x", 1)
+	if head != emojiFamily || tail != "x" {
+		t.Fatalf("cutCells(emoji) = %q, %q", head, tail)
+	}
+
+	head, tail = cutCells("\x1b[4m"+emojiFamily+"x\x1b[0m", 2)
+	if head != "\x1b[4m"+emojiFamily+"\x1b[0m" || tail != "\x1b[4mx\x1b[0m" {
+		t.Fatalf("cutCells(styled emoji) = %q, %q", head, tail)
 	}
 }
 

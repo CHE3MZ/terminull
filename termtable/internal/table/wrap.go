@@ -44,10 +44,17 @@ func wrapLine(line string, width int) []string {
 	for _, w := range words {
 		for w.width > width {
 			head, rest := cutCells(w.prefix+w.text, width-1)
+			hyphen := "-"
+			if termcore.VisibleWidth(head)+1 > width {
+				// A cluster wider than the space left for a hyphen cannot
+				// be split. Keep it whole and hard-break without one.
+				head, rest = cutCells(w.prefix+w.text, width)
+				hyphen = ""
+			}
 			if currentWidth > 0 {
 				push()
 			}
-			lines = append(lines, head+"-")
+			lines = append(lines, head+hyphen)
 			w.prefix = ""
 			w.text = rest
 			w.width = termcore.VisibleWidth(rest)
@@ -151,6 +158,7 @@ func cutCells(s string, cells int) (head, tail string) {
 	var b strings.Builder
 	active := ""
 	width := 0
+	wrote := false
 	i := 0
 	for i < len(s) {
 		if n := termcore.EscapeLen(s, i); n > 0 {
@@ -160,13 +168,20 @@ func cutCells(s string, cells int) (head, tail string) {
 			i += n
 			continue
 		}
-		r, size := utf8.DecodeRuneInString(s[i:])
-		if width+termcore.RuneWidth(r) > cells {
+		cluster, clusterWidth := termcore.FirstGrapheme(s[i:])
+		if cluster == "" {
 			break
 		}
-		b.WriteRune(r)
-		width += termcore.RuneWidth(r)
-		i += size
+		// Always take the first cluster so a cluster wider than cells
+		// cannot stall the caller; it is the smallest unit we can keep
+		// intact.
+		if wrote && width+clusterWidth > cells {
+			break
+		}
+		b.WriteString(cluster)
+		width += clusterWidth
+		wrote = true
+		i += len(cluster)
 	}
 	if i >= len(s) {
 		return b.String(), ""
