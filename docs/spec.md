@@ -71,19 +71,21 @@ docs/ ( index + dependencies + architecture + spec + TODO )
 how every app runs from start to finish:
 1. main makes a stop context for ctrl+c and sigterm.
 2. termapp.New creates the root command from the owned cli engine with SilenceUsage true and SilenceErrors true.
-3. termapp adds global flags once: config, output, no-color, verbose, debug, log-style.
+3. termapp adds global flags once: config, output, no-color, verbose, debug, log-level, log-style.
 4. outputs default to process streams, tests redirect with SetOut SetErr SetIn.
-5. PersistentPreRunE runs in fixed order: debug switch, console ansi setup, output and log-style validation, renderer plus logger, config load.
-6. the cli engine parses flags and finds subcommand, help and version bypass live render.
-7. RunE wrapper builds ctx with context, config, logger, io, output mode, flag getters.
-8. app code runs with ctx only, returns error or nil.
-9. termcore maps error to exit code, stops render, flushes logs, exits.
+5. logs default to stderr; stdout carries only command data and help/version/completion.
+6. PersistentPreRunE runs in fixed order: output, log-level, and log-style validation; debug switch; console ansi setup; renderer plus logger; config load.
+7. the cli engine parses flags and finds subcommand, help and version bypass live render.
+8. RunE wrapper builds ctx with context, config, logger, io, output mode, flag getters.
+9. app code runs with ctx only, returns error or nil.
+10. termcore maps error to exit code, stops render, drains and closes logs, exits.
 
 rules:
 only one writer owns the terminal per phase, never two at once.
 prompt pauses render before asking and resumes after via ctx PauseDrawing and ResumeDrawing.
 spinners and bars do the same: pause, draw, resume, never beside live tree output.
-logger drains before finalize via Sync, stops join the draw loop before tables print.
+logger.Close drains and stops the consumer before finalize; drawing stops join the loop before tables print.
+Logger.Close drains, stops the consumer goroutine, and waits; late logs drop without blocking.
 static help version completion always use simple plain output even on tty.
 every prompt has a flag fallback, non terminal must still work with flags alone.
 validate names and flags before banners and logs, so usage errors print clean and fast.
@@ -92,10 +94,13 @@ validate names and flags before banners and logs, so usage errors print clean an
 
 termapp is the boss, it owns the cli engine inside ( literal fork of cobra + pflag ) and never exposes it except one Raw escape.
 termapp holds name, version, root command, subcommands.
-termapp owns global flags: --config, --output table json yaml, --no-color, --verbose, --debug, --log-style tree plain time time-level logrus k8s.
+termapp owns global flags: --config, --output table json yaml, --no-color, --verbose, --debug, --log-level error warn info debug trace, --log-style tree plain time time-level logrus k8s.
 globals carry no shorthands, so subcommands own -f -o -e -v freely.
+WithLogLevel sets the default log level; --log-level overrides it. --verbose and --debug raise the level to debug unless an explicit --log-level is present.
 WithLogStyle sets the default log style; --log-style overrides it.
 WithLogStyleColors customizes flat prefix colors; --no-color wins.
+WithLogOutput redirects logs from stderr; WithLogRendererFactory replaces built-in renderer selection for custom styles and CI folds.
+logs default to stderr, so --output json and yaml stay parseable on stdout.
 help, version, and completion output come from the owned engine and stay stock-compatible.
 apps declare Command with use, short, flags, run with ctx, plus Args and ValidArgs completion.
 flag callbacks take termapp.FlagSet, arg validation takes termapp validators, completions take termapp directives.
@@ -117,8 +122,8 @@ Config.Watch polls the file search path and returns a fresh Config on size or mt
 # termrender:
 
 termrender is the fork of cirruslabs/echelon, MIT kept and owned in this repo.
-api stays compatible: NewLogger, Scoped, Infof Debugf Warnf Errorf, AsWriter, Finish.
-single writer with one draw goroutine, all output goes through it.
+api stays compatible and adds ParseLogLevel, LogLevel.String, and Logger.Close.
+single writer with one consumer goroutine, all output goes through it.
 modes: interactive live tree on tty, simple lines on ci pipe dumb.
 flat styles: plain, time [15:04:05], time-level [15:04:05] INFO, logrus INFO[0000], k8s I1026 15:04:05.123456.
 use termapp.WithLogStyle or --log-style; root messages stay ctx.Logger.Infof, scopes still work.
@@ -126,6 +131,9 @@ non-tree styles force flat lines on tty; AsWriter stays raw so subprocess output
 tty prefix colors: error red, warn yellow, info blue, debug and trace gray, timestamps and elapsed use the terminal default; termapp.WithLogStyleColors overrides, --no-color wins.
 logrus keeps its INFO[0000] layout but uses full level names: ERROR, WARN, INFO, DEBUG, TRACE.
 levels are error warn info debug trace; success and skipped are scope outcomes, not log levels; there is no fatal level.
+normal messages are normalized to exactly one trailing newline; raw AsWriter output keeps bytes unchanged.
+finished scopes are removed from start tracking, so a reused scope starts a fresh duration.
+custom renderers receive the selected style and output through termapp.WithLogRendererFactory; CI folds wrap the flat renderer.
 emoji where the terminal renders it including windows terminal, ascii SymbolsOnly elsewhere.
 ci decorators for travis github teamcity are kept from echelon pattern.
 setup runs synchronously before handlers, drawing starts alongside, stop joins the loop.
@@ -256,7 +264,7 @@ termcore holds signals, exit codes, version, slog logging, plus the shared termi
 signals: SIGINT SIGTERM cancel the app context, render stops, prompt aborts, exit code 130 on ctrl+c.
 exit codes: 0 ok, 1 error, 2 usage, 130 interrupted, custom via ExitCodeError like cirrus helpers.
 version: semver from build info plus git tag, --version uses static plain output.
-logging: slog with LevelVar, --verbose sets debug, --debug sets debug.
+logging: slog with LevelVar, --verbose and --debug set debug, --log-level debug/trace also enables it; SetDebug(false) resets debug to info.
 Level wires into app slog handlers with termcore.Level.
 
 # errors:
