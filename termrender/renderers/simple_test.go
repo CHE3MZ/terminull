@@ -244,12 +244,60 @@ func TestSimpleRendererStyledRawUnchanged(t *testing.T) {
 	var out safeBuffer
 	renderer := NewSimpleRendererWithStyle(&out, terminal.NoColorSchema(), termrender.LogStyleLogrus)
 	logger := termrender.NewLogger(termrender.InfoLevel, renderer)
-	if _, err := logger.AsWriter(termrender.InfoLevel).Write([]byte("raw output")); err != nil {
+	if _, err := logger.AsWriter(termrender.InfoLevel).Write([]byte("raw output\n")); err != nil {
 		t.Fatalf("Write() error = %v", err)
 	}
 	logger.Sync()
 
-	if got := out.String(); got != "raw output" {
-		t.Fatalf("raw styled output = %q, want undecorated", got)
+	if got := out.String(); got != "raw output\n" {
+		t.Fatalf("raw styled output = %q, want bytes unchanged", got)
+	}
+}
+
+func TestSimpleRendererTrailingNewline(t *testing.T) {
+	t.Parallel()
+
+	var out safeBuffer
+	renderer := NewSimpleRendererWithStyle(&out, terminal.NoColorSchema(), termrender.LogStyleTimeLevel)
+	logger := termrender.NewLogger(termrender.InfoLevel, renderer)
+	logger.Infof("hello\n\n")
+	logger.Sync()
+
+	got := out.String()
+	if !strings.HasSuffix(got, " INFO hello\n") || strings.Count(got, "\n") != 1 {
+		t.Fatalf("output = %q, want one decorated line", got)
+	}
+}
+
+func TestSimpleRendererReusedScope(t *testing.T) {
+	t.Parallel()
+
+	var out safeBuffer
+	renderer := NewSimpleRenderer(&out, terminal.NoColorSchema())
+	logger := termrender.NewLogger(termrender.InfoLevel, renderer)
+
+	first := logger.Scoped("build")
+	first.Finish(true)
+	second := logger.Scoped("build")
+	second.Finish(true)
+	logger.Sync()
+
+	got := out.String()
+	if count := strings.Count(got, "Started 'build'"); count != 2 {
+		t.Fatalf("Started count = %d, output %q, want 2", count, got)
+	}
+	if count := strings.Count(got, "'build' succeeded in"); count != 2 {
+		t.Fatalf("succeeded count = %d, output %q, want 2", count, got)
+	}
+	if renderer.ScopeHasStarted([]string{"build"}) {
+		t.Fatal("finished scope still reports started")
+	}
+}
+
+func TestScopeKeyAvoidsSlashCollisions(t *testing.T) {
+	t.Parallel()
+
+	if scopeKey([]string{"a/b"}) == scopeKey([]string{"a", "b"}) {
+		t.Fatal("scopeKey collides on slash paths")
 	}
 }

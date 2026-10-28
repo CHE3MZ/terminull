@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -74,7 +75,7 @@ func (r SimpleRenderer) RenderScopeStarted(entry *termrender.LogScopeStarted) {
 	if level == 0 {
 		return
 	}
-	timeKey := strings.Join(scopes, "/")
+	timeKey := scopeKey(scopes)
 	if _, ok := r.startTimes[timeKey]; ok {
 		// duplicate event
 		return
@@ -100,9 +101,11 @@ func (r SimpleRenderer) RenderScopeFinished(entry *termrender.LogScopeFinished) 
 	if now.IsZero() {
 		now = time.Now()
 	}
+	timeKey := scopeKey(scopes)
 	startTime := now
-	if t, ok := r.startTimes[strings.Join(scopes, "/")]; ok {
+	if t, ok := r.startTimes[timeKey]; ok {
 		startTime = t
+		delete(r.startTimes, timeKey)
 	}
 	duration := now.Sub(startTime)
 	formatedDuration := utils.FormatDuration(duration, true)
@@ -264,9 +267,21 @@ func (r SimpleRenderer) ScopeHasStarted(scopes []string) bool {
 	if level == 0 {
 		return true
 	}
-	timeKey := strings.Join(scopes, "/")
+	timeKey := scopeKey(scopes)
 	_, result := r.startTimes[timeKey]
 	return result
+}
+
+// scopeKey encodes scope names without slash collisions. Length prefixes
+// keep ["a/b"] distinct from ["a", "b"] and preserve reuse after finish.
+func scopeKey(scopes []string) string {
+	var b strings.Builder
+	for _, scope := range scopes {
+		b.WriteString(strconv.Itoa(len(scope)))
+		b.WriteByte(':')
+		b.WriteString(scope)
+	}
+	return b.String()
 }
 
 func quotedIfNeeded(s string) string {
