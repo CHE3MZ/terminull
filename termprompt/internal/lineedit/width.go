@@ -1,90 +1,92 @@
 package liner
 
 import (
-	"unicode"
-
 	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
-// These character classes are mostly zero width (when combined).
-// A few might not be, depending on the user's font. Fixing this
-// is non-trivial, given that some terminals don't support
-// ANSI DSR/CPR
-var zeroWidth = []*unicode.RangeTable{
-	unicode.Mn,
-	unicode.Me,
-	unicode.Cc,
-	unicode.Cf,
-}
-
-// countGlyphs considers zero-width characters to be zero glyphs wide,
-// and members of Chinese, Japanese, and Korean scripts to be 2 glyphs wide.
+// countGlyphs returns the display width of s. Grapheme clusters such as
+// combining sequences and emoji families count as one unit, matching how
+// the terminal draws them.
 func countGlyphs(s []rune) int {
-	n := 0
-	for _, r := range s {
-		// speed up the common case
-		if r < 127 {
-			n++
-			continue
-		}
-
-		n += termcore.RuneWidth(r)
-	}
-	return n
+	return termcore.Width(string(s))
 }
 
 func countMultiLineGlyphs(s []rune, columns int, start int) int {
+	if columns <= 0 {
+		columns = 1
+	}
+
 	n := start
-	for _, r := range s {
-		if r < 127 {
-			n++
-			continue
+	for text := string(s); len(text) > 0; {
+		cluster, _ := termcore.FirstGrapheme(text)
+		if cluster == "" {
+			break
 		}
-		switch termcore.RuneWidth(r) {
+		text = text[len(cluster):]
+
+		switch width := termcore.Width(cluster); width {
 		case 0:
-		case 1:
-			n++
 		case 2:
 			n += 2
-			// no room for a 2-glyphs-wide char in the ending
-			// so skip a column and display it at the beginning
+			// No room for a wide glyph in the ending, so skip a column
+			// and display it at the beginning.
 			if n%columns == 1 {
 				n++
 			}
+		default:
+			n += width
 		}
 	}
 	return n
 }
 
 func getPrefixGlyphs(s []rune, num int) []rune {
+	text := string(s)
 	p := 0
-	for n := 0; n < num && p < len(s); p++ {
-		// speed up the common case
-		if s[p] < 127 {
-			n++
-			continue
+	for n := 0; n < num && p < len(text); {
+		cluster, _ := termcore.FirstGrapheme(text[p:])
+		if cluster == "" {
+			break
 		}
-		if !unicode.IsOneOf(zeroWidth, s[p]) {
+		p += len(cluster)
+		if termcore.Width(cluster) > 0 {
 			n++
 		}
 	}
-	for p < len(s) && unicode.IsOneOf(zeroWidth, s[p]) {
-		p++
+	// Keep trailing zero-width clusters, as the old rune walk did.
+	for p < len(text) {
+		cluster, _ := termcore.FirstGrapheme(text[p:])
+		if cluster == "" || termcore.Width(cluster) != 0 {
+			break
+		}
+		p += len(cluster)
 	}
-	return s[:p]
+	return []rune(text[:p])
 }
 
 func getSuffixGlyphs(s []rune, num int) []rune {
-	p := len(s)
-	for n := 0; n < num && p > 0; p-- {
-		// speed up the common case
-		if s[p-1] < 127 {
-			n++
-			continue
+	text := string(s)
+	starts := make([]int, 0, 8)
+	ends := make([]int, 0, 8)
+	for p := 0; p < len(text); {
+		cluster, _ := termcore.FirstGrapheme(text[p:])
+		if cluster == "" {
+			break
 		}
-		if !unicode.IsOneOf(zeroWidth, s[p-1]) {
+		starts = append(starts, p)
+		p += len(cluster)
+		ends = append(ends, p)
+	}
+
+	start := len(starts)
+	for n := 0; start > 0 && n < num; {
+		start--
+		if termcore.Width(text[starts[start]:ends[start]]) > 0 {
 			n++
 		}
 	}
-	return s[p:]
+	if start == len(starts) {
+		return nil
+	}
+	return []rune(text[starts[start]:])
 }
