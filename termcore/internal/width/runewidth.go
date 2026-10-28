@@ -573,6 +573,23 @@ func (c *Condition) graphemeWidth(cluster string) int {
 	return width + min(max(glyph, 0), 2)
 }
 
+// FirstGrapheme returns the first extended grapheme cluster in s and its
+// display width. It is the unit wrappers and editors should move by when
+// they need to keep emoji sequences, combining marks, flags, and Hangul
+// syllables together. ANSI escape sequences are not special here; callers
+// that handle styled text must skip them before calling.
+func FirstGrapheme(s string) (string, int) {
+	if s == "" {
+		return "", 0
+	}
+	g := graphemes.FromString(clusterText(s))
+	if !g.Next() {
+		return "", 0
+	}
+	cluster := g.Value()
+	return cluster, DefaultCondition.graphemeWidth(cluster)
+}
+
 // startsGlyph reports whether r begins a sequence that a terminal draws as
 // a single glyph however many runes it has.
 func startsGlyph(r rune) bool {

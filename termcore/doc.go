@@ -5,6 +5,7 @@
 //   - version: binary version and commit, with `go install` fallback
 //   - log level: one shared slog.LevelVar behind --verbose/--debug
 //   - terminal facts: width, height, tty/color/console detection
+//   - text: ANSI-aware width, truncation, and extended grapheme clusters
 //   - terminal I/O: raw-mode capability queries, cell pixels, no-echo
 //     password reads
 //
