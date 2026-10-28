@@ -90,4 +90,15 @@ func TestSetDebug(t *testing.T) {
 	if Level.Level() != slog.LevelDebug {
 		t.Fatalf("SetDebug(true) level = %v, want debug", Level.Level())
 	}
+
+	SetDebug(false)
+	if Level.Level() != slog.LevelInfo {
+		t.Fatalf("SetDebug(false) level = %v, want info", Level.Level())
+	}
+
+	Level.Set(slog.LevelWarn)
+	SetDebug(false)
+	if Level.Level() != slog.LevelWarn {
+		t.Fatalf("SetDebug(false) overrode custom level: %v", Level.Level())
+	}
 }

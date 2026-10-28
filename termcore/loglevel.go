@@ -8,9 +8,15 @@ import "log/slog"
 // &slog.HandlerOptions{Level: termcore.Level}).
 var Level = &slog.LevelVar{}
 
-// SetDebug enables debug logging when debug is true.
+// SetDebug enables debug logging when debug is true and resets a debug
+// level to info otherwise, so repeated app runs do not leak a previous
+// debug setting without overriding a custom level.
 func SetDebug(debug bool) {
 	if debug {
 		Level.Set(slog.LevelDebug)
+		return
+	}
+	if Level.Level() == slog.LevelDebug {
+		Level.Set(slog.LevelInfo)
 	}
 }
