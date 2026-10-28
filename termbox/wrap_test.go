@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+const emojiFamily = "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466"
+
 func TestBreakAt(t *testing.T) {
 	cases := []struct {
 		in   string
@@ -16,7 +18,8 @@ func TestBreakAt(t *testing.T) {
 		{"ab你", 3, 2},
 		{"a你b", 3, 4},
 		{"hello", 3, 3},
-		{"ab你cd", 3, 2},
+		{"ab\u4F60cd", 3, 2},
+		{emojiFamily + "x", 1, len(emojiFamily)},
 	}
 	for _, c := range cases {
 		if got := breakAt(c.in, c.cols); got != c.want {
@@ -40,6 +43,11 @@ func TestWrapLine(t *testing.T) {
 			"e\u0301x", 1,
 			[]string{"e\u0301", "x"},
 		},
+		{
+			"emoji cluster stays whole",
+			"xx" + emojiFamily + "yy", 2,
+			[]string{"xx", emojiFamily, "yy"},
+		},
 	}
 	for _, c := range cases {
 		if got := wrapLine(c.in, c.cols); !reflect.DeepEqual(got, c.want) {
@@ -57,12 +65,22 @@ func TestWrapKeepsEscapesIntact(t *testing.T) {
 	}
 }
 
-func TestCellsAttachEscapesToRune(t *testing.T) {
+func TestCellsAttachEscapesToCluster(t *testing.T) {
 	cs := cells("\x1b[31mx")
 	if len(cs) != 1 {
 		t.Fatalf("got %d cells, want 1", len(cs))
 	}
-	if cs[0].start != 0 || cs[0].end != 6 || cs[0].r != 'x' || cs[0].w != 1 {
+	if cs[0].start != 0 || cs[0].end != 6 || cs[0].text != "x" || cs[0].w != 1 {
+		t.Errorf("unexpected cell: %+v", cs[0])
+	}
+}
+
+func TestCellsKeepEmojiCluster(t *testing.T) {
+	cs := cells(emojiFamily)
+	if len(cs) != 1 {
+		t.Fatalf("got %d cells, want 1", len(cs))
+	}
+	if cs[0].text != emojiFamily || cs[0].w != 2 {
 		t.Errorf("unexpected cell: %+v", cs[0])
 	}
 }

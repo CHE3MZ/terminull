@@ -2,23 +2,22 @@ package termbox
 
 import (
 	"strings"
-	"unicode/utf8"
 
 	"github.com/CHE3MZ/terminull/v2/termcore"
 )
 
 // cell is one printable unit of a styled line: any ANSI prefix bytes
-// starting at start, plus the base rune ending at end.
+// starting at start, plus the grapheme cluster ending at end.
 type cell struct {
 	start int
 	end   int
-	r     rune
+	text  string
 	w     int
 }
 
-// cells splits a styled line into printable units, attaching leading
-// escape sequences to the rune they precede so slices never orphan
-// color codes mid-sequence.
+// cells splits a styled line into printable grapheme clusters, attaching
+// leading escape sequences to the cluster they precede so slices never
+// orphan color codes or split an emoji sequence mid-cluster.
 func cells(s string) []cell {
 	var out []cell
 	pending := -1
@@ -30,14 +29,17 @@ func cells(s string) []cell {
 			i += n
 			continue
 		}
-		r, size := utf8.DecodeRuneInString(s[i:])
+		cluster, width := termcore.FirstGrapheme(s[i:])
+		if cluster == "" {
+			break
+		}
 		start := i
 		if pending >= 0 {
 			start = pending
 			pending = -1
 		}
-		out = append(out, cell{start: start, end: i + size, r: r, w: termcore.RuneWidth(r)})
-		i += size
+		out = append(out, cell{start: start, end: i + len(cluster), text: cluster, w: width})
+		i += len(cluster)
 	}
 	if pending >= 0 {
 		if len(out) > 0 {
@@ -119,11 +121,14 @@ func isSGR(esc string) bool {
 // one exists, else after the last fitting unit.
 func breakAt(s string, cols int) int {
 	cs := cells(s)
+	if len(cs) == 0 {
+		return len(s)
+	}
 	width := 0
 	lastSpace := -1
 	i := 0
 	for i < len(cs) && width+cs[i].w <= cols {
-		if cs[i].r == ' ' {
+		if cs[i].text == " " {
 			lastSpace = i
 		}
 		width += cs[i].w
