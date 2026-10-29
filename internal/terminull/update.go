@@ -5,6 +5,7 @@ import (
 
 	"github.com/CHE3MZ/terminull/v2/termapp"
 	"github.com/CHE3MZ/terminull/v2/termcore"
+	"github.com/CHE3MZ/terminull/v2/termupdate"
 )
 
 func updateCommand() termapp.Command {
@@ -27,17 +28,21 @@ func updateCommand() termapp.Command {
 			if err != nil {
 				return err
 			}
-			status, err := termapp.CheckUpdate(ctx, termapp.UpdateOptions{
+			source, err := termupdate.NewGitHub(termupdate.GitHubOptions{Repo: repo})
+			if err != nil {
+				return err
+			}
+			status, err := termupdate.Check(ctx, termupdate.Options{
 				AppName:        "terminull",
-				Repo:           repo,
 				CurrentVersion: termcore.Version,
 				StateFile:      state,
+				Source:         source,
 			})
 			if err != nil {
 				return err
 			}
 			if status.Available {
-				return termapp.NotifyUpdate(ctx.Out, status)
+				return termupdate.Notify(ctx.Out, status)
 			}
 			if status.Current == "" || status.Current == "unknown" {
 				_, err = fmt.Fprintln(ctx.Out, "terminull version unknown; update check skipped")
