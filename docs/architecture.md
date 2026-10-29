@@ -12,6 +12,7 @@ termrender/ ( fork of echelon , single writer logs )
 termpager/ ( less paging , tty gated , epipe safe )
 termstatic/ ( appname banner , out only , no input )
 termretry/ ( owned retry engine fork )
+termupdate/ ( release check + cache , github or custom source )
 termconfig/ ( owned merge engine fork + yaml + toml )
 termapp/ ( owned cli engine fork , root and subcommands )
 cmd/terminull ( dogfood generator cli )
@@ -32,6 +33,7 @@ termrender/ ( public , importable as CHE3MZ/terminull/termrender )
 termpager/ ( public , importable as CHE3MZ/terminull/termpager )
 termstatic/ ( public , importable as CHE3MZ/terminull/termstatic )
 termretry/ ( public , importable as CHE3MZ/terminull/termretry )
+termupdate/ ( public , importable as CHE3MZ/terminull/termupdate )
 termconfig/ ( public , importable as CHE3MZ/terminull/termconfig )
 termapp/ ( public , importable as CHE3MZ/terminull/termapp )
 */internal/ ( forked engines and private adapters , never importable by apps )
@@ -56,7 +58,7 @@ cmd/terminull proves the combination end to end.
 L0 termcore → x/sys , x/term
 L1 termstyle → termcore
 L2 termbox termtable termprogress termstatic termpager termprompt termrender termimage → termcore ( + termstyle where color is used )
-L3 termoutput → termtable termstyle termcore yaml.v3 ; termconfig → yaml.v3 + BurntSushi/toml ; termretry → stdlib
+L3 termoutput → termtable termstyle termcore yaml.v3 ; termconfig → yaml.v3 + BurntSushi/toml ; termretry → stdlib ; termupdate → stdlib
 L4 termapp → every library below + its internal cli fork ; cmd and internal → termapp and friends
 
 imports point down only, no cycles. a library's public api may only reference its own and lower-layer types. `tests/dependency_law_test.go` checks the edges and `scripts/standalone.sh` builds each library in a throwaway module.
@@ -78,7 +80,7 @@ how an app runs from start to finish:
 8. core shuts down cleanly and returns the right exit code.
 
 what each folder does:
-termapp/ is the boss. it holds the root command and subcommands, and owns the internal cli engine ( literal fork of cobra + pflag ). it owns flags, help, version, and shutdown, and exposes roff man page generation plus a throttled GitHub update check. apps never touch the engine directly, only through termapp.
+termapp/ is the boss. it holds the root command and subcommands, and owns the internal cli engine ( literal fork of cobra + pflag ). it owns flags, help, version, and shutdown, and exposes roff man page generation plus compatibility update wrappers. apps never touch the engine directly, only through termapp.
 termconfig/ loads yaml or toml files and env vars and merges them with flags. the merge engine is the internal koanf fork; yaml.v3 and BurntSushi/toml are the codecs. it fails loudly on unknown keys so typos are caught early, and Watch polls the search path for reloads.
 termrender/ is our fork of echelon. it keeps a tree of jobs like task and subtask. it draws live on a normal terminal and plain lines on ci. it has an emoji mode and a plain ascii mode, picked by capability including windows terminal. its deps are termcore and termstyle.
 termstyle/ decides color or no color. it owns the internal color engine fork and is the only place that builds text sgr. no app prints with fmt directly, all go through termstyle and termrender. widths come from termcore.
@@ -88,6 +90,7 @@ termoutput/ prints tables, graphs, sizes, durations. graphs are plain ascii so t
 termstatic/ prints out only things like app name banner. it never asks for input, never starts spinners or prompts, and stays plain unless the terminal earned color. it finishes fast and exits cleanly on ctrl+c.
 termcore/ holds signals, exit codes, version, and slog logging, plus the shared terminal and text primitives: widths, ansi parse, isatty, console setup, ANSI capability, color depth, terminal width, shell split.
 termretry/ reruns flaky ops like tidy with backoff until attempts run out, on the internal retry engine fork.
+termupdate/ checks a release source and caches the answer. it never downloads, installs, or checks automatically; github is the built-in source and SourceFunc adapts custom endpoints.
 termpager/ pages long output through less on terminals and passes pipes through untouched.
 termtable/ renders the same rows in five styles: bordered default, rounded, ascii, markdown, borderless. the renderer is private and never surfaces in the api.
 termbox/ draws frames around text: rounded, hard, double, ascii corners, titles, padding, and wrapping. it measures visible widths so ansi colors and cjk stay aligned inside the frame.
@@ -99,6 +102,7 @@ one writer owns the terminal per phase, never two at once.
 pause drawing around prompts and widgets, stop drawing before result tables.
 logger drains before finalize, stops join the draw loop.
 apps import only public term* libraries. never import internal, and never import a fork.
+no automatic update checks or installs; update checks are explicit and opt-in.
 no package outside termcore asks the os about terminal facts: width, height, tty, depth, console mode, raw queries, or password reads.
 only termstyle builds text sgr. termcore parses ansi. termimage builds image protocol escapes only.
 width facts come from termcore only; no component keeps its own width table.

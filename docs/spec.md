@@ -8,6 +8,7 @@ wrapping matters more than features, engines are frozen owned forks, our names a
 # non-goals:
 
 no full screen apps, no ssh, no copy, no metrics in core.
+no automatic update checks or installs; update checks are explicit and opt-in.
 no charmbracelet mods anywhere.
 no third-party terminal mods; only yaml, toml, and golang.org/x/* stay external.
 no new renderer from scratch, render is a fork of echelon.
@@ -33,6 +34,7 @@ termprogress/ ( owned spinner + bar , tty gated )
 termoutput/ ( tables + json yaml + graph , owned humanize subset , termcore shlex )
 termstatic/ ( appname banner , out only , no input )
 termretry/ ( owned retry engine fork , attempts delay veto )
+termupdate/ ( release check + cache , github or custom source )
 termpager/ ( less paging , tty gated , epipe safe )
 termtable/ ( one table library , five styles , owned renderer )
 termbox/ ( framed boxes , termcore widths )
@@ -54,6 +56,7 @@ termprogress/ ( public , importable as CHE3MZ/terminull/termprogress )
 termoutput/ ( public , importable as CHE3MZ/terminull/termoutput )
 termstatic/ ( public , importable as CHE3MZ/terminull/termstatic )
 termretry/ ( public , importable as CHE3MZ/terminull/termretry )
+termupdate/ ( public , importable as CHE3MZ/terminull/termupdate )
 termpager/ ( public , importable as CHE3MZ/terminull/termpager )
 termtable/ ( public , importable as CHE3MZ/terminull/termtable )
 termbox/ ( public , importable as CHE3MZ/terminull/termbox )
@@ -108,7 +111,19 @@ Raw and Unwrap stay as narrow escape hatches, user code never imports cobra, pfl
 WithSymbolsOnly pins ascii spinners and statuses on any terminal.
 Context.Emoji carries the resolved capability after terminal detection and WithSymbolsOnly, so commands gate custom glyphs without calling termcore.Emoji directly.
 App.ManPages renders one roff page per visible command; the hidden man command writes them to disk.
-CheckUpdate and NotifyUpdate implement a state-file-throttled GitHub release check.
+CheckUpdate and NotifyUpdate are compatibility wrappers over termupdate; neither runs automatically.
+
+# termupdate:
+
+termupdate checks a release Source and caches the result; it never downloads or installs.
+Options carries AppName, CurrentVersion, StateFile, Interval, and Source.
+Check calls Source.Latest only when the cache is absent or older than Interval; zero interval means 24 hours.
+a successful check writes latest version, URL, and checked_at to the state file; writes are best-effort and cache hits set FromCache.
+GitHub validates owner/name and reads releases/latest; GitHubOptions BaseURL and Client target GitHub-compatible APIs and tests.
+SourceFunc adapts a function for custom release endpoints; Source is the only extension point and returns a Release with Version and URL.
+Notify writes one notice only when Available is true; AppName defaults to terminull and a leading v is ignored for comparison.
+version comparison is numeric x.y.z, not full semver; pre-release and build suffixes are stripped.
+no startup, background, or automatic checks; no automatic installs.
 
 # termconfig:
 

@@ -38,6 +38,7 @@ The generated app uses `termapp`, `termconfig`, `termrender`,
 | `termpager` | paging with TTY and EPIPE handling |
 | `termstatic` | banners, help, version, completion output |
 | `termretry` | retry with capped attempts and backoff |
+| `termupdate` | explicit cached release checks for GitHub or custom sources |
 | `termconfig` | layered YAML/TOML, env, flag configuration and polling watch |
 | `termapp` | CLI framework combining the libraries |
 
