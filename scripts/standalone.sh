@@ -19,7 +19,7 @@ case "$(uname -s)" in
 esac
 
 LIBS="termcore termstyle termbox termtable termimage termoutput termprogress
-termprompt termrender termpager termstatic termretry termconfig termapp"
+termprompt termrender termpager termstatic termretry termupdate termconfig termapp"
 
 for lib in $LIBS; do
 	dir="$TMP/$lib"

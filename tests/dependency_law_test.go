@@ -23,12 +23,14 @@ var libraryDeps = map[string]map[string]bool{
 	"termpager":    {"termcore": true},
 	"termstatic":   {"termstyle": true},
 	"termretry":    {},
+	"termupdate":   {},
 	"termconfig":   {},
 	"termapp": {
 		"termconfig": true,
 		"termcore":   true,
 		"termoutput": true,
 		"termrender": true,
+		"termupdate": true,
 	},
 }
 
