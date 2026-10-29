@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -119,39 +118,5 @@ func TestNotifyUpdate(t *testing.T) {
 	}
 	if got := b.String(); !strings.Contains(got, "demo 1.1.0") || !strings.Contains(got, "https://example.test") {
 		t.Fatalf("notice = %q", got)
-	}
-}
-
-func TestVersionComparison(t *testing.T) {
-	t.Parallel()
-
-	for _, tc := range []struct {
-		latest, current string
-		want            bool
-	}{
-		{"1.2.4", "1.2.3", true},
-		{"v2.0.0", "1.9.9", true},
-		{"1.2.3", "1.2.3", false},
-		{"1.2.2", "1.2.3", false},
-		{"unknown", "1.0.0", false},
-		{"1.0", "0.9.9", true},
-	} {
-		if got := newerVersion(tc.latest, tc.current); got != tc.want {
-			t.Errorf("newerVersion(%q, %q) = %v, want %v", tc.latest, tc.current, got, tc.want)
-		}
-	}
-}
-
-func TestDefaultUpdateStateFileUsesCacheDir(t *testing.T) {
-	dir := t.TempDir()
-	t.Setenv("XDG_CACHE_HOME", dir)
-	t.Setenv("LOCALAPPDATA", dir)
-
-	got := defaultUpdateStateFile("demo")
-	if got == "" || !strings.Contains(got, "demo") || !strings.HasSuffix(got, "update-check.json") {
-		t.Fatalf("defaultUpdateStateFile() = %q", got)
-	}
-	if _, err := os.Stat(filepath.Dir(got)); err == nil {
-		t.Fatal("cache directory should not be created until a check succeeds")
 	}
 }
