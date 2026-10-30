@@ -1,7 +1,7 @@
 site_name: Terminull Docs
-
-theme:
-  name: "readthedocs"
+site_description: Terminull Docs
+site_author: CHE3MZ
+repo_url: https://github.com/CHE3MZ/terminull
 
 nav:
   - Home: index.md
@@ -11,3 +11,49 @@ nav:
   - Dependencies: dependencies.md
   - Workflow: workflow.md
   - TODO: TODO.md
+
+theme:
+  name: "material"
+  language: en
+  logo: assets/icon.png
+  favicon: assets/icon.png
+  font:
+    text: Architects Daughter
+    code: Roboto Mono
+  palette:
+    - media: "(prefers-color-scheme)"
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      primary: custom
+      accent: custom
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      primary: custom
+      accent: custom
+      scheme: terminull
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - footnotes

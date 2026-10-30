@@ -1,3 +1,5 @@
+<img src="assets/icon.png" alt="Terminull Logo" width="256" />
+
 # terminull
 
 Terminull is a workspace of small Go libraries for building command line

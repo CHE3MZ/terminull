@@ -1,0 +1,43 @@
+/* Header */
+:root {
+    --md-primary-fg-color: #292929;
+    --md-primary-fg-color--dark: #292929;
+    --md-primary-fg-color--light: #292929;
+}
+
+/* Terminull color scheme */
+[data-md-color-scheme="terminull"] {
+
+    /* Background */
+    --md-default-bg-color: #1a1a1a;
+    --md-default-bg-color--light: #1a1a1a;
+    --md-default-bg-color--lighter: #1a1a1a;
+
+    /* Text */
+    --md-default-fg-color: #ffffff;
+    --md-default-fg-color--light: #eeeeee;
+    --md-typeset-color: #ffffff;
+
+    /* Headings */
+    --md-typeset-a-color: #ffffff;
+
+    /* Code blocks */
+    --md-code-bg-color: #292929;
+    --md-code-fg-color: #ffffff;
+
+    /* Header text */
+    --md-primary-bg-color: #ffffff;
+    --md-primary-fg-color: #292929;
+}
+
+/* White headings */
+[data-md-color-scheme="terminull"] .md-typeset h1,
+[data-md-color-scheme="terminull"] .md-typeset h2,
+[data-md-color-scheme="terminull"] .md-typeset h3 {
+    color: #ffffff;
+}
+
+/* Table of contents */
+[data-md-color-scheme="terminull"] .md-nav--secondary .md-nav__title {
+    color: #ffffff;
+}
