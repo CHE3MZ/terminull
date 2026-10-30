@@ -46,6 +46,7 @@ The generated app uses `termapp`, `termconfig`, `termrender`,
 
 - [Architecture](architecture.md)
 - [Specification](spec.md)
+- [Custom Components](components.md)
 - [Dependencies](dependencies.md)
 - [Workflow](workflow.md)
 - [TODO](TODO.md)

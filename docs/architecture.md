@@ -51,7 +51,9 @@ every term* folder is a library you can import alone and get its full feature se
 termcore is the shared base: it is the only place that owns terminal facts (width, height, tty, depth, console mode), terminal I/O (raw-mode queries, no-echo password reads), and text primitives (ansi parse, shell split).
 component engines (color, cli, config merge, line editing, retry, humanize subset) are forked literally into that component's internal tree, licensed and attributed, and never surface in its public api.
 termapp is the combination layer: it wires the libraries into an app framework, convenience rather than requirement.
+custom components are ordinary go packages against public term* apis; there is no registry, loader, or runtime plugin system.
 cmd/terminull proves the combination end to end.
+examples/component/ shows a custom command module and widget package.
 
 # layers:
 
@@ -110,6 +112,7 @@ dependencies point down only; ci builds every package with go build ./... and do
 every prompt has a flag fallback. if there is no terminal, the app must still work with flags alone.
 every new part needs tests on windows, mac, and linux, plus piped and non tty paths.
 wrapping matters more than features. underlying engines are frozen forks now; our folder names and function names do not change without a major.
+no plugin registry or dynamic loader; custom components are packages and own their versioning.
 
 fork policy:
 literal forks: upstream source is copied into the owning library's internal tree at a pinned version, license kept.

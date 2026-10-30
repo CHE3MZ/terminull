@@ -11,6 +11,7 @@ no full screen apps, no ssh, no copy, no metrics in core.
 no automatic update checks or installs; update checks are explicit and opt-in.
 no charmbracelet mods anywhere.
 no third-party terminal mods; only yaml, toml, and golang.org/x/* stay external.
+no plugin registry, dynamic component loader, or full-screen widget framework; custom components are packages against public apis.
 no new renderer from scratch, render is a fork of echelon.
 no breaking public names without a major version.
 
@@ -40,7 +41,7 @@ termtable/ ( one table library , five styles , owned renderer )
 termbox/ ( framed boxes , termcore widths )
 termimage/ ( image rendering , kitty + iterm2 + sixel + ansi fallback )
 cmd/terminull ( dogfood generator cli )
-examples/ ( runnable termtable style demo )
+examples/ ( runnable termtable style demo + custom component demo )
 
 note: the tree uses the term* names; the v1 folders were renamed right after phase 14.1, ahead of 14.7.
 
