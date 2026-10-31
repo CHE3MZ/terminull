@@ -193,7 +193,7 @@ termprompt tests drive real reads over pipes, never real tty.
 
 termprogress owns its spinner and bar, no widget mods remain.
 spinners animate only on terminal files, quiet no-op on pipes and files.
-spinner frames are caller-provided; CharSets carries the briandowns tables, and NewSpinner gates dots with termcore.Emoji so ascii stays safe everywhere.
+spinner frames are caller-provided; CharSets carries the briandowns tables, CharSetASCII and CharSetBraille name the common sets, and NewSpinner takes the frame list directly.
 spinner redraws clear wrapped lines and hide the cursor on ansi terminals; legacy windows consoles overwrite with spaces instead.
 spinner stop clears leftover glyphs and writes the final message, so no stale frame remains.
 bars render every step as plain lines, so ci logs keep full progress.

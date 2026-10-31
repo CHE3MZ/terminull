@@ -221,7 +221,11 @@ func tidyWithSpinner(ctx *termapp.Context, dir string) error {
 	ctx.PauseDrawing()
 	defer ctx.ResumeDrawing()
 
-	spin := termprogress.NewSpinner(ctx.Out, "resolving modules", ctx.Emoji)
+	frames := termprogress.CharSets[termprogress.CharSetASCII]
+	if termcore.Emoji() {
+		frames = termprogress.CharSets[termprogress.CharSetBraille]
+	}
+	spin := termprogress.NewSpinner(ctx.Out, "resolving modules", frames)
 	spin.Start()
 	defer spin.Stop()
 	var out string

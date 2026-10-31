@@ -14,9 +14,6 @@ import (
 // asciiFrames render on every console, including raster fonts.
 var asciiFrames = []string{"|", "/", "-", "\\"}
 
-// dotFrames need a modern terminal font; CharSets[14] is the same set.
-var dotFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-
 const (
 	spinnerSpeed = 100 * time.Millisecond
 	hideCursor   = "\x1b[?25l"
@@ -182,18 +179,17 @@ func New(frames []string, delay time.Duration, opts ...Option) *Spinner {
 	return s
 }
 
-// NewSpinner builds a stopped spinner writing to w. Pass termcore.Emoji()
-// as emoji to pick dots vs ASCII frames. The message is the suffix while
-// animating and the final line after Stop.
-func NewSpinner(w io.Writer, message string, emoji bool) *Spinner {
-	frames := asciiFrames
-	if emoji {
-		frames = dotFrames
-	}
+// NewSpinner builds a stopped spinner with caller-provided frames and
+// options. Empty frames fall back to ASCII. The message is the suffix while
+// animating and the final line after Stop. Callers using emoji or wide
+// glyphs must gate them with termcore.Emoji.
+func NewSpinner(w io.Writer, message string, frames []string, opts ...Option) *Spinner {
 	return New(frames, spinnerSpeed,
-		WithWriter(w),
-		WithSuffix(" "+message),
-		WithFinalMessage(message),
+		append([]Option{
+			WithWriter(w),
+			WithSuffix(" " + message),
+			WithFinalMessage(message),
+		}, opts...)...,
 	)
 }
 

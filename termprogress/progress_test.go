@@ -37,9 +37,9 @@ func TestSpinnerBufferNoop(t *testing.T) {
 
 	// Buffers are not terminals: Start is a safe no-op writing nothing,
 	// and Stop on a never-started spinner stays silent.
-	for _, emoji := range []bool{false, true} {
+	for _, frames := range [][]string{nil, CharSets[CharSetBraille]} {
 		var out guarded
-		s := NewSpinner(&out, "spin-msg", emoji)
+		s := NewSpinner(&out, "spin-msg", frames)
 		s.Start()
 		if s.Active() {
 			t.Fatal("spinner active on a buffer, want quiet no-op")
@@ -71,7 +71,7 @@ func TestSpinnerPipeFileStaysQuiet(t *testing.T) {
 		_ = w.Close()
 	})
 
-	s := NewSpinner(w, "spin-msg", false)
+	s := NewSpinner(w, "spin-msg", nil)
 	s.Start()
 	if s.Active() {
 		t.Fatal("spinner active on a pipe, want quiet no-op")
@@ -113,13 +113,13 @@ func TestSpinnerSchemeFrame(t *testing.T) {
 	t.Parallel()
 
 	var out guarded
-	s := NewSpinner(&out, "spin-msg", false).WithScheme(termstyle.NewScheme(true))
+	s := NewSpinner(&out, "spin-msg", nil).WithScheme(termstyle.NewScheme(true))
 	if got := s.line("|"); got != "\x1b[36m|\x1b[0m spin-msg" {
 		t.Fatalf("spinner frame %q, want cyan frame", got)
 	}
 
 	var plain guarded
-	p := NewSpinner(&plain, "spin-msg", false)
+	p := NewSpinner(&plain, "spin-msg", nil)
 	if got := p.line("|"); got != "| spin-msg" {
 		t.Fatalf("plain spinner frame %q, want raw frame", got)
 	}
@@ -150,14 +150,46 @@ func TestSpinnerOptionsAndCharsets(t *testing.T) {
 		t.Fatalf("zero scheme painted %q, want plain text", got)
 	}
 
-	if got := CharSets[14][0]; got != "⠋" {
+	if got := CharSets[CharSetBraille][0]; got != "⠋" {
 		t.Fatalf("charset 14 frame = %q, want braille dot", got)
 	}
-	if got := CharSets[9]; len(got) != 4 || got[0] != "|" {
+	if got := CharSets[CharSetASCII]; len(got) != 4 || got[0] != "|" {
 		t.Fatalf("charset 9 = %v, want ASCII spinner", got)
 	}
 	if got := CharSets[39]; len(got) == 0 {
 		t.Fatal("charset 39 is empty, want emoji globe frames")
+	}
+}
+
+func TestSpinnerFramesAndOptions(t *testing.T) {
+	t.Parallel()
+
+	var out guarded
+	s := NewSpinner(&out, "spin-msg", CharSets[CharSetBraille],
+		WithDelay(25*time.Millisecond),
+		WithPrefix("pre "),
+		WithHiddenCursor(false),
+	)
+	if len(s.frames) != len(CharSets[CharSetBraille]) {
+		t.Fatalf("frames = %v, want charset 14", s.frames)
+	}
+	if got := s.line(s.frames[0]); got != "pre "+CharSets[CharSetBraille][0]+" spin-msg" {
+		t.Fatalf("spinner line %q, want prefix and message", got)
+	}
+	if s.delay != 25*time.Millisecond {
+		t.Fatalf("spinner delay = %v, want 25ms", s.delay)
+	}
+	if s.finalMessage != "spin-msg" {
+		t.Fatalf("final message = %q, want spin-msg", s.finalMessage)
+	}
+	if s.hideCursor {
+		t.Fatal("spinner hides cursor despite WithHiddenCursor(false)")
+	}
+
+	var fallback guarded
+	f := NewSpinner(&fallback, "fallback", nil)
+	if len(f.frames) != len(asciiFrames) || f.frames[0] != "|" {
+		t.Fatalf("frames = %v, want ASCII fallback", f.frames)
 	}
 }
 
@@ -344,7 +376,7 @@ func TestSharedWriterSmoke(t *testing.T) {
 	renderer := renderers.NewSimpleRenderer(&out, terminal.NoColorSchema())
 	logger := termrender.NewLogger(termrender.InfoLevel, renderer)
 
-	spin := NewSpinner(&out, "spin-msg", false)
+	spin := NewSpinner(&out, "spin-msg", nil)
 	spin.Start()
 	bar := NewBar(&out, 4, "bar-desc")
 	task := logger.Scoped("smoke")

@@ -21,11 +21,17 @@ package termprogress
 const (
 	clockOneOClock = '\U0001F550'
 	clockOneThirty = '\U0001F55C'
+
+	// CharSetASCII indexes the plain ASCII spinner in CharSets.
+	CharSetASCII = 9
+
+	// CharSetBraille indexes the braille-dot spinner in CharSets.
+	CharSetBraille = 14
 )
 
-// CharSets contains the character sets available to New. Set 9 is
-// ASCII and set 14 is the braille-dot spinner used by NewSpinner.
-// Callers may pass any slice, including their own emoji frames.
+// CharSets contains the character sets available to New and NewSpinner.
+// CharSetASCII and CharSetBraille name the common sets. Callers may pass
+// any slice, including their own emoji frames.
 var CharSets = map[int][]string{
 	0:  {"←", "↖", "↑", "↗", "→", "↘", "↓", "↙"},
 	1:  {"▁", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▁"},

@@ -12,9 +12,9 @@
 // terminal; Start elsewhere is a safe no-op. Bars always render (they
 // degrade to plain lines), so CI logs keep full progress.
 //
-// Frame rule: New accepts any caller-provided frame list (see CharSets).
-// NewSpinner picks braille dots when termcore.Emoji() allows them and
-// ASCII elsewhere. Other callers should gate emoji and wide glyphs with
+// Frame rule: New and NewSpinner accept any caller-provided frame list
+// (see CharSets, CharSetASCII, and CharSetBraille); empty frames fall back
+// to ASCII. Callers using emoji or wide glyphs should gate them with
 // termcore.Emoji() themselves.
 //
 // Redraw rule: ANSI-capable terminals clear the previous frame, including
