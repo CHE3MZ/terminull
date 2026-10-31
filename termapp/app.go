@@ -45,6 +45,9 @@ type App struct {
 	// would render: deterministic output for logs, scripts, and house
 	// styles that prefer it.
 	symbolsOnly bool
+	// visibleCompletion lists the auto-generated completion command in
+	// help; it stays callable either way.
+	visibleCompletion bool
 }
 
 // LogRendererOptions describes the logging destination and built-in
@@ -99,6 +102,15 @@ func WithLong(long string) Option {
 func WithSymbolsOnly() Option {
 	return func(a *App) {
 		a.symbolsOnly = true
+	}
+}
+
+// WithVisibleCompletionCommand lists the auto-generated completion command
+// in help. It is hidden by default but stays callable either way, and shell
+// completion works through the hidden __complete command.
+func WithVisibleCompletionCommand() Option {
+	return func(a *App) {
+		a.visibleCompletion = true
 	}
 }
 
@@ -195,6 +207,8 @@ func New(name string, opts ...Option) *App {
 	cmd.PersistentFlags().BoolVar(&a.debug, "debug", false, "debug logging")
 	cmd.PersistentFlags().StringVar(&a.logLevelValue, "log-level", a.logLevel.String(), "log level: error|warn|info|debug|trace")
 	cmd.PersistentFlags().StringVar(&a.logStyleValue, "log-style", a.logStyle.String(), "log style: tree|plain|time|time-level|logrus|k8s")
+
+	cmd.CompletionOptions.HiddenDefaultCmd = !a.visibleCompletion
 
 	a.cmd = cmd
 	return a

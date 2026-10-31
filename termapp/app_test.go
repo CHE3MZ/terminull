@@ -24,8 +24,8 @@ type testDeployRun struct {
 	ran       bool
 }
 
-func newTestApp(out, errOut *bytes.Buffer, run *testDeployRun) *App {
-	app := New("demo", WithVersion("9.9.9-test"))
+func newTestApp(out, errOut *bytes.Buffer, run *testDeployRun, opts ...Option) *App {
+	app := New("demo", append([]Option{WithVersion("9.9.9-test")}, opts...)...)
 	app.SetOut(out)
 	app.SetErr(errOut)
 	app.Add(Command{
@@ -108,6 +108,49 @@ func TestCompletionIsOutOnly(t *testing.T) {
 
 	got := combined(&out, &errOut)
 	if len(got) == 0 || !strings.Contains(got, "demo") {
+		t.Fatalf("completion output %q is empty or missing app name", got)
+	}
+}
+
+func TestCompletionCommandHiddenByDefault(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run)
+
+	if err := app.Execute(context.Background(), []string{"--help"}); err != nil {
+		t.Fatalf("Execute(--help) error = %v", err)
+	}
+	got := combined(&out, &errOut)
+	if strings.Contains(got, "completion") {
+		t.Fatalf("help %q lists completion by default", got)
+	}
+	if !strings.Contains(got, "deploy") {
+		t.Fatalf("help %q does not list deploy", got)
+	}
+}
+
+func TestVisibleCompletionCommand(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var run testDeployRun
+	app := newTestApp(&out, &errOut, &run, WithVisibleCompletionCommand())
+
+	if err := app.Execute(context.Background(), []string{"--help"}); err != nil {
+		t.Fatalf("Execute(--help) error = %v", err)
+	}
+	if got := combined(&out, &errOut); !strings.Contains(got, "completion") {
+		t.Fatalf("help %q does not list completion", got)
+	}
+
+	out.Reset()
+	errOut.Reset()
+	if err := app.Execute(context.Background(), []string{"completion", "bash"}); err != nil {
+		t.Fatalf("Execute(completion bash) error = %v", err)
+	}
+	if got := combined(&out, &errOut); !strings.Contains(got, "demo") {
 		t.Fatalf("completion output %q is empty or missing app name", got)
 	}
 }

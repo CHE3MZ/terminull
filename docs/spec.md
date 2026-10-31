@@ -110,6 +110,7 @@ apps declare Command with use, short, flags, run with ctx, plus Args and ValidAr
 flag callbacks take termapp.FlagSet, arg validation takes termapp validators, completions take termapp directives.
 Raw and Unwrap stay as narrow escape hatches, user code never imports cobra, pflag, or the cli fork.
 WithSymbolsOnly pins ascii spinners and statuses on any terminal.
+completion is hidden from help by default but stays callable; WithVisibleCompletionCommand lists it, and shell completion still works.
 Context.Emoji carries the resolved capability after terminal detection and WithSymbolsOnly, so commands gate custom glyphs without calling termcore.Emoji directly.
 App.ManPages renders one roff page per visible command; the hidden man command writes them to disk.
 CheckUpdate and NotifyUpdate are compatibility wrappers over termupdate; neither runs automatically.
