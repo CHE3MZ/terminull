@@ -289,6 +289,81 @@ func TestNestedChildren(t *testing.T) {
 	}
 }
 
+func TestNestedUnknownCommand(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	ran := false
+
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use:   "worker",
+		Short: "manage workers",
+		Children: []Command{
+			{
+				Use:   "run",
+				Short: "run a worker",
+				Run: func(_ *Context) error {
+					ran = true
+					return nil
+				},
+			},
+		},
+	})
+
+	err := app.Execute(context.Background(), []string{"worker", "rnu"})
+	if err == nil {
+		t.Fatal("Execute(worker rnu) = nil, want unknown command error")
+	}
+	if code := termcore.ExitCodeOf(err); code != 2 {
+		t.Fatalf("exit code = %d, want 2", code)
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, `unknown command "rnu" for "demo worker"`) {
+		t.Fatalf("error = %q, want unknown command with group path", msg)
+	}
+	if !strings.Contains(msg, "Did you mean this?") || !strings.Contains(msg, "run") {
+		t.Fatalf("error = %q, want run suggestion", msg)
+	}
+	if ran {
+		t.Fatal("worker run ran for an unknown child")
+	}
+	if got := combined(&out, &errOut); got != "" {
+		t.Fatalf("output = %q, want no help text on unknown child", got)
+	}
+}
+
+func TestRunnableGroupKeepsPositionalArgs(t *testing.T) {
+	t.Parallel()
+
+	var out, errOut bytes.Buffer
+	var got []string
+
+	app := New("demo", WithVersion("1-test"))
+	app.SetOut(&out)
+	app.SetErr(&errOut)
+	app.Add(Command{
+		Use:   "jobs",
+		Short: "manage jobs",
+		Children: []Command{
+			{Use: "list", Short: "list jobs", Run: func(_ *Context) error { return nil }},
+		},
+		Run: func(ctx *Context) error {
+			got = ctx.Args()
+			return nil
+		},
+	})
+
+	if err := app.Execute(context.Background(), []string{"jobs", "custom-arg"}); err != nil {
+		t.Fatalf("Execute(jobs custom-arg) error = %v", err)
+	}
+	if len(got) != 1 || got[0] != "custom-arg" {
+		t.Fatalf("args = %v, want custom-arg passed to runnable parent", got)
+	}
+}
+
 func TestPauseResumeSimpleNoop(t *testing.T) {
 	t.Parallel()
 

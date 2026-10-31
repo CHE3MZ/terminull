@@ -107,6 +107,7 @@ WithLogOutput redirects logs from stderr; WithLogRendererFactory replaces built-
 logs default to stderr, so --output json and yaml stay parseable on stdout.
 help, version, and completion output come from the owned engine and stay stock-compatible.
 apps declare Command with use, short, flags, run with ctx, plus Args and ValidArgs completion.
+unknown commands fail at the root and at pure group parents, with stock suggestions; runnable parents keep their positional args.
 flag callbacks take termapp.FlagSet, arg validation takes termapp validators, completions take termapp directives.
 Raw and Unwrap stay as narrow escape hatches, user code never imports cobra, pflag, or the cli fork.
 WithSymbolsOnly pins ascii spinners and statuses on any terminal.

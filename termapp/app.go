@@ -404,12 +404,16 @@ func (a *App) symbolsRenderer(outFile *os.File) (termrender.LogRendered, func())
 // build converts a Command, recursing into Children groups. Drawing starts
 // inside RunE (not preRun) so --help/--version/completion never draw.
 func (a *App) build(c Command) *cli.Command {
+	args := adaptArgs(c.Args)
+	if args == nil && c.Run == nil && len(c.Children) > 0 {
+		args = rejectUnknownSubcommand
+	}
 	cmd := &cli.Command{
 		Use:               c.Use,
 		Short:             c.Short,
 		Long:              c.Long,
 		Example:           c.Example,
-		Args:              adaptArgs(c.Args),
+		Args:              args,
 		ValidArgs:         c.ValidArgs,
 		ValidArgsFunction: adaptCompletion(c.ValidArgsFunction),
 		Hidden:            c.Hidden,
@@ -448,9 +452,19 @@ func (a *App) build(c Command) *cli.Command {
 	return cmd
 }
 
+// rejectUnknownSubcommand guards a group parent that has no Run handler:
+// any positional arg is an unknown child. Runnable parents keep their
+// positional args.
+func rejectUnknownSubcommand(cmd *cli.Command, args []string) error {
+	if len(args) == 0 {
+		return nil
+	}
+	return cmd.UnknownCommandError(args[0])
+}
+
 // adaptArgs maps a terminull validator onto the engine hook. Nil keeps
-// the engine default, so group parents and bare commands behave exactly
-// as before.
+// the engine default; build adds the unknown-subcommand guard for pure
+// group parents.
 func adaptArgs(pa PositionalArgs) cli.PositionalArgs {
 	if pa == nil {
 		return nil

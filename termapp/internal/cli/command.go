@@ -778,6 +778,11 @@ func (c *Command) Find(args []string) (*Command, []string, error) {
 	return commandFound, a, nil
 }
 
+// UnknownCommandError reports an unknown subcommand, with suggestions.
+func (c *Command) UnknownCommandError(arg string) error {
+	return fmt.Errorf("unknown command %q for %q%s", arg, c.CommandPath(), c.findSuggestions(arg))
+}
+
 func (c *Command) findSuggestions(arg string) string {
 	if c.DisableSuggestions {
 		return ""
