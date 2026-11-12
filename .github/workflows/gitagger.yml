@@ -26,6 +26,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - uses: CHE3MZ/gitagger@69aaaf9e2259498919b864a84b410a271c216283 # v1
+      - uses: CHE3MZ/gitagger@7b846241fced6f5cc37796865519eb5d22ee0984 # v1
         with:
           args: ${{ inputs.bump }}
